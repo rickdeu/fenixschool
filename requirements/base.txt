@@ -9,6 +9,12 @@ psycopg[binary]==3.3.5
 # docs/09-seguranca-e-privacidade.md §9.7 and `.env.example`.
 django-environ==0.14.0
 
+# Structured (JSON), locally-rotated logging, no external service required --
+# RNF-OBS-01 (docs/03-requisitos-nao-funcionais.md §3.11) and
+# config/settings/base.py's "Logging" section.
+structlog==26.1.0
+django-structlog==10.1.0
+
 # Time-sortable UUID v7 for SyncedModel primary keys (Python's stdlib `uuid` does
 # not implement uuid7() yet) — see docs/04-arquitetura-tecnica.md §4.5 and
 # apps/core/models/base.py.

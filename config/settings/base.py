@@ -9,6 +9,7 @@ etc.) — see docs/10-stack-tecnologica-e-estrutura-projeto.md §10.2/§10.3.
 from pathlib import Path
 
 import environ
+import structlog
 
 # BASE_DIR points at the repository root (two levels above this file:
 # config/settings/base.py -> config/settings -> config -> root).
@@ -55,6 +56,10 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    # Structured (JSON), locally-rotated logging (RNF-OBS-01) -- see the
+    # "Logging" section below and docs/10-stack-tecnologica-e-estrutura-projeto.md
+    # §10 (Observabilidade).
+    "django_structlog",
 ]
 
 # FenixSchool's own business apps -- see
@@ -94,6 +99,12 @@ MIDDLEWARE = [
     # must run after AuthenticationMiddleware, which sets request.user. See
     # docs/04-arquitetura-tecnica.md §4.4.4 and apps/core/middleware.py.
     "apps.core.middleware.TenantMiddleware",
+    # Binds request/user metadata (request_id, user_id...) to every log line
+    # emitted while handling this request -- must run after
+    # AuthenticationMiddleware and TenantMiddleware, which set request.user /
+    # request.institution_id (bound in via apps/core/signals.py). See the
+    # "Logging" section below.
+    "django_structlog.middlewares.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -202,3 +213,93 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
+
+
+# Logging (RNF-OBS-01, issue #13) -- structured logs, rotated automatically,
+# with no dependency on an external service (essential for the local node,
+# which is expected to run fully offline). Every log line -- structlog's own
+# calls (`structlog.get_logger(...)`) and plain stdlib ones (Django's own
+# `django.request` etc.) alike -- ends up going through the same processor
+# chain and out through the same handlers, rendered as JSON to a locally
+# rotated file always, and additionally as human-readable text on the
+# console while DEBUG is on. See docs/10-stack-tecnologica-e-estrutura-projeto.md
+# §10 (Observabilidade) and apps/core/signals.py (binds request.institution_id
+# from apps/core/middleware.py into every request's log lines).
+LOG_DIR = Path(env("DJANGO_LOG_DIR", default=str(BASE_DIR / "logs")))
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+# A structlog "foreign_pre_chain" -- applied only to *plain* stdlib
+# `logging` records (structlog's own calls already went through
+# `structlog.configure()`'s own `processors` below) so both end up with the
+# same timestamp/level/contextvars shape before rendering.
+_STRUCTLOG_FOREIGN_PRE_CHAIN = [
+    structlog.contextvars.merge_contextvars,
+    structlog.stdlib.add_log_level,
+    structlog.processors.TimeStamper(fmt="iso"),
+]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processors": [
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                structlog.processors.JSONRenderer(),
+            ],
+            "foreign_pre_chain": _STRUCTLOG_FOREIGN_PRE_CHAIN,
+        },
+        "console": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processors": [
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                # Only DEBUG gets the coloured, human-oriented renderer --
+                # every real deployment (local_node/central_node, DEBUG=False)
+                # gets JSON on the console too, so a container's own log
+                # driver (e.g. `docker logs`, journald) captures structured
+                # lines from day one, with no separate configuration.
+                structlog.dev.ConsoleRenderer() if DEBUG else structlog.processors.JSONRenderer(),
+            ],
+            "foreign_pre_chain": _STRUCTLOG_FOREIGN_PRE_CHAIN,
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+        },
+        "file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": str(LOG_DIR / "fenixschool.log"),
+            "when": "midnight",
+            "backupCount": env.int("DJANGO_LOG_RETENTION_DAYS", default=30),
+            "formatter": "json",
+        },
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": env("DJANGO_LOG_LEVEL", default="INFO"),
+    },
+}
+
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        # Hands off to `logging`'s own dictConfig-configured handlers/
+        # formatters (above) instead of structlog rendering the event
+        # itself -- this is what lets structlog-native and plain stdlib log
+        # records share one JSON file.
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)

@@ -48,3 +48,9 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE  # noqa: F405
+
+# Logs task start/success/failure/retry through the same structlog pipeline
+# as everything else (config/settings/base.py's "Logging" section) -- only
+# meaningful here: the local node has no Celery, only Django-Q, which
+# django_structlog does not integrate with.
+DJANGO_STRUCTLOG_CELERY_ENABLED = True
