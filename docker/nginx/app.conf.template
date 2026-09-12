@@ -1,0 +1,83 @@
+# Shared by both the local-node and central-node stacks (see
+# docker-compose.local-node.yml / docker-compose.central-node.yml). Mounted at
+# /etc/nginx/templates/default.conf.template, where the official nginx image's
+# own entrypoint (docker-entrypoint.d/20-envsubst-on-templates.sh) runs
+# envsubst over it at container startup and writes the result to
+# /etc/nginx/conf.d/default.conf -- no custom entrypoint script needed here.
+# envsubst only substitutes variables that are actually set in the
+# container's environment, so nginx's own runtime variables below (like
+# $host, $remote_addr, $scheme) are left untouched.
+#
+# See docs/11-implantacao-e-operacoes.md §11.3 (issue #7's acceptance
+# criterion: the app must be reachable through Nginx on port 80/443).
+
+upstream fenixschool_app {
+    server web:8000;
+}
+
+server {
+    listen 80;
+    server_name ${NGINX_SERVER_NAME};
+
+    client_max_body_size 20M;
+
+    # /static/ is served straight from the shared volume WhiteNoise's
+    # CompressedManifestStaticFilesStorage wrote to (see
+    # config/settings/local_node.py / central_node.py), bypassing Django and
+    # WhiteNoise entirely in this production path -- every filename is
+    # content-hashed, so it is safe (and, per RNF-COMP-02's "works well on a
+    # slow connection" goal, desirable) to cache it as effectively immutable.
+    # /media/ holds user uploads, which are neither hashed nor immutable, so
+    # it gets a much shorter cache lifetime instead. See issue #10 /
+    # docs/04-arquitetura-tecnica.md §4.6 and
+    # docs/03-requisitos-nao-funcionais.md §3.6.
+    location /static/ {
+        alias /app/staticfiles/;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location /media/ {
+        alias /app/media/;
+        add_header Cache-Control "public, max-age=3600";
+    }
+
+    location / {
+        proxy_pass http://fenixschool_app;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# TLS (port 443) is deliberately not enabled by default: it needs real
+# certificates (e.g. Let's Encrypt/certbot), which is provisioning work for a
+# dedicated issue, not something this compose file can fabricate. Once a
+# certificate exists on the host, mount it into the nginx container and
+# uncomment a block like the one below (adjusting paths to match).
+#
+# server {
+#     listen 443 ssl;
+#     server_name ${NGINX_SERVER_NAME};
+#
+#     ssl_certificate     /etc/nginx/certs/fullchain.pem;
+#     ssl_certificate_key /etc/nginx/certs/privkey.pem;
+#
+#     client_max_body_size 20M;
+#
+#     location /static/ {
+#         alias /app/staticfiles/;
+#     }
+#
+#     location /media/ {
+#         alias /app/media/;
+#     }
+#
+#     location / {
+#         proxy_pass http://fenixschool_app;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#     }
+# }

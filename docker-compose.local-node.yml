@@ -1,0 +1,108 @@
+# The local node's production stack: PostgreSQL + Django (Gunicorn) + Nginx +
+# Django-Q -- no Redis/Celery at all, on purpose, to keep the number of
+# services a school's own hardware has to run to a minimum. See
+# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1/§10.3 and
+# docs/11-implantacao-e-operacoes.md §11.3 (issue #7).
+#
+# Usage:
+#   cp .env.example .env   # then edit it -- see that file for what each
+#                          # variable does and which ones must change
+#   docker compose -f docker-compose.local-node.yml up -d
+
+# An explicit project name keeps this stack's containers, volumes and network
+# isolated from docker-compose.central-node.yml's, even though both files
+# live in the same repository checkout (see issue #8's "isolated from the
+# local node" acceptance criterion).
+name: fenixschool-local-node
+
+x-common-env: &common-env
+  DJANGO_SETTINGS_MODULE: config.settings.local_node
+  POSTGRES_HOST: db
+  POSTGRES_DB: ${POSTGRES_DB:-fenixschool}
+  POSTGRES_USER: ${POSTGRES_USER:-fenixschool}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+
+x-app-build: &app-build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    REQUIREMENTS_FILE: requirements/local_node.txt
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      <<: *common-env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - backups:/backups
+      - ./docker/backup.sh:/usr/local/bin/backup.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  web:
+    build: *app-build
+    image: fenixschool/local-node-app:latest
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+      - backups:/app/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      [
+        "gunicorn",
+        "config.wsgi:application",
+        "--bind",
+        "0.0.0.0:8000",
+        "--workers",
+        "${GUNICORN_WORKERS:-3}",
+      ]
+    restart: always
+
+  qcluster:
+    build: *app-build
+    image: fenixschool/local-node-app:latest
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_COLLECTSTATIC: "true"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      web:
+        condition: service_started
+    command: ["python", "manage.py", "qcluster"]
+    restart: always
+
+  nginx:
+    image: nginx:1.27-alpine
+    environment:
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:-localhost}
+    volumes:
+      - ./docker/nginx/app.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - static_data:/app/staticfiles:ro
+      - media_data:/app/media:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      - web
+    restart: always
+
+volumes:
+  postgres_data:
+  static_data:
+  media_data:
+  backups:
