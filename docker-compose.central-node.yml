@@ -1,0 +1,144 @@
+# The central node's production stack: PostgreSQL + Django (Gunicorn) + Nginx
+# + Celery + Redis, for multi-institution aggregation and the sync API. See
+# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1/§10.3 and
+# docs/11-implantacao-e-operacoes.md §11.2 (issue #8).
+#
+# Usage:
+#   cp .env.example .env   # then edit it -- see that file for what each
+#                          # variable does and which ones must change
+#   docker compose -f docker-compose.central-node.yml up -d
+
+# An explicit project name (distinct from docker-compose.local-node.yml's)
+# keeps this stack's containers, volumes and network fully isolated, even
+# though both files live in the same repository checkout.
+name: fenixschool-central-node
+
+x-common-env: &common-env
+  DJANGO_SETTINGS_MODULE: config.settings.central_node
+  POSTGRES_HOST: db
+  POSTGRES_DB: ${POSTGRES_DB:-fenixschool}
+  POSTGRES_USER: ${POSTGRES_USER:-fenixschool}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+  REDIS_URL: redis://redis:6379/0
+
+x-app-build: &app-build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    # A distinct image (see the `image:` keys below) from the local node's,
+    # built with the central node's own requirements (Celery/Redis instead of
+    # Django-Q) -- same Dockerfile, isolated image.
+    REQUIREMENTS_FILE: requirements/central_node.txt
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      <<: *common-env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - backups:/backups
+      - ./docker/backup.sh:/usr/local/bin/backup.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  web:
+    build: *app-build
+    image: fenixschool/central-node-app:latest
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+      - backups:/app/backups
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command:
+      [
+        "gunicorn",
+        "config.wsgi:application",
+        "--bind",
+        "0.0.0.0:8000",
+        "--workers",
+        "${GUNICORN_WORKERS:-3}",
+      ]
+    restart: always
+
+  celery-worker:
+    build: *app-build
+    image: fenixschool/central-node-app:latest
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_COLLECTSTATIC: "true"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    command: ["celery", "-A", "config", "worker", "--loglevel=info"]
+    restart: always
+
+  celery-beat:
+    build: *app-build
+    image: fenixschool/central-node-app:latest
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_COLLECTSTATIC: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    command: ["celery", "-A", "config", "beat", "--loglevel=info"]
+    restart: always
+
+  nginx:
+    image: nginx:1.27-alpine
+    environment:
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:-localhost}
+    volumes:
+      - ./docker/nginx/app.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - static_data:/app/staticfiles:ro
+      - media_data:/app/media:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      - web
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  media_data:
+  backups:
