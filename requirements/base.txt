@@ -19,3 +19,7 @@ django-structlog==10.1.0
 # not implement uuid7() yet) — see docs/04-arquitetura-tecnica.md §4.5 and
 # apps/core/models/base.py.
 uuid6==2025.0.1
+
+# Required by Django's ImageField (validates and reads image dimensions) --
+# used by core.Institution.logo (docs/05-modelo-de-dados.md §5.2, issue #15).
+Pillow==12.3.0

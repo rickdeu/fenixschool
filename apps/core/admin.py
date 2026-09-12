@@ -21,8 +21,49 @@ from .models import (
 
 @admin.register(Institution)
 class InstitutionAdmin(admin.ModelAdmin):
-    list_display = ("name", "created_at", "updated_at")
-    search_fields = ("name",)
+    list_display = (
+        "name",
+        "tax_id",
+        "ministry_of_education_code",
+        "municipality",
+        "created_at",
+    )
+    search_fields = ("name", "tax_id", "ministry_of_education_code")
+    autocomplete_fields = ("province", "municipality")
+    fieldsets = (
+        ("Identificação", {"fields": ("name", "tax_id", "ministry_of_education_code")}),
+        (
+            "Morada",
+            {
+                "fields": (
+                    "province",
+                    "municipality",
+                    "district_or_commune",
+                    "neighborhood",
+                    "street",
+                    "house_number",
+                )
+            },
+        ),
+        (
+            "Contactos",
+            {
+                "fields": (
+                    "landline_phone",
+                    "unitel_phone",
+                    "movicel_phone",
+                    "africell_phone",
+                    "email",
+                    "website",
+                )
+            },
+        ),
+        ("Identidade visual", {"fields": ("logo",)}),
+        (
+            "Parametrização",
+            {"fields": ("default_grading_formula", "blocks_documents_with_outstanding_debt")},
+        ),
+    )
 
 
 class MunicipalityInline(admin.TabularInline):

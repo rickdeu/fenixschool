@@ -1,11 +1,15 @@
 """The `core.Institution` model — the root tenant of the whole system.
 
-This is deliberately a minimal version: just enough to be a valid target for the
-`SyncedModel.institution` foreign key at this stage of the technical foundation
-(M0). The full data model (`tax_id`, `ministry_of_education_code`,
-`province`/`municipality`, `logo`, `default_grading_formula`, etc. — see
-docs/05-modelo-de-dados.md §5.2) is left to a dedicated `core` issue, so as not to
-fabricate business fields that were not specified there.
+Full data model per docs/05-modelo-de-dados.md §5.2 (issue #15), expanding the
+minimal M0 version that existed only to be a valid target for
+`SyncedModel.institution`.
+
+One field from §5.2 is deliberately not here yet: `ano_lectivo_corrente`
+(`current_academic_year`), a FK to `AnoLectivo`. That model doesn't exist yet —
+it's §5.3's `core.AnoLectivo`/`AcademicYear`, built by issue #16 (Models
+AnoLectivo, PeriodoLectivo, CicloLectivo e DiaNaoLectivo). Add the FK here once
+that model lands, rather than fabricating it against a table that doesn't
+exist.
 """
 
 from django.db import models
@@ -19,8 +23,62 @@ class Institution(models.Model):
     so it has no `institution` foreign key of its own.
     """
 
+    # -- Identificação --------------------------------------------------
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     name = models.CharField(max_length=255)
+    tax_id = models.CharField("NIF", max_length=50, blank=True, default="")
+    ministry_of_education_code = models.CharField(
+        "código MED", max_length=50, blank=True, default=""
+    )
+
+    # -- Morada -----------------------------------------------------------
+    province = models.ForeignKey(
+        "core.Province",
+        verbose_name="província",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="institutions",
+    )
+    municipality = models.ForeignKey(
+        "core.Municipality",
+        verbose_name="município",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="institutions",
+    )
+    district_or_commune = models.CharField(
+        "distrito/comuna", max_length=100, blank=True, default=""
+    )
+    neighborhood = models.CharField("bairro", max_length=100, blank=True, default="")
+    street = models.CharField("rua", max_length=150, blank=True, default="")
+    house_number = models.CharField("número da casa", max_length=20, blank=True, default="")
+
+    # -- Contactos --------------------------------------------------------
+    landline_phone = models.CharField("telefone fixo", max_length=20, blank=True, default="")
+    unitel_phone = models.CharField("telefone Unitel", max_length=20, blank=True, default="")
+    movicel_phone = models.CharField("telefone Movicel", max_length=20, blank=True, default="")
+    africell_phone = models.CharField("telefone Africell", max_length=20, blank=True, default="")
+    email = models.EmailField(blank=True, default="")
+    website = models.URLField(blank=True, default="")
+
+    # -- Identidade visual --------------------------------------------------
+    logo = models.ImageField("logótipo", upload_to="institutions/logos/", blank=True, null=True)
+
+    # -- Parametrização ---------------------------------------------------
+    default_grading_formula = models.JSONField(
+        "fórmula de média por omissão",
+        default=dict,
+        blank=True,
+        help_text=("Fórmula por omissão de cálculo de médias, sobreponível por curso/disciplina."),
+    )
+    blocks_documents_with_outstanding_debt = models.BooleanField(
+        "bloqueia documentos com dívida",
+        default=False,
+        help_text="Parametrização financeira (RF-FIN-06).",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
