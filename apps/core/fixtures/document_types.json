@@ -1,0 +1,30 @@
+[
+  {
+    "model": "core.identificationdocumenttype",
+    "pk": "bilhete-de-identidade",
+    "fields": {
+      "name": "Bilhete de Identidade"
+    }
+  },
+  {
+    "model": "core.identificationdocumenttype",
+    "pk": "cedula-pessoal",
+    "fields": {
+      "name": "Cédula Pessoal"
+    }
+  },
+  {
+    "model": "core.identificationdocumenttype",
+    "pk": "passaporte",
+    "fields": {
+      "name": "Passaporte"
+    }
+  },
+  {
+    "model": "core.identificationdocumenttype",
+    "pk": "assento-de-nascimento",
+    "fields": {
+      "name": "Assento de Nascimento"
+    }
+  }
+]
