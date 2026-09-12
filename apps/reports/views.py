@@ -1,0 +1,1 @@
+"""Views da app `reports`."""

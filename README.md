@@ -27,6 +27,28 @@ Comece por [`docs/00-README.md`](docs/00-README.md).
 
 ## Estado actual
 
-Esqueleto inicial do projecto Django (`fenixschool/`) e pacote de documentação de
-escopo completo. Implementação das apps de negócio ainda por iniciar — ver roadmap em
+Fundação técnica (M0) criada: estrutura definitiva de directórios (`config/`, `apps/`,
+`static/`, `templates/`, `locale/`, `fixtures/`, `tests/` — ver
+[`docs/10-stack-tecnologica-e-estrutura-projeto.md §10.2`](docs/10-stack-tecnologica-e-estrutura-projeto.md))
+e ferramentas de qualidade configuradas (`ruff`, `pytest`/`pytest-django`, dependências
+base em `requirements/`). Implementação das regras de negócio das apps ainda por
+iniciar — ver roadmap em
 [`docs/12-plano-de-implementacao.md`](docs/12-plano-de-implementacao.md).
+
+### Arrancar em desenvolvimento
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements/dev.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
+
+Qualidade de código e testes:
+
+```bash
+ruff check .
+ruff format .
+pytest
+```

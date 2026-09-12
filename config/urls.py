@@ -1,0 +1,13 @@
+"""
+Configuração de URLs raiz do projecto FenixSchool.
+
+Cada app regista as suas próprias rotas em ``apps/<app>/urls.py`` e é incluída aqui
+à medida que for sendo implementada (ver docs/10-stack-tecnologica-e-estrutura-projeto.md).
+"""
+
+from django.contrib import admin
+from django.urls import path
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+]

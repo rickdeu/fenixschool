@@ -1,0 +1,9 @@
+# Dependências de desenvolvimento e qualidade de código (lint, testes) — ver
+# `pyproject.toml` ([tool.ruff] / [tool.pytest.ini_options]) e RNF-MAN-01/03
+# (docs/03-requisitos-nao-funcionais.md §3.9).
+-r base.txt
+
+ruff==0.16.7
+pytest==9.1.1
+pytest-django==4.14.0
+factory-boy==3.3.3
