@@ -1,0 +1,146 @@
+# The local node's production stack: PostgreSQL + Django (Gunicorn) + Nginx +
+# Django-Q -- no Redis/Celery at all, on purpose, to keep the number of
+# services a school's own hardware has to run to a minimum. See
+# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1/§10.3 and
+# docs/11-implantacao-e-operacoes.md §11.3 (issue #7).
+#
+# Usage:
+#   cp .env.example .env   # then edit it -- see that file for what each
+#                          # variable does and which ones must change
+#   docker compose -f docker-compose.local-node.yml up -d
+
+# An explicit project name keeps this stack's containers, volumes and network
+# isolated from docker-compose.central-node.yml's, even though both files
+# live in the same repository checkout (see issue #8's "isolated from the
+# local node" acceptance criterion).
+name: fenixschool-local-node
+
+x-postgres-env: &postgres-env
+  POSTGRES_DB: ${POSTGRES_DB:-fenixschool}
+  POSTGRES_USER: ${POSTGRES_USER:-fenixschool}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+
+x-common-env: &common-env
+  <<: *postgres-env
+  DJANGO_SETTINGS_MODULE: config.settings.local_node
+  POSTGRES_HOST: db
+
+x-app-build: &app-build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    REQUIREMENTS_FILE: requirements/local_node.txt
+
+x-app-image: &app-image fenixschool/local-node-app:latest
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      <<: *postgres-env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - backups:/backups
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  # One-shot: applies migrations and collects static files exactly once per
+  # `docker compose up`, before any long-running service starts. Reuses
+  # scripts/entrypoint.sh unchanged (its own `exec "$@"` just runs `true`
+  # here) instead of duplicating that logic. Every other service depends on
+  # this one completing successfully rather than merely starting, and skips
+  # both steps itself via SKIP_MIGRATIONS/SKIP_COLLECTSTATIC -- a single
+  # source of truth instead of concurrent, uncoordinated per-container runs
+  # (which, before this, could race on the same empty schema, and which also
+  # made `web` wipe the shared static volume nginx serves from on every
+  # restart, not just on first boot).
+  init:
+    build: *app-build
+    image: *app-image
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+    volumes:
+      - static_data:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["true"]
+    restart: "no"
+
+  web:
+    build: *app-build
+    image: *app-image
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_MIGRATIONS: "true"
+      SKIP_COLLECTSTATIC: "true"
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+      - backups:/app/backups
+    depends_on:
+      db:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    command:
+      [
+        "gunicorn",
+        "config.wsgi:application",
+        "--bind",
+        "0.0.0.0:8000",
+        "--workers",
+        "${GUNICORN_WORKERS:-3}",
+      ]
+    restart: always
+
+  qcluster:
+    build: *app-build
+    image: *app-image
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_MIGRATIONS: "true"
+      SKIP_COLLECTSTATIC: "true"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    command: ["python", "manage.py", "qcluster"]
+    restart: always
+
+  nginx:
+    image: nginx:1.27-alpine
+    environment:
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:-localhost}
+    volumes:
+      - ./docker/nginx/app.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - static_data:/app/staticfiles:ro
+      - media_data:/app/media:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      web:
+        condition: service_started
+    restart: always
+
+volumes:
+  postgres_data:
+  static_data:
+  media_data:
+  backups:

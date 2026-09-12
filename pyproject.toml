@@ -41,3 +41,17 @@ DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 testpaths = ["apps", "tests"]
 addopts = "--reuse-db"
+markers = [
+    "sync: sync-partition tests that simulate a network partition (see docs/13-testes-e-qualidade.md)",
+]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*"]
+
+[tool.coverage.report]
+# RNF-MAN-03 (docs/03-requisitos-nao-funcionais.md §3.9): 70% minimum test
+# coverage on the business core. Enforced in CI via
+# `pytest --cov=apps --cov-fail-under=70` (see .github/workflows/ci.yml).
+fail_under = 70
+show_missing = true

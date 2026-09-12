@@ -8,10 +8,9 @@ Every business model (academic, enrollment, grading, finance, etc.) should inher
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Manager
 from uuid6 import uuid7
 
-from .managers import TenantManager
+from .managers import TenantManager, TenantQuerySet
 
 
 class SyncedModel(models.Model):
@@ -35,9 +34,13 @@ class SyncedModel(models.Model):
 
     ``objects`` (via `TenantManager`, see `apps.core.models.managers`) always
     filters by the institution of the current tenant context and hides
-    soft-deleted records. ``all_objects`` does not filter anything — **restricted
-    use**: system tasks (the sync engine, the Super Administrator area), never
-    code that serves an ordinary user's request.
+    soft-deleted records. ``all_objects`` shares the same `TenantQuerySet` (so
+    `for_institution`/`for_request` are available on it too, for code that
+    wants to filter explicitly without depending on the ambient tenant
+    context) but does not override `get_queryset()`, so plain `all_objects.all()`
+    is genuinely unfiltered — **restricted use**: system tasks (the sync
+    engine, the Super Administrator area), never code that serves an ordinary
+    user's request.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
@@ -62,7 +65,12 @@ class SyncedModel(models.Model):
     is_deleted = models.BooleanField(default=False, db_index=True)
 
     objects = TenantManager()
-    all_objects = Manager()  # noqa: DJ012 -- ruff only recognizes the "objects" manager name
+    # Deliberately not a second named manager class: this is exactly
+    # `TenantManager`'s own queryset, just without the tenant-filtering
+    # `get_queryset()` override, so it is spelled out via the same
+    # `from_queryset()` factory `TenantManager` itself is built from instead
+    # of via a subclass that would exist only to restate that in prose.
+    all_objects = models.Manager.from_queryset(TenantQuerySet)()  # noqa: DJ012 -- ruff only recognizes "objects"
 
     class Meta:
         abstract = True

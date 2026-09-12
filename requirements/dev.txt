@@ -6,4 +6,8 @@
 ruff==0.16.7
 pytest==9.1.1
 pytest-django==4.14.0
+pytest-cov==7.1.0
 factory-boy==3.3.3
+
+# Dependency vulnerability scanning in CI (docs/13-testes-e-qualidade.md §13.5).
+pip-audit==2.10.1

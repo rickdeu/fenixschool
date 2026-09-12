@@ -1,0 +1,179 @@
+# The central node's production stack: PostgreSQL + Django (Gunicorn) + Nginx
+# + Celery + Redis, for multi-institution aggregation and the sync API. See
+# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1/§10.3 and
+# docs/11-implantacao-e-operacoes.md §11.2 (issue #8).
+#
+# Usage:
+#   cp .env.example .env   # then edit it -- see that file for what each
+#                          # variable does and which ones must change
+#   docker compose -f docker-compose.central-node.yml up -d
+
+# An explicit project name (distinct from docker-compose.local-node.yml's)
+# keeps this stack's containers, volumes and network fully isolated, even
+# though both files live in the same repository checkout.
+name: fenixschool-central-node
+
+x-postgres-env: &postgres-env
+  POSTGRES_DB: ${POSTGRES_DB:-fenixschool}
+  POSTGRES_USER: ${POSTGRES_USER:-fenixschool}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+
+x-common-env: &common-env
+  <<: *postgres-env
+  DJANGO_SETTINGS_MODULE: config.settings.central_node
+  POSTGRES_HOST: db
+  REDIS_URL: redis://redis:6379/0
+
+x-app-build: &app-build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    # A distinct image (see `x-app-image` below) from the local node's, built
+    # with the central node's own requirements (Celery/Redis instead of
+    # Django-Q) -- same Dockerfile, isolated image.
+    REQUIREMENTS_FILE: requirements/central_node.txt
+
+x-app-image: &app-image fenixschool/central-node-app:latest
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      <<: *postgres-env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - backups:/backups
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  # One-shot: applies migrations and collects static files exactly once per
+  # `docker compose up`, before any long-running service starts -- see
+  # docker-compose.local-node.yml's `init` service for the full rationale
+  # (avoids web/celery-worker/celery-beat racing each other to migrate the
+  # same empty schema, and web clobbering the shared static volume nginx
+  # serves from on every restart).
+  init:
+    build: *app-build
+    image: *app-image
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+    volumes:
+      - static_data:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["true"]
+    restart: "no"
+
+  web:
+    build: *app-build
+    image: *app-image
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_MIGRATIONS: "true"
+      SKIP_COLLECTSTATIC: "true"
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+      - backups:/app/backups
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    command:
+      [
+        "gunicorn",
+        "config.wsgi:application",
+        "--bind",
+        "0.0.0.0:8000",
+        "--workers",
+        "${GUNICORN_WORKERS:-3}",
+      ]
+    restart: always
+
+  celery-worker:
+    build: *app-build
+    image: *app-image
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_MIGRATIONS: "true"
+      SKIP_COLLECTSTATIC: "true"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    command: ["celery", "-A", "config", "worker", "--loglevel=info"]
+    restart: always
+
+  celery-beat:
+    build: *app-build
+    image: *app-image
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SKIP_MIGRATIONS: "true"
+      SKIP_COLLECTSTATIC: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    command: ["celery", "-A", "config", "beat", "--loglevel=info"]
+    restart: always
+
+  nginx:
+    image: nginx:1.27-alpine
+    environment:
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:-localhost}
+    volumes:
+      - ./docker/nginx/app.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - static_data:/app/staticfiles:ro
+      - media_data:/app/media:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      web:
+        condition: service_started
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  media_data:
+  backups:

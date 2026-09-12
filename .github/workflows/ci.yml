@@ -9,6 +9,26 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
 
+    # A real Postgres service, matching production's database backend, is
+    # available here for any test that needs it (e.g. future integration and
+    # sync-partition suites) -- see docs/13-testes-e-qualidade.md §13.5. The
+    # default test suite itself still runs against SQLite in memory
+    # (config.settings.test) for speed and does not depend on this service.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: fenixschool
+          POSTGRES_USER: fenixschool
+          POSTGRES_PASSWORD: fenixschool
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fenixschool"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,7 +39,13 @@ jobs:
           cache-dependency-path: requirements/dev.txt
 
       - name: Install dependencies
-        run: pip install -r requirements/dev.txt
+        # Upgrading pip first matters here specifically because of the
+        # `pip-audit` steps below: an outdated bootstrap pip can itself have a
+        # known CVE, which would otherwise fail the audit on a vulnerability
+        # that has nothing to do with this project's own dependencies.
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/dev.txt
 
       - name: Ruff check
         run: ruff check .
@@ -27,12 +53,55 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
+      - name: Dependency vulnerability audit (base + dev)
+        run: pip-audit
+
+      # `-r` audits a requirements file's pins directly, without needing them
+      # installed in this job's environment -- these two intentionally never
+      # get pip-installed alongside dev.txt in CI (local_node.txt/
+      # central_node.txt are mutually exclusive in real deployments, and
+      # installing celery here would defeat the point of the next step, which
+      # is what actually verifies apps/core/tasks.py's guarded import still
+      # works when celery is absent).
+      - name: Dependency vulnerability audit (local node)
+        run: pip-audit -r requirements/local_node.txt
+
+      - name: Dependency vulnerability audit (central node)
+        run: pip-audit -r requirements/central_node.txt
+
       - name: Check for missing migrations
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Run tests
+      # `-m "not sync"` keeps this step SQLite-only and fast: sync-partition
+      # tests get their own step below, against the Postgres service, once
+      # any exist. The coverage threshold itself lives in pyproject.toml's
+      # [tool.coverage.report] (not repeated here as --cov-fail-under, so
+      # there is exactly one place to change it).
+      - name: Run tests with coverage
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
-        run: pytest
+        run: pytest --cov=apps --cov-report=term-missing -m "not sync"
+
+      - name: Sync-partition tests (simulated network partition)
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+        run: pytest tests/sync_partition -m sync
+
+      # Both node images get a real build here, using the same
+      # REQUIREMENTS_FILE build arg each docker-compose.*.yml passes, so a
+      # broken central-node-only dependency (celery/redis) or Dockerfile
+      # change can't reach main unnoticed just because the default arg value
+      # happens to build fine.
+      - name: Build the local node's Docker image
+        run: >-
+          docker build
+          --build-arg REQUIREMENTS_FILE=requirements/local_node.txt
+          -t fenixschool-local-node:ci .
+
+      - name: Build the central node's Docker image
+        run: >-
+          docker build
+          --build-arg REQUIREMENTS_FILE=requirements/central_node.txt
+          -t fenixschool-central-node:ci .
