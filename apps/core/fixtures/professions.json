@@ -1,0 +1,310 @@
+[
+  {
+    "model": "core.profession",
+    "pk": "advogado-a",
+    "fields": {
+      "name": "Advogado(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "agricultor-a",
+    "fields": {
+      "name": "Agricultor(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "arquiteto-a",
+    "fields": {
+      "name": "Arquiteto(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "bancario-a",
+    "fields": {
+      "name": "Bancário(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "cabeleireiro-a",
+    "fields": {
+      "name": "Cabeleireiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "carpinteiro-a",
+    "fields": {
+      "name": "Carpinteiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "comerciante",
+    "fields": {
+      "name": "Comerciante"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "contabilista",
+    "fields": {
+      "name": "Contabilista"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "costureiro-a",
+    "fields": {
+      "name": "Costureiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "cozinheiro-a",
+    "fields": {
+      "name": "Cozinheiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "desempregado-a",
+    "fields": {
+      "name": "Desempregado(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "domestico-a",
+    "fields": {
+      "name": "Doméstico(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "economista",
+    "fields": {
+      "name": "Economista"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "eletricista",
+    "fields": {
+      "name": "Eletricista"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "empresario-a",
+    "fields": {
+      "name": "Empresário(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "enfermeiro-a",
+    "fields": {
+      "name": "Enfermeiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "engenheiro-a",
+    "fields": {
+      "name": "Engenheiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "estudante",
+    "fields": {
+      "name": "Estudante"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "farmaceutico-a",
+    "fields": {
+      "name": "Farmacêutico(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "funcionario-a-publico-a",
+    "fields": {
+      "name": "Funcionário(a) Público(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "gestor-a",
+    "fields": {
+      "name": "Gestor(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "jornalista",
+    "fields": {
+      "name": "Jornalista"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "mecanico-a",
+    "fields": {
+      "name": "Mecânico(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "medico-a",
+    "fields": {
+      "name": "Médico(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "militar",
+    "fields": {
+      "name": "Militar"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "ministro-a-de-culto-religioso",
+    "fields": {
+      "name": "Ministro(a) de Culto Religioso"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "motorista",
+    "fields": {
+      "name": "Motorista"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "pedreiro-a",
+    "fields": {
+      "name": "Pedreiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "pescador-a",
+    "fields": {
+      "name": "Pescador(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "pintor-a",
+    "fields": {
+      "name": "Pintor(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "policia",
+    "fields": {
+      "name": "Polícia"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "professor-a",
+    "fields": {
+      "name": "Professor(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "psicologo-a",
+    "fields": {
+      "name": "Psicólogo(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "reformado-a",
+    "fields": {
+      "name": "Reformado(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "seguranca",
+    "fields": {
+      "name": "Segurança"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "serralheiro-a",
+    "fields": {
+      "name": "Serralheiro(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "soldador-a",
+    "fields": {
+      "name": "Soldador(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "tecnico-a-administrativo-a",
+    "fields": {
+      "name": "Técnico(a) Administrativo(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "tecnico-a-de-enfermagem",
+    "fields": {
+      "name": "Técnico(a) de Enfermagem"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "tecnico-a-de-informatica",
+    "fields": {
+      "name": "Técnico(a) de Informática"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "tradutor-a-interprete",
+    "fields": {
+      "name": "Tradutor(a)/Intérprete"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "vendedor-a-ambulante",
+    "fields": {
+      "name": "Vendedor(a) Ambulante"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "veterinario-a",
+    "fields": {
+      "name": "Veterinário(a)"
+    }
+  },
+  {
+    "model": "core.profession",
+    "pk": "outra",
+    "fields": {
+      "name": "Outra"
+    }
+  }
+]

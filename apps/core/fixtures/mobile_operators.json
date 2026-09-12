@@ -1,0 +1,23 @@
+[
+  {
+    "model": "core.mobileoperator",
+    "pk": "unitel",
+    "fields": {
+      "name": "Unitel"
+    }
+  },
+  {
+    "model": "core.mobileoperator",
+    "pk": "movicel",
+    "fields": {
+      "name": "Movicel"
+    }
+  },
+  {
+    "model": "core.mobileoperator",
+    "pk": "africell",
+    "fields": {
+      "name": "Africell"
+    }
+  }
+]
