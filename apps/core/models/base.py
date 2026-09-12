@@ -8,7 +8,10 @@ Every business model (academic, enrollment, grading, finance, etc.) should inher
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Manager
 from uuid6 import uuid7
+
+from .managers import TenantManager
 
 
 class SyncedModel(models.Model):
@@ -29,6 +32,12 @@ class SyncedModel(models.Model):
     - ``version``: optimistic concurrency-control counter.
     - ``is_deleted``: soft-delete — academic/financial data is never physically
       removed.
+
+    ``objects`` (via `TenantManager`, see `apps.core.models.managers`) always
+    filters by the institution of the current tenant context and hides
+    soft-deleted records. ``all_objects`` does not filter anything — **restricted
+    use**: system tasks (the sync engine, the Super Administrator area), never
+    code that serves an ordinary user's request.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
@@ -52,8 +61,20 @@ class SyncedModel(models.Model):
     version = models.PositiveIntegerField(default=1)
     is_deleted = models.BooleanField(default=False, db_index=True)
 
+    objects = TenantManager()
+    all_objects = Manager()  # noqa: DJ012 -- ruff only recognizes the "objects" manager name
+
     class Meta:
         abstract = True
+        # Django uses the model's *base* manager (the first one defined, by
+        # default) for internal operations that must see every row regardless of
+        # filtering -- e.g. collecting related objects for an on_delete=PROTECT
+        # check. Since `objects` here can legitimately return an empty queryset
+        # when no tenant context is active, that default would be unsafe: it
+        # could make Django think a to-be-deleted row has no related records
+        # when it simply couldn't see them. Pointing `base_manager_name` at the
+        # unfiltered `all_objects` keeps those internal checks correct.
+        base_manager_name = "all_objects"
         indexes = [
             models.Index(
                 fields=["institution", "is_deleted"],
