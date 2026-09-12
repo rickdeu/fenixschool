@@ -1,4 +1,4 @@
-"""Tests for the `wait_for_db` management command (docker/entrypoint.sh)."""
+"""Tests for the `wait_for_db` management command (scripts/entrypoint.sh)."""
 
 from io import StringIO
 from unittest.mock import patch

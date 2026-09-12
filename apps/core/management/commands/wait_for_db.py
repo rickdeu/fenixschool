@@ -1,10 +1,12 @@
 """A management command that blocks until the default database is reachable.
 
-Used by docker/entrypoint.sh so gunicorn/Django-Q/Celery containers don't crash
-on startup just because Postgres takes a few extra seconds to accept
-connections (a common race in `docker compose up`, since dependency ordering
-via `depends_on` only waits for the container to start, not for Postgres
-itself to be ready -- see docs/11-implantacao-e-operacoes.md §11.3).
+Used by scripts/entrypoint.sh as cheap defense-in-depth: both
+docker-compose.local-node.yml and docker-compose.central-node.yml already
+gate every service on `db: condition: service_healthy`, so this should
+rarely have to wait in practice -- but that guarantee only holds when this
+image runs *through* one of those compose files, not for an ad-hoc
+`docker run`, or any other orchestration that doesn't attach a healthcheck to
+Postgres. See docs/11-implantacao-e-operacoes.md §11.3.
 """
 
 import time

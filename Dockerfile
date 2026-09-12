@@ -35,6 +35,10 @@ FROM python:${PYTHON_VERSION} AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/home/fenixschool/.local/bin:$PATH \
+    # Only a fallback default for an ad-hoc `docker run` with no compose file
+    # involved -- every service in docker-compose.local-node.yml /
+    # docker-compose.central-node.yml sets this explicitly, and that value
+    # always wins over this one.
     DJANGO_SETTINGS_MODULE=config.settings.local_node
 
 # libpq5 is the runtime (non-dev) Postgres client library psycopg needs.
@@ -43,11 +47,17 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 1000 --shell /usr/sbin/nologin fenixschool
 
+# WORKDIR creates /app while still root, so it -- unlike everything COPY
+# --chown places inside it -- would otherwise stay root-owned; celery-beat
+# (docker-compose.central-node.yml) writes its schedule file straight into
+# this directory as the unprivileged `fenixschool` user, so it needs to be
+# writable too, not just its contents.
 WORKDIR /app
+RUN chown fenixschool:fenixschool /app
 
 COPY --from=builder --chown=fenixschool:fenixschool /root/.local /home/fenixschool/.local
 COPY --chown=fenixschool:fenixschool . .
-COPY --chown=fenixschool:fenixschool docker/entrypoint.sh /entrypoint.sh
+COPY --chown=fenixschool:fenixschool scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 RUN mkdir -p /app/staticfiles /app/media /app/backups \

@@ -15,10 +15,18 @@ set -eu
 
 BACKUP_DIR="${BACKUP_DIR:-/backups}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-DEST="${BACKUP_DIR}/fenixschool-${TIMESTAMP}.sql.gz"
+DUMP="${BACKUP_DIR}/fenixschool-${TIMESTAMP}.sql"
 
 mkdir -p "${BACKUP_DIR}"
 
-echo "Backing up ${POSTGRES_DB} to ${DEST}..."
-pg_dump --username "${POSTGRES_USER}" --dbname "${POSTGRES_DB}" | gzip > "${DEST}"
+# Deliberately not `pg_dump ... | gzip > "$DUMP.gz"`: under `/bin/sh` (which on
+# both the Debian app image and this Alpine-based postgres image is not bash),
+# `set -e` only sees a pipeline's *last* command's exit status -- gzip would
+# still exit 0 and "succeed" even if pg_dump failed, silently producing an
+# empty/corrupt backup that reports success. Writing the plain dump first
+# means a failing pg_dump aborts the script immediately, before gzip ever
+# runs.
+echo "Backing up ${POSTGRES_DB} to ${DUMP}.gz..."
+pg_dump --username "${POSTGRES_USER}" --dbname "${POSTGRES_DB}" --file "${DUMP}"
+gzip "${DUMP}"
 echo "Done."
