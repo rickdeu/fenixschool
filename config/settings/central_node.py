@@ -9,20 +9,22 @@ Ver docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1/§10.3.
 """
 
 from .base import *  # noqa: F401,F403
-from .base import MIDDLEWARE, env_bool, env_list, os
+from .base import MIDDLEWARE, env
 
-DEBUG = env_bool("DJANGO_DEBUG", False)
+# Production defaults to DEBUG=False regardless of what `base.py` fell back
+# to -- only an explicit DJANGO_DEBUG=true in this node's `.env` turns it on.
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", [])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "fenixschool"),
-        "USER": os.environ.get("POSTGRES_USER", "fenixschool"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "NAME": env("POSTGRES_DB", default="fenixschool"),
+        "USER": env("POSTGRES_USER", default="fenixschool"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default=""),
+        "HOST": env("POSTGRES_HOST", default="localhost"),
+        "PORT": env("POSTGRES_PORT", default="5432"),
     }
 }
 
@@ -40,8 +42,8 @@ STORAGES = {
 
 # Celery + Redis — tarefas assíncronas do Nó Central (notificações em massa,
 # relatórios pesados) — ver docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1.
-CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

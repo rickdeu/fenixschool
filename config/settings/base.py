@@ -6,41 +6,39 @@ and override only what is specific to their context (database, async task queue,
 etc.) — see docs/10-stack-tecnologica-e-estrutura-projeto.md §10.2/§10.3.
 """
 
-import os
 from pathlib import Path
+
+import environ
 
 # BASE_DIR points at the repository root (two levels above this file:
 # config/settings/base.py -> config/settings -> config -> root).
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
-def env_bool(name: str, default: bool) -> bool:
-    """Read a boolean environment variable (accepts 1/0, true/false, yes/no)."""
-    value = os.environ.get(name)
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
-
-
-def env_list(name: str, default: list[str]) -> list[str]:
-    """Read a comma-separated environment variable as a list."""
-    value = os.environ.get(name)
-    if not value:
-        return default
-    return [item.strip() for item in value.split(",") if item.strip()]
-
+# `env` is the single place every settings module (this one, `local_node`,
+# `central_node`, `test`) reads configuration from -- see issue #12 and
+# docs/09-seguranca-e-privacidade.md §9.7 ("segredos... geridos por variáveis
+# de ambiente/`django-environ` e nunca commitados"). `.env.example`
+# documents every variable it recognizes; a real `.env` (gitignored) is only
+# read here for local development -- the node environments
+# (local_node/central_node) get their environment from
+# docker-compose.*.yml's own `env_file: .env` instead, so this call is a
+# no-op there (the file simply doesn't exist inside the container image).
+env = environ.Env(
+    DJANGO_DEBUG=(bool, True),
+)
+environ.Env.read_env(BASE_DIR / ".env")
 
 # SECURITY WARNING: keep the secret key secret in production! Every production
 # environment (local node / central node) MUST set DJANGO_SECRET_KEY in its
 # `.env` -- this default is only acceptable for local development.
-SECRET_KEY = os.environ.get(
+SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
-    "django-insecure-fenixschool-dev-only-change-me-in-production",
+    default="django-insecure-fenixschool-dev-only-change-me-in-production",
 )
 
-DEBUG = env_bool("DJANGO_DEBUG", True)
+DEBUG = env("DJANGO_DEBUG")
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", [])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 
 
 # Application definition
