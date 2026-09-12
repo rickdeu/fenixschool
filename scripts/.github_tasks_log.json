@@ -1,5 +1,7 @@
 {
   "2FA (TOTP) obrigatório para Administrador, Super Administrador e Financeiro": "https://github.com/rickdeu/fenixschool/issues/25",
+  "Adotar template EduTrack (Bootstrap) como base visual do admin_panel": "https://github.com/rickdeu/fenixschool/issues/187",
+  "Adotar template Royal College (Bootstrap) como base visual do public_site": "https://github.com/rickdeu/fenixschool/issues/188",
   "Aplicação móvel nativa (iOS/Android)": "https://github.com/rickdeu/fenixschool/issues/185",
   "Associação Docente-Disciplina-Turma via Horário com controlo de carga horária": "https://github.com/rickdeu/fenixschool/issues/85",
   "Atualização de dados de contacto próprios do encarregado": "https://github.com/rickdeu/fenixschool/issues/111",

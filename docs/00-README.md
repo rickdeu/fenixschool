@@ -26,6 +26,7 @@ online/offline sem perda de dados.
 | 12 | [Plano de Implementação](12-plano-de-implementacao.md) | Roadmap por marcos (M1–M6), critérios de aceitação |
 | 13 | [Testes e Qualidade](13-testes-e-qualidade.md) | Estratégia de testes, com foco especial em testes de sincronização |
 | 14 | [Glossário](14-glossario.md) | Termos de negócio angolanos e termos técnicos de arquitetura |
+| 15 | [Referências Visuais de UI](15-referencias-visuais-ui.md) | Templates Bootstrap escolhidos como base visual do admin_panel e do public_site |
 | — | [Legislação de Referência](legislacao/README.md) | Leis e decretos angolanos aplicáveis (educação, protecção de dados, trabalho), com PDFs oficiais |
 
 ## Como este pacote deve ser lido

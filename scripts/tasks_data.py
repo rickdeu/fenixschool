@@ -1263,4 +1263,22 @@ add("future", MF, "P2", "M", "Integração directa por API com sistemas do MED",
     ["Fora do escopo v1 — exportação manual já suportada por RF-ADM-05"],
     ["01-visao-geral-e-contexto.md §1.8", "12-plano-de-implementacao.md §12.9"])
 
+# =====================================================================
+# UI — TEMPLATES DE REFERÊNCIA VISUAL
+# =====================================================================
+
+add("admin-panel", M1, "P1", "M", "Adotar template EduTrack (Bootstrap) como base visual do admin_panel",
+    ["15.1"],
+    "Usar o template 'EduTrack School Dashboard' (Bootstrap) como referência de layout para as áreas internas (admin_panel, secretaria, direção, financeiro, RH), reduzindo esforço de design de UI.",
+    "Ver mapeamento detalhado de secções/componentes em docs/15-referencias-visuais-ui.md §15.1 (dashboards por papel, cartões de turma, calendário, gráficos, tabelas). Extrair apenas HTML/CSS/ícones para `static/`; toda interatividade reimplementada com HTMX/Alpine.js (nunca o JS original do template); gráficos migrados para Chart.js local.",
+    ["Licenciamento do template confirmado antes de vendorizar qualquer asset (ver §15.3)", "Layout adaptado ao menu real de módulos (06-modulos-e-funcionalidades.md §6.1), não ao menu genérico do template", "Nenhuma dependência de CDN externo introduzida (RNF-COMP-02)"],
+    ["15-referencias-visuais-ui.md §15.1"])
+
+add("public-site", M1, "P1", "M", "Adotar template Royal College (Bootstrap) como base visual do public_site",
+    ["15.2"],
+    "Usar o template 'Royal College' (Bootstrap) como referência de layout para o portal público institucional.",
+    "Ver mapeamento detalhado de secções em docs/15-referencias-visuais-ui.md §15.2 (hero institucional, cursos, notícias, admissões, calendário de eventos, contadores). Substituir todo o conteúdo de exemplo por dados reais (Curso, Aviso); remover secções tipo e-commerce/blog genérico sem correspondência no escopo; selector de idioma do template substituído pelo mecanismo próprio de multilinguismo (§10.4).",
+    ["Licenciamento do template confirmado antes de vendorizar qualquer asset (ver §15.3)", "Nenhum conteúdo de exemplo do template remanescente em produção", "Portal funcional tanto no Nó Central como servido localmente na LAN da escola (§6.3)"],
+    ["15-referencias-visuais-ui.md §15.2"])
+
 print(f"TOTAL TASKS: {len(TASKS)}")
