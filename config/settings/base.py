@@ -1,21 +1,21 @@
 """
-Definições base do projecto FenixSchool, comuns a todos os ambientes.
+Base settings for the FenixSchool project, shared by every environment.
 
-Os ambientes concretos (`local_node`, `central_node`, `test`) importam este módulo e
-sobrepõem apenas o que é específico do seu contexto (base de dados, filas assíncronas,
-etc.) — ver docs/10-stack-tecnologica-e-estrutura-projeto.md §10.2/§10.3.
+The concrete environments (`local_node`, `central_node`, `test`) import this module
+and override only what is specific to their context (database, async task queue,
+etc.) — see docs/10-stack-tecnologica-e-estrutura-projeto.md §10.2/§10.3.
 """
 
 import os
 from pathlib import Path
 
-# BASE_DIR aponta para a raiz do repositório (dois níveis acima deste ficheiro:
-# config/settings/base.py -> config/settings -> config -> raiz).
+# BASE_DIR points at the repository root (two levels above this file:
+# config/settings/base.py -> config/settings -> config -> root).
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 def env_bool(name: str, default: bool) -> bool:
-    """Lê uma variável de ambiente booleana (aceita 1/0, true/false, yes/no)."""
+    """Read a boolean environment variable (accepts 1/0, true/false, yes/no)."""
     value = os.environ.get(name)
     if value is None:
         return default
@@ -23,16 +23,16 @@ def env_bool(name: str, default: bool) -> bool:
 
 
 def env_list(name: str, default: list[str]) -> list[str]:
-    """Lê uma variável de ambiente como lista separada por vírgulas."""
+    """Read a comma-separated environment variable as a list."""
     value = os.environ.get(name)
     if not value:
         return default
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-# SECURITY WARNING: mantenha a chave secreta em segredo em produção! Cada ambiente de
-# produção (Nó Local / Nó Central) DEVE definir DJANGO_SECRET_KEY no seu `.env` — este
-# valor por omissão só é aceitável em desenvolvimento local.
+# SECURITY WARNING: keep the secret key secret in production! Every production
+# environment (local node / central node) MUST set DJANGO_SECRET_KEY in its
+# `.env` -- this default is only acceptable for local development.
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
     "django-insecure-fenixschool-dev-only-change-me-in-production",
@@ -59,9 +59,10 @@ THIRD_PARTY_APPS = [
     "rest_framework",
 ]
 
-# Apps de negócio do FenixSchool — ver docs/10-stack-tecnologica-e-estrutura-projeto.md
-# §10.2 para a responsabilidade de cada uma. A ordem reflecte, grosso modo, as
-# dependências entre domínios (core/accounts primeiro; sync/audit/api por último).
+# FenixSchool's own business apps -- see
+# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.2 for what each one is
+# responsible for. The order roughly follows the dependencies between domains
+# (core/accounts first; sync/audit/api last).
 LOCAL_APPS = [
     "apps.core",
     "apps.accounts",
@@ -91,6 +92,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Resolves the current tenant (institution) from the authenticated user --
+    # must run after AuthenticationMiddleware, which sets request.user. See
+    # docs/04-arquitetura-tecnica.md §4.4.4 and apps/core/middleware.py.
+    "apps.core.middleware.TenantMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -117,10 +122,10 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 
-# Base de dados
-# Por omissão usa-se SQLite para desenvolvimento sem dependências externas (ver
-# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.3). Os ambientes de nó
-# (local_node/central_node) sobrepõem esta configuração com PostgreSQL.
+# Database
+# Defaults to SQLite for zero-dependency local development (see
+# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.3). The node environments
+# (local_node/central_node) override this with PostgreSQL.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -128,8 +133,10 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = "accounts.User"
 
-# Validação de palavras-passe
+
+# Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -148,11 +155,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internacionalização — ver docs/10-stack-tecnologica-e-estrutura-projeto.md §10.4
-# NOTA: `accounts.Utilizador` (a implementar) terá o campo `idioma_preferido` que um
-# middleware fino próprio usará para activar o idioma do utilizador autenticado antes do
-# LocaleMiddleware standard actuar sobre utilizadores anónimos. Esse middleware ainda não
-# existe nesta fase de fundação técnica (depende do modelo `accounts.Utilizador`).
+# Internationalization -- see docs/10-stack-tecnologica-e-estrutura-projeto.md §10.4
+# NOTE: `accounts.User` will eventually get a `preferred_language` field that a thin
+# custom middleware uses to activate the authenticated user's language before the
+# standard LocaleMiddleware acts on anonymous users. That middleware is not part of
+# this technical-foundation phase yet.
 
 LANGUAGE_CODE = "pt"
 
@@ -174,7 +181,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Ficheiros estáticos e media
+# Static and media files
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
@@ -187,8 +194,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Django REST Framework — usado apenas para os endpoints de sincronização entre Nó
-# Local e Nó Central (`apps.api`), não como API pública de aplicação.
+# Django REST Framework -- used only for the sync endpoints between the local
+# node and the central node (`apps.api`), not as a general-purpose public API.
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
