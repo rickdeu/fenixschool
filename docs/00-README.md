@@ -4,7 +4,7 @@ Sistema de gestão académica para instituições de Ensino Secundário (I e II 
 Ensino Médio) na República de Angola. Este pacote de documentação recria e expande o
 escopo do projecto original **Fénix School EM 1.0** (2017), cujos artefactos de código
 foram perdidos, com base no documento de referência preservado
-(`../fenixschoolEM.pdf`), e define a solução completa a construir em **Django**, com
+([`fenixschoolEM.pdf`](fenixschoolEM.pdf)), e define a solução completa a construir em **Django**, com
 frontend integrado (sem SPA), funcionamento **offline-first** e sincronização
 online/offline sem perda de dados.
 

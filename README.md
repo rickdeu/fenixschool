@@ -6,7 +6,7 @@ Ensino Médio) na República de Angola — construído em Django, com frontend i
 dados.
 
 Este projecto recria e expande o escopo do projecto original **Fénix School EM 1.0**
-(2017), documentado em [`fenixschoolEM.pdf`](fenixschoolEM.pdf).
+(2017), documentado em [`docs/fenixschoolEM.pdf`](docs/fenixschoolEM.pdf).
 
 ## Documentação
 
