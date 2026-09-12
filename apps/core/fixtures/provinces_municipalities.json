@@ -1,0 +1,1629 @@
+[
+  {
+    "model": "core.province",
+    "pk": "bengo",
+    "fields": {
+      "name": "Bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bengo-ambriz",
+    "fields": {
+      "name": "Ambriz",
+      "province": "bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bengo-bula-atumba",
+    "fields": {
+      "name": "Bula Atumba",
+      "province": "bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bengo-dande",
+    "fields": {
+      "name": "Dande",
+      "province": "bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bengo-dembos",
+    "fields": {
+      "name": "Dembos",
+      "province": "bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bengo-nambuangongo",
+    "fields": {
+      "name": "Nambuangongo",
+      "province": "bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bengo-pango-aluquem",
+    "fields": {
+      "name": "Pango Aluquém",
+      "province": "bengo"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "benguela",
+    "fields": {
+      "name": "Benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-baia-farta",
+    "fields": {
+      "name": "Baía Farta",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-balombo",
+    "fields": {
+      "name": "Balombo",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-benguela",
+    "fields": {
+      "name": "Benguela",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-bocoio",
+    "fields": {
+      "name": "Bocoio",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-caimbambo",
+    "fields": {
+      "name": "Caimbambo",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-catumbela",
+    "fields": {
+      "name": "Catumbela",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-chongoroi",
+    "fields": {
+      "name": "Chongoroi",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-cubal",
+    "fields": {
+      "name": "Cubal",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-ganda",
+    "fields": {
+      "name": "Ganda",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "benguela-lobito",
+    "fields": {
+      "name": "Lobito",
+      "province": "benguela"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "bie",
+    "fields": {
+      "name": "Bié"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-andulo",
+    "fields": {
+      "name": "Andulo",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-camacupa",
+    "fields": {
+      "name": "Camacupa",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-catabola",
+    "fields": {
+      "name": "Catabola",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-chinguar",
+    "fields": {
+      "name": "Chinguar",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-chitembo",
+    "fields": {
+      "name": "Chitembo",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-cuemba",
+    "fields": {
+      "name": "Cuemba",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-cunhinga",
+    "fields": {
+      "name": "Cunhinga",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-kuito",
+    "fields": {
+      "name": "Kuito",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "bie-nharea",
+    "fields": {
+      "name": "Nharea",
+      "province": "bie"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "cabinda",
+    "fields": {
+      "name": "Cabinda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cabinda-belize",
+    "fields": {
+      "name": "Belize",
+      "province": "cabinda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cabinda-buco-zau",
+    "fields": {
+      "name": "Buco-Zau",
+      "province": "cabinda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cabinda-cabinda",
+    "fields": {
+      "name": "Cabinda",
+      "province": "cabinda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cabinda-cacongo",
+    "fields": {
+      "name": "Cacongo",
+      "province": "cabinda"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "cuando",
+    "fields": {
+      "name": "Cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-cuito-cuanavale",
+    "fields": {
+      "name": "Cuito Cuanavale",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-dima",
+    "fields": {
+      "name": "Dima",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-dirico",
+    "fields": {
+      "name": "Dirico",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-luengue",
+    "fields": {
+      "name": "Luengue",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-luiana",
+    "fields": {
+      "name": "Luiana",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-mavinga",
+    "fields": {
+      "name": "Mavinga",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-mucusso",
+    "fields": {
+      "name": "Mucusso",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-rivungo",
+    "fields": {
+      "name": "Rivungo",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuando-xipundo",
+    "fields": {
+      "name": "Xipundo",
+      "province": "cuando"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "cubango",
+    "fields": {
+      "name": "Cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-caiundo",
+    "fields": {
+      "name": "Caiundo",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-calai",
+    "fields": {
+      "name": "Calai",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-chinguanja",
+    "fields": {
+      "name": "Chinguanja",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-cuangar",
+    "fields": {
+      "name": "Cuangar",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-cuchi",
+    "fields": {
+      "name": "Cuchi",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-cutato",
+    "fields": {
+      "name": "Cutato",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-longa",
+    "fields": {
+      "name": "Longa",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-mavengue",
+    "fields": {
+      "name": "Mavengue",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-menongue",
+    "fields": {
+      "name": "Menongue",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-nancova",
+    "fields": {
+      "name": "Nancova",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cubango-savate",
+    "fields": {
+      "name": "Savate",
+      "province": "cubango"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "cuanza-norte",
+    "fields": {
+      "name": "Cuanza Norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-ambaca",
+    "fields": {
+      "name": "Ambaca",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-banga",
+    "fields": {
+      "name": "Banga",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-bolongongo",
+    "fields": {
+      "name": "Bolongongo",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-cambambe",
+    "fields": {
+      "name": "Cambambe",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-cazengo",
+    "fields": {
+      "name": "Cazengo",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-golungo-alto",
+    "fields": {
+      "name": "Golungo Alto",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-gonguembo",
+    "fields": {
+      "name": "Gonguembo",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-lucala",
+    "fields": {
+      "name": "Lucala",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-quiculungo",
+    "fields": {
+      "name": "Quiculungo",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-norte-samba-caju",
+    "fields": {
+      "name": "Samba Caju",
+      "province": "cuanza-norte"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "cuanza-sul",
+    "fields": {
+      "name": "Cuanza Sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-amboim",
+    "fields": {
+      "name": "Amboim",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-cassongue",
+    "fields": {
+      "name": "Cassongue",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-cela",
+    "fields": {
+      "name": "Cela",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-conda",
+    "fields": {
+      "name": "Conda",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-ebo",
+    "fields": {
+      "name": "Ebo",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-libolo",
+    "fields": {
+      "name": "Libolo",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-mussende",
+    "fields": {
+      "name": "Mussende",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-porto-amboim",
+    "fields": {
+      "name": "Porto Amboim",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-quibala",
+    "fields": {
+      "name": "Quibala",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-quilenda",
+    "fields": {
+      "name": "Quilenda",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-seles",
+    "fields": {
+      "name": "Seles",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cuanza-sul-sumbe",
+    "fields": {
+      "name": "Sumbe",
+      "province": "cuanza-sul"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "cunene",
+    "fields": {
+      "name": "Cunene"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cunene-cahama",
+    "fields": {
+      "name": "Cahama",
+      "province": "cunene"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cunene-cuanhama",
+    "fields": {
+      "name": "Cuanhama",
+      "province": "cunene"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cunene-curoca",
+    "fields": {
+      "name": "Curoca",
+      "province": "cunene"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cunene-cuvelai",
+    "fields": {
+      "name": "Cuvelai",
+      "province": "cunene"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cunene-namacunde",
+    "fields": {
+      "name": "Namacunde",
+      "province": "cunene"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "cunene-ombadja",
+    "fields": {
+      "name": "Ombadja",
+      "province": "cunene"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "huambo",
+    "fields": {
+      "name": "Huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-bailundo",
+    "fields": {
+      "name": "Bailundo",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-caala",
+    "fields": {
+      "name": "Caála",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-catchiungo",
+    "fields": {
+      "name": "Catchiungo",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-chicala-cholohanga",
+    "fields": {
+      "name": "Chicala-Cholohanga",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-ecunha",
+    "fields": {
+      "name": "Ecunha",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-huambo",
+    "fields": {
+      "name": "Huambo",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-londuimbali",
+    "fields": {
+      "name": "Londuimbali",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-longonjo",
+    "fields": {
+      "name": "Longonjo",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-mungo",
+    "fields": {
+      "name": "Mungo",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-tchindjenje",
+    "fields": {
+      "name": "Tchindjenje",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huambo-ucuma",
+    "fields": {
+      "name": "Ucuma",
+      "province": "huambo"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "huila",
+    "fields": {
+      "name": "Huíla"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-caconda",
+    "fields": {
+      "name": "Caconda",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-cacula",
+    "fields": {
+      "name": "Cacula",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-caluquembe",
+    "fields": {
+      "name": "Caluquembe",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-chibia",
+    "fields": {
+      "name": "Chibia",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-chicomba",
+    "fields": {
+      "name": "Chicomba",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-chipindo",
+    "fields": {
+      "name": "Chipindo",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-cuvango",
+    "fields": {
+      "name": "Cuvango",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-gambos",
+    "fields": {
+      "name": "Gambos",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-humpata",
+    "fields": {
+      "name": "Humpata",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-jamba",
+    "fields": {
+      "name": "Jamba",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-lubango",
+    "fields": {
+      "name": "Lubango",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-matala",
+    "fields": {
+      "name": "Matala",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-quilengues",
+    "fields": {
+      "name": "Quilengues",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "huila-quipungo",
+    "fields": {
+      "name": "Quipungo",
+      "province": "huila"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "icolo-e-bengo",
+    "fields": {
+      "name": "Ícolo e Bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "icolo-e-bengo-bom-jesus",
+    "fields": {
+      "name": "Bom Jesus",
+      "province": "icolo-e-bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "icolo-e-bengo-cabiri",
+    "fields": {
+      "name": "Cabiri",
+      "province": "icolo-e-bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "icolo-e-bengo-cabo-ledo",
+    "fields": {
+      "name": "Cabo Ledo",
+      "province": "icolo-e-bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "icolo-e-bengo-calumbo",
+    "fields": {
+      "name": "Calumbo",
+      "province": "icolo-e-bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "icolo-e-bengo-catete",
+    "fields": {
+      "name": "Catete",
+      "province": "icolo-e-bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "icolo-e-bengo-quicama",
+    "fields": {
+      "name": "Quiçama",
+      "province": "icolo-e-bengo"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "icolo-e-bengo-sequele",
+    "fields": {
+      "name": "Sequele",
+      "province": "icolo-e-bengo"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "luanda",
+    "fields": {
+      "name": "Luanda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "luanda-belas",
+    "fields": {
+      "name": "Belas",
+      "province": "luanda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "luanda-cacuaco",
+    "fields": {
+      "name": "Cacuaco",
+      "province": "luanda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "luanda-cazenga",
+    "fields": {
+      "name": "Cazenga",
+      "province": "luanda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "luanda-kilamba-kiaxi",
+    "fields": {
+      "name": "Kilamba Kiaxi",
+      "province": "luanda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "luanda-luanda",
+    "fields": {
+      "name": "Luanda",
+      "province": "luanda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "luanda-talatona",
+    "fields": {
+      "name": "Talatona",
+      "province": "luanda"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "luanda-viana",
+    "fields": {
+      "name": "Viana",
+      "province": "luanda"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "lunda-norte",
+    "fields": {
+      "name": "Lunda Norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-cambulo",
+    "fields": {
+      "name": "Cambulo",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-capenda-camulemba",
+    "fields": {
+      "name": "Capenda-Camulemba",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-caungula",
+    "fields": {
+      "name": "Caungula",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-chitato",
+    "fields": {
+      "name": "Chitato",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-cuango",
+    "fields": {
+      "name": "Cuango",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-cuilo",
+    "fields": {
+      "name": "Cuílo",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-lovua",
+    "fields": {
+      "name": "Lóvua",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-lubalo",
+    "fields": {
+      "name": "Lubalo",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-lucapa",
+    "fields": {
+      "name": "Lucapa",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-norte-xa-muteba",
+    "fields": {
+      "name": "Xá-Muteba",
+      "province": "lunda-norte"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "lunda-sul",
+    "fields": {
+      "name": "Lunda Sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-sul-cacolo",
+    "fields": {
+      "name": "Cacolo",
+      "province": "lunda-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-sul-dala",
+    "fields": {
+      "name": "Dala",
+      "province": "lunda-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-sul-muconda",
+    "fields": {
+      "name": "Muconda",
+      "province": "lunda-sul"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "lunda-sul-saurimo",
+    "fields": {
+      "name": "Saurimo",
+      "province": "lunda-sul"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "malanje",
+    "fields": {
+      "name": "Malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-cacuso",
+    "fields": {
+      "name": "Cacuso",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-calandula",
+    "fields": {
+      "name": "Calandula",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-cambundi-catembo",
+    "fields": {
+      "name": "Cambundi-Catembo",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-cangandala",
+    "fields": {
+      "name": "Cangandala",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-caombo",
+    "fields": {
+      "name": "Caombo",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-cuaba-nzogo",
+    "fields": {
+      "name": "Cuaba Nzogo",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-cunda-dia-baze",
+    "fields": {
+      "name": "Cunda-Dia-Baze",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-luquembo",
+    "fields": {
+      "name": "Luquembo",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-malanje",
+    "fields": {
+      "name": "Malanje",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-marimba",
+    "fields": {
+      "name": "Marimba",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-massango",
+    "fields": {
+      "name": "Massango",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-mucari",
+    "fields": {
+      "name": "Mucari",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-quela",
+    "fields": {
+      "name": "Quela",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "malanje-quirima",
+    "fields": {
+      "name": "Quirima",
+      "province": "malanje"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "moxico",
+    "fields": {
+      "name": "Moxico"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-bundas",
+    "fields": {
+      "name": "Bundas",
+      "province": "moxico"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-camanongue",
+    "fields": {
+      "name": "Camanongue",
+      "province": "moxico"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leua",
+    "fields": {
+      "name": "Léua",
+      "province": "moxico"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-luchazes",
+    "fields": {
+      "name": "Luchazes",
+      "province": "moxico"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-moxico",
+    "fields": {
+      "name": "Moxico",
+      "province": "moxico"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "moxico-leste",
+    "fields": {
+      "name": "Moxico Leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-caianda",
+    "fields": {
+      "name": "Caianda",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-cameia",
+    "fields": {
+      "name": "Cameia",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-cazombo",
+    "fields": {
+      "name": "Cazombo",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-lago-dilolo",
+    "fields": {
+      "name": "Lago Dilolo",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-lovua-do-zambeze",
+    "fields": {
+      "name": "Lóvua do Zambeze",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-luacano",
+    "fields": {
+      "name": "Luacano",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-luau",
+    "fields": {
+      "name": "Luau",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-macondo",
+    "fields": {
+      "name": "Macondo",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "moxico-leste-nana-candundo",
+    "fields": {
+      "name": "Nana Candundo",
+      "province": "moxico-leste"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "namibe",
+    "fields": {
+      "name": "Namibe"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "namibe-bibala",
+    "fields": {
+      "name": "Bibala",
+      "province": "namibe"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "namibe-camucuio",
+    "fields": {
+      "name": "Camucuio",
+      "province": "namibe"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "namibe-namibe",
+    "fields": {
+      "name": "Namibe",
+      "province": "namibe"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "namibe-tombwa",
+    "fields": {
+      "name": "Tômbwa",
+      "province": "namibe"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "namibe-virei",
+    "fields": {
+      "name": "Virei",
+      "province": "namibe"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "uige",
+    "fields": {
+      "name": "Uíge"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-alto-cauale",
+    "fields": {
+      "name": "Alto Cauale",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-ambuila",
+    "fields": {
+      "name": "Ambuíla",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-bembe",
+    "fields": {
+      "name": "Bembe",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-buengas",
+    "fields": {
+      "name": "Buengas",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-bungo",
+    "fields": {
+      "name": "Bungo",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-cangola",
+    "fields": {
+      "name": "Cangola",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-damba",
+    "fields": {
+      "name": "Damba",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-mucaba",
+    "fields": {
+      "name": "Mucaba",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-negage",
+    "fields": {
+      "name": "Negage",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-puri",
+    "fields": {
+      "name": "Puri",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-quimbele",
+    "fields": {
+      "name": "Quimbele",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-quitexe",
+    "fields": {
+      "name": "Quitexe",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-sanza-pombo",
+    "fields": {
+      "name": "Sanza Pombo",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-songo",
+    "fields": {
+      "name": "Songo",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-uige",
+    "fields": {
+      "name": "Uíge",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "uige-zombo",
+    "fields": {
+      "name": "Zombo",
+      "province": "uige"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": "zaire",
+    "fields": {
+      "name": "Zaire"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "zaire-cuimba",
+    "fields": {
+      "name": "Cuimba",
+      "province": "zaire"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "zaire-mbanza-kongo",
+    "fields": {
+      "name": "Mbanza Kongo",
+      "province": "zaire"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "zaire-noqui",
+    "fields": {
+      "name": "Nóqui",
+      "province": "zaire"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "zaire-nzeto",
+    "fields": {
+      "name": "Nzeto",
+      "province": "zaire"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "zaire-soyo",
+    "fields": {
+      "name": "Soyo",
+      "province": "zaire"
+    }
+  },
+  {
+    "model": "core.municipality",
+    "pk": "zaire-tomboco",
+    "fields": {
+      "name": "Tomboco",
+      "province": "zaire"
+    }
+  }
+]

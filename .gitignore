@@ -7,6 +7,9 @@ __pycache__/
 
 # Django
 *.log
+# Rotated log backups (logging.handlers.TimedRotatingFileHandler) are named
+# fenixschool.log.YYYY-MM-DD, not *.log -- see config/settings/base.py.
+logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
