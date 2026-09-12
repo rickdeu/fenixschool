@@ -50,16 +50,3 @@ class TenantManager(models.Manager.from_queryset(TenantQuerySet)):
         if institution_id is None:
             return queryset.none()
         return queryset.for_institution(institution_id)
-
-
-class UnfilteredTenantManager(models.Manager.from_queryset(TenantQuerySet)):
-    """The unfiltered manager used as `all_objects` on every `SyncedModel`.
-
-    Unlike `TenantManager`, `get_queryset()` here is the plain, unfiltered
-    default -- `all_objects.all()` really does return every institution's
-    records, soft-deleted included. It still shares `TenantQuerySet`, though,
-    so restricted system code that has a `request` (or an institution id) at
-    hand can filter explicitly and intentionally, e.g.
-    `Model.all_objects.for_request(request)`, without depending on -- or being
-    silently bound to -- whatever the ambient tenant context happens to be.
-    """
