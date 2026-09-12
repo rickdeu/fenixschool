@@ -1,0 +1,5 @@
+# Dependências base do projecto, comuns a todos os ambientes (dev, Nó Local, Nó
+# Central e testes) — ver docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1.
+Django==5.2.17
+djangorestframework==3.18.1
+psycopg[binary]==3.3.5
