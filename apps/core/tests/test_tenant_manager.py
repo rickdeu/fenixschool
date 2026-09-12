@@ -1,6 +1,7 @@
 """Tests for tenant isolation via `TenantQuerySet`/`TenantManager` (issue #4)."""
 
 import uuid
+from types import SimpleNamespace
 
 import pytest
 
@@ -71,3 +72,27 @@ def test_tenant_context_does_not_leak_across_blocks(synced_model_class, institut
 
     with tenant_context(institution_b.id):
         assert synced_model_class.objects.count() == 1
+
+
+def test_for_request_filters_by_the_requests_institution_id(
+    synced_model_class, institution_factory
+):
+    institution_a = institution_factory("Institution A")
+    institution_b = institution_factory("Institution B")
+    record_a = synced_model_class.objects.create(
+        institution=institution_a, origin_node_id=uuid.uuid4()
+    )
+    synced_model_class.objects.create(institution=institution_b, origin_node_id=uuid.uuid4())
+
+    request = SimpleNamespace(institution_id=institution_a.id)
+
+    assert list(synced_model_class.all_objects.for_request(request)) == [record_a]
+
+
+def test_for_request_without_an_institution_id_returns_nothing(
+    synced_model_class, institution_factory
+):
+    institution = institution_factory()
+    synced_model_class.objects.create(institution=institution, origin_node_id=uuid.uuid4())
+
+    assert synced_model_class.all_objects.for_request(SimpleNamespace()).count() == 0

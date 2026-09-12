@@ -9,6 +9,26 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
 
+    # A real Postgres service, matching production's database backend, is
+    # available here for any test that needs it (e.g. future integration and
+    # sync-partition suites) -- see docs/13-testes-e-qualidade.md §13.5. The
+    # default test suite itself still runs against SQLite in memory
+    # (config.settings.test) for speed and does not depend on this service.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: fenixschool
+          POSTGRES_USER: fenixschool
+          POSTGRES_PASSWORD: fenixschool
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fenixschool"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,12 +47,23 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
+      - name: Dependency vulnerability audit
+        run: pip-audit
+
       - name: Check for missing migrations
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
-        run: pytest
+        run: pytest --cov=apps --cov-report=term-missing --cov-fail-under=70
+
+      - name: Sync-partition tests (simulated network partition)
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+        run: pytest tests/sync_partition -m sync
+
+      - name: Build the Docker image
+        run: docker build -t fenixschool:ci .

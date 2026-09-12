@@ -8,10 +8,9 @@ Every business model (academic, enrollment, grading, finance, etc.) should inher
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Manager
 from uuid6 import uuid7
 
-from .managers import TenantManager
+from .managers import TenantManager, UnfilteredTenantManager
 
 
 class SyncedModel(models.Model):
@@ -35,9 +34,12 @@ class SyncedModel(models.Model):
 
     ``objects`` (via `TenantManager`, see `apps.core.models.managers`) always
     filters by the institution of the current tenant context and hides
-    soft-deleted records. ``all_objects`` does not filter anything — **restricted
-    use**: system tasks (the sync engine, the Super Administrator area), never
-    code that serves an ordinary user's request.
+    soft-deleted records. ``all_objects`` (via `UnfilteredTenantManager`) does
+    not filter anything by default — **restricted use**: system tasks (the sync
+    engine, the Super Administrator area), never code that serves an ordinary
+    user's request. It still exposes `for_institution`/`for_request` for code
+    that wants to filter explicitly without depending on the ambient tenant
+    context.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
@@ -62,7 +64,7 @@ class SyncedModel(models.Model):
     is_deleted = models.BooleanField(default=False, db_index=True)
 
     objects = TenantManager()
-    all_objects = Manager()  # noqa: DJ012 -- ruff only recognizes the "objects" manager name
+    all_objects = UnfilteredTenantManager()  # noqa: DJ012 -- ruff only recognizes "objects"
 
     class Meta:
         abstract = True
