@@ -59,7 +59,12 @@ class MobileOperator(models.Model):
 
 
 class IdentificationDocumentType(models.Model):
-    code = models.CharField(max_length=20, primary_key=True)
+    # 40, not 20: "bilhete-de-identidade" and "assento-de-nascimento" (see
+    # apps/core/fixtures/document_types.json) are 21 characters -- SQLite
+    # (used by config.settings.test/base) never enforces CharField length,
+    # so this only surfaced against real PostgreSQL (issue #7's local-node
+    # stack), when `migrate`'s loaddata step failed loading them.
+    code = models.CharField(max_length=40, primary_key=True)
     name = models.CharField(max_length=50, unique=True)
 
     class Meta:

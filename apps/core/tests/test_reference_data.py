@@ -92,3 +92,17 @@ def test_str_methods_are_human_readable():
 def test_each_fixture_is_loadable_on_its_own_via_loaddata(fixture_name):
     """Acceptance criterion: "4 fixtures criadas e carregáveis via `loaddata`"."""
     call_command("loaddata", fixture_name, app_label="core")
+
+
+def test_fixture_field_values_pass_model_validation():
+    """Guards against a value too long for its field's `max_length` (e.g. a
+    21-character document type code against a 20-character field): SQLite,
+    used by every other test in this file, never enforces `CharField`
+    `max_length` at the database level, so such a value passes `migrate`
+    here yet fails against real PostgreSQL with
+    `DataError: value too long for type character varying(N)`.
+    `full_clean()` checks it in Python instead, independent of backend.
+    """
+    for model in (Province, Municipality, MobileOperator, IdentificationDocumentType, Profession):
+        for obj in model.objects.all():
+            obj.full_clean()

@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='IdentificationDocumentType',
             fields=[
-                ('code', models.CharField(max_length=20, primary_key=True, serialize=False)),
+                ('code', models.CharField(max_length=40, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=50, unique=True)),
             ],
             options={
