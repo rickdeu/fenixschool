@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Configuração inicial — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>Configuração inicial</h1>
+<p>
+    Este assistente cria a instituição e a conta do respectivo Gestor
+    (Administrador da Instituição). Só está disponível enquanto não existir
+    nenhuma instituição configurada neste Nó.
+</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    <fieldset>
+        <legend>Instituição</legend>
+        {{ institution_form.as_p }}
+    </fieldset>
+
+    <fieldset>
+        <legend>Gestor (Administrador da Instituição)</legend>
+        {{ manager_form.as_p }}
+    </fieldset>
+
+    <button type="submit">Concluir configuração</button>
+</form>
+{% endblock %}
