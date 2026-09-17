@@ -152,6 +152,17 @@ DATABASES = {
 
 AUTH_USER_MODEL = "accounts.User"
 
+# `EmailOrPhoneBackend` first (issue #24, docs/09-seguranca-e-privacidade.md
+# §9.2: login by email/phone, never username) -- `ModelBackend` stays too, so
+# username-based logins (the Django Admin's own login screen) keep working.
+AUTHENTICATION_BACKENDS = [
+    "apps.accounts.backends.EmailOrPhoneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "accounts:landing_placeholder"
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
