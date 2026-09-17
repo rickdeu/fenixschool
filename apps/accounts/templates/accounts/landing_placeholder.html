@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}FenixSchool{% endblock %}
+
+{% block content %}
+<h1>Sessão iniciada, {{ user.first_name|default:user.username }}.</h1>
+<p>
+    A área própria do seu perfil ainda está por construir. Volte mais tarde.
+</p>
+<form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button type="submit">Sair</button>
+</form>
+{% endblock %}
