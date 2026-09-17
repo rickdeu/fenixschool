@@ -50,34 +50,11 @@ server {
     }
 }
 
-# TLS (port 443) is deliberately not enabled by default: it needs real
-# certificates (e.g. Let's Encrypt/certbot), which is provisioning work for a
-# dedicated issue, not something this compose file can fabricate. Once a
-# certificate exists on the host, mount it into the nginx container and
-# uncomment a block like the one below (adjusting paths to match).
-#
-# server {
-#     listen 443 ssl;
-#     server_name ${NGINX_SERVER_NAME};
-#
-#     ssl_certificate     /etc/nginx/certs/fullchain.pem;
-#     ssl_certificate_key /etc/nginx/certs/privkey.pem;
-#
-#     client_max_body_size 20M;
-#
-#     location /static/ {
-#         alias /app/staticfiles/;
-#     }
-#
-#     location /media/ {
-#         alias /app/media/;
-#     }
-#
-#     location / {
-#         proxy_pass http://fenixschool_app;
-#         proxy_set_header Host $host;
-#         proxy_set_header X-Real-IP $remote_addr;
-#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-#         proxy_set_header X-Forwarded-Proto $scheme;
-#     }
-# }
+# TLS (port 443) is deliberately not enabled by default here: it needs a real
+# certificate on the host first (issue #142) -- see
+# scripts/generate_local_node_tls_cert.sh (local node, self-signed) or
+# docs/11-implantacao-e-operacoes.md (central node, e.g. Let's Encrypt). Once
+# one exists, layer docker-compose.tls.yml on top of this node's own compose
+# file instead of editing this one -- it swaps in app-tls.conf.template
+# (this same directory), which redirects plain HTTP to HTTPS and terminates
+# TLS 1.2+/1.3 with a modern cipher suite.
