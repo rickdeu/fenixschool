@@ -23,3 +23,7 @@ uuid6==2025.0.1
 # Required by Django's ImageField (validates and reads image dimensions) --
 # used by core.Institution.logo (docs/05-modelo-de-dados.md §5.2, issue #15).
 Pillow==12.3.0
+
+# Content-Security-Policy header -- docs/09-seguranca-e-privacidade.md §9.7 and
+# config/settings/base.py's "Security headers" section (issue #146).
+django-csp==4.0
