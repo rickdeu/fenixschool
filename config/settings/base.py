@@ -60,6 +60,9 @@ THIRD_PARTY_APPS = [
     # "Logging" section below and docs/10-stack-tecnologica-e-estrutura-projeto.md
     # §10 (Observabilidade).
     "django_structlog",
+    # Content-Security-Policy header -- see the "Security headers" section
+    # below and docs/09-seguranca-e-privacidade.md §9.7 (issue #146).
+    "csp",
 ]
 
 # FenixSchool's own business apps -- see
@@ -107,6 +110,11 @@ MIDDLEWARE = [
     "django_structlog.middlewares.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Sets the Content-Security-Policy header on every response -- see the
+    # "Security headers" section below (issue #146). Last, like Django's own
+    # docs recommend, so it sees the final response the other middlewares
+    # produced.
+    "csp.middleware.CSPMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -303,3 +311,53 @@ structlog.configure(
     wrapper_class=structlog.stdlib.BoundLogger,
     cache_logger_on_first_use=True,
 )
+
+
+# Security headers (issue #146, docs/09-seguranca-e-privacidade.md §9.7).
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+
+# TLS is provisioned per node via Nginx (self-signed certificate on the
+# school's LAN for the local node, a public certificate on the central node --
+# docs/09-seguranca-e-privacidade.md §9.3), not by Django itself, and is not
+# wired up yet by default (docker/nginx/app.conf.template's 443 server block
+# is still commented out pending issue #142). The settings below only make
+# sense once requests actually arrive over HTTPS, so each node opts in
+# explicitly with `DJANGO_SECURE_SSL=true` in its own `.env` once its
+# certificate is in place -- turning them on earlier would either redirect
+# every request into a loop (nothing listening on 443 yet) or silently drop
+# session/CSRF cookies (browsers refuse `Secure` cookies over plain HTTP).
+if env.bool("DJANGO_SECURE_SSL", default=False):
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=31536000)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Nginx (docker/nginx/app.conf.template) always sets X-Forwarded-Proto, even
+# though it talks to Django over plain HTTP inside the Docker network -- this
+# lets Django/`SECURE_SSL_REDIRECT` above tell a request actually arrived over
+# HTTPS at the edge instead of redirecting it again.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Content-Security-Policy (django-csp). Every asset is vendorized locally
+# (templates/base.html, docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1:
+# no external CDN), so `'self'` covers scripts/styles/images/fonts. Alpine.js
+# needs `'unsafe-eval'` for its expression evaluation (`x-data`, `x-on`, ...);
+# revisit this if the project ever adopts Alpine's separate CSP-compliant
+# build instead.
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'", "'unsafe-eval'"],
+        "style-src": ["'self'"],
+        "img-src": ["'self'", "data:"],
+        "font-src": ["'self'"],
+        "connect-src": ["'self'"],
+        "object-src": ["'none'"],
+        "base-uri": ["'self'"],
+        "form-action": ["'self'"],
+        "frame-ancestors": ["'none'"],
+    },
+}
