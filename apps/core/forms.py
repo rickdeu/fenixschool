@@ -8,10 +8,14 @@ of asking whoever is adding a row by hand to invent a slug themselves. See
 """
 
 from django import forms
+from django.contrib.auth import password_validation
 from django.utils.text import slugify
+
+from apps.accounts.models import User
 
 from .models import (
     IdentificationDocumentType,
+    Institution,
     MobileOperator,
     Municipality,
     Profession,
@@ -85,4 +89,49 @@ class MunicipalityAdminForm(SlugFromNameFormMixin):
         name = cleaned_data.get("name")
         if province and name:
             cleaned_data["code"] = f"{province.code}-{slugify(name)}"
+        return cleaned_data
+
+
+class InstitutionSetupForm(forms.ModelForm):
+    """The Institution half of the setup wizard (issue #17)."""
+
+    class Meta:
+        model = Institution
+        fields = [
+            "name",
+            "tax_id",
+            "ministry_of_education_code",
+            "province",
+            "municipality",
+            "email",
+            "website",
+        ]
+
+
+class ManagerSetupForm(forms.ModelForm):
+    """The Manager (Institution Administrator) half of the setup wizard (issue #17)."""
+
+    password = forms.CharField(widget=forms.PasswordInput, label="Palavra-passe")
+    password_confirmation = forms.CharField(
+        widget=forms.PasswordInput, label="Confirmar palavra-passe"
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "first_name", "last_name", "phone"]
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        # Uses AUTH_PASSWORD_VALIDATORS (config/settings/base.py) -- this is
+        # the very first password the system ever stores, so it goes through
+        # the same policy as every later one.
+        password_validation.validate_password(password)
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirmation = cleaned_data.get("password_confirmation")
+        if password and confirmation and password != confirmation:
+            self.add_error("password_confirmation", "As palavras-passe não coincidem.")
         return cleaned_data
