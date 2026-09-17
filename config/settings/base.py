@@ -320,13 +320,14 @@ X_FRAME_OPTIONS = "DENY"
 # TLS is provisioned per node via Nginx (self-signed certificate on the
 # school's LAN for the local node, a public certificate on the central node --
 # docs/09-seguranca-e-privacidade.md §9.3), not by Django itself, and is not
-# wired up yet by default (docker/nginx/app.conf.template's 443 server block
-# is still commented out pending issue #142). The settings below only make
-# sense once requests actually arrive over HTTPS, so each node opts in
-# explicitly with `DJANGO_SECURE_SSL=true` in its own `.env` once its
-# certificate is in place -- turning them on earlier would either redirect
-# every request into a loop (nothing listening on 443 yet) or silently drop
-# session/CSRF cookies (browsers refuse `Secure` cookies over plain HTTP).
+# wired up by default -- it needs docker-compose.tls.yml layered on top of the
+# node's own compose file, plus a real certificate (see
+# docs/11-implantacao-e-operacoes.md §11.3.1, issue #142). The settings below
+# only make sense once requests actually arrive over HTTPS, so each node opts
+# in explicitly with `DJANGO_SECURE_SSL=true` in its own `.env` once that is
+# active -- turning them on earlier would either redirect every request into a
+# loop (nothing listening on 443 yet) or silently drop session/CSRF cookies
+# (browsers refuse `Secure` cookies over plain HTTP).
 if env.bool("DJANGO_SECURE_SSL", default=False):
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
