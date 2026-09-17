@@ -10,10 +10,14 @@ from .forms import (
     ProvinceAdminForm,
 )
 from .models import (
+    AcademicCycle,
+    AcademicTerm,
+    AcademicYear,
     IdentificationDocumentType,
     Institution,
     MobileOperator,
     Municipality,
+    NonTeachingDay,
     Profession,
     Province,
 )
@@ -116,3 +120,41 @@ class ProfessionAdmin(admin.ModelAdmin):
     form = ProfessionAdminForm
     list_display = ("name", "code")
     search_fields = ("name", "code")
+
+
+class AcademicTermInline(admin.TabularInline):
+    model = AcademicTerm
+    fields = ("number", "start_date", "end_date")
+    extra = 1
+
+
+@admin.register(AcademicYear)
+class AcademicYearAdmin(admin.ModelAdmin):
+    list_display = ("designation", "institution", "start_date", "end_date", "is_current")
+    list_filter = ("is_current", "institution")
+    search_fields = ("designation",)
+    autocomplete_fields = ("institution",)
+    inlines = [AcademicTermInline]
+
+
+@admin.register(AcademicTerm)
+class AcademicTermAdmin(admin.ModelAdmin):
+    list_display = ("academic_year", "number", "start_date", "end_date")
+    list_filter = ("academic_year__institution",)
+    autocomplete_fields = ("academic_year", "institution")
+
+
+@admin.register(AcademicCycle)
+class AcademicCycleAdmin(admin.ModelAdmin):
+    list_display = ("designation", "order", "institution")
+    list_filter = ("institution",)
+    search_fields = ("designation",)
+    autocomplete_fields = ("institution",)
+
+
+@admin.register(NonTeachingDay)
+class NonTeachingDayAdmin(admin.ModelAdmin):
+    list_display = ("description", "date", "scope", "institution")
+    list_filter = ("scope", "institution")
+    search_fields = ("description",)
+    autocomplete_fields = ("institution",)
