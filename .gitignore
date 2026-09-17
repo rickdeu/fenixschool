@@ -26,6 +26,11 @@ ENV/
 # Docker
 docker-compose.override.yml
 
+# TLS certificates/keys generated per installation (issue #142) -- never
+# shared between installations, never committed. See
+# scripts/generate_local_node_tls_cert.sh.
+certs/
+
 # Editors/OS
 .vscode/
 .idea/

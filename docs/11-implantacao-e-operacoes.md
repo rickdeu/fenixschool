@@ -47,6 +47,38 @@ contexto de conectividade internacional variável.
 Tempo-alvo: instalação completa por técnico com formação básica em **menos de 1 hora**
 (RNF-PORT-03).
 
+## 11.3.1 TLS (HTTPS)
+
+TLS 1.2+ é obrigatório em todos os endpoints (RNF-SEC-01,
+[09-seguranca-e-privacidade.md §9.3](09-seguranca-e-privacidade.md)). Não está activo por
+omissão em `docker-compose.local-node.yml`/`docker-compose.central-node.yml` — precisa de
+um certificado real primeiro:
+
+- **Nó Local**: `./scripts/generate_local_node_tls_cert.sh <nome-do-servidor>` gera uma CA
+  raiz própria da instalação e um certificado de servidor assinado por ela (auto-assinado,
+  aceitável na LAN da escola). A CA raiz gerada (`certs/rootCA.pem`) tem de ser distribuída
+  e instalada como certificado raiz de confiança em cada dispositivo da instituição —
+  passo único por dispositivo, caso contrário o browser mostra aviso de certificado.
+- **Nó Central**: usar um certificado público válido (ex. Let's Encrypt/certbot), colocado
+  em `certs/fullchain.pem` / `certs/privkey.pem`.
+
+Com o certificado em `certs/`, activar TLS sobrepondo `docker-compose.tls.yml` ao ficheiro
+do nó:
+
+```bash
+docker compose -f docker-compose.local-node.yml -f docker-compose.tls.yml up -d
+```
+
+Isto substitui a configuração do Nginx pela de `docker/nginx/app-tls.conf.template`
+(redirecciona HTTP→HTTPS, termina TLS 1.2+/1.3 com cifras modernas) e publica a porta 443.
+Definir também `DJANGO_SECURE_SSL=true` no `.env` do nó, para que a própria aplicação
+Django passe a exigir cookies seguros e HSTS (`config/settings/base.py`, issue #146).
+
+A autenticação mútua adicional Nó↔Nó (chave própria de cada `Node`, além do TLS) aplica-se
+aos endpoints de sincronização (`apps.api`), que ainda não existem nesta fase — ver
+[08-offline-first-e-sincronizacao.md §8.5](08-offline-first-e-sincronizacao.md); será
+concluída junto com essa implementação (M5).
+
 ## 11.4 Backups
 
 | Tipo | Frequência | Destino | Retenção |

@@ -1,0 +1,32 @@
+# TLS override for docker-compose.local-node.yml / docker-compose.central-node.yml
+# (issue #142, docs/09-seguranca-e-privacidade.md §9.3: "TLS 1.2+ obrigatório").
+# Both stacks' `nginx` service is identical, so this one override file works
+# for either. Opt-in: layer it on top of the node's own compose file once a
+# certificate exists under ./certs/ --
+# see scripts/generate_local_node_tls_cert.sh (local node, self-signed
+# certificate + root CA -- distribute the root CA to the institution's own
+# devices) or docs/11-implantacao-e-operacoes.md (central node, e.g. Let's
+# Encrypt/certbot).
+#
+# Usage:
+#   docker compose -f docker-compose.local-node.yml -f docker-compose.tls.yml up -d
+#
+# Also set DJANGO_SECURE_SSL=true in .env once this is active, so Django
+# itself enforces HTTPS-only cookies/HSTS too -- see config/settings/base.py's
+# "Security headers" section (issue #146).
+
+services:
+  nginx:
+    # Compose replaces a service's `volumes`/`ports` list wholesale when the
+    # same service is redefined across `-f` files (not merged) -- this
+    # repeats the base compose file's own static/media mounts and HTTP port
+    # rather than losing them, on top of the two TLS-specific additions
+    # (the swapped template and the certs mount/port).
+    volumes:
+      - ./docker/nginx/app-tls.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - static_data:/app/staticfiles:ro
+      - media_data:/app/media:ro
+      - ./certs:/etc/nginx/certs:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
