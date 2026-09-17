@@ -8,3 +8,6 @@ class SyncConfig(AppConfig):
     name = "apps.sync"
     label = "sync"
     verbose_name = "Sincronização"
+
+    def ready(self) -> None:
+        from . import signals  # noqa: F401 -- connects its @receiver-decorated functions
