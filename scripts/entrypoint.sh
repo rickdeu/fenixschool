@@ -28,6 +28,11 @@ python manage.py wait_for_db
 if [ "${SKIP_MIGRATIONS:-false}" != "true" ]; then
     echo "Applying database migrations..."
     python manage.py migrate --noinput
+    # DEBUG-only (see the command itself) -- never creates a hardcoded-
+    # credential account on a real deployment. Runs here, in the same
+    # once-per-`docker compose up` block as migrations, purely for local
+    # dev convenience.
+    python manage.py create_dev_superuser
 fi
 
 if [ "${SKIP_COLLECTSTATIC:-false}" != "true" ]; then
