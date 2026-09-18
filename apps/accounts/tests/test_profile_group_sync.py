@@ -48,3 +48,40 @@ def test_an_extra_manually_granted_group_is_dropped_on_the_next_profile_driven_s
     user.save()
 
     assert list(user.groups.values_list("name", flat=True)) == ["Docente"]
+
+
+def test_creating_a_super_admin_grants_is_superuser_and_is_staff():
+    """ "Super Administrador deve ter acesso a tudo, sem restrição alguma" --
+    Group-based RBAC (e.g. `Grade`'s own permissions migration grants Super
+    Administrador only view-only access) can never be the *only* thing this
+    profile relies on: `is_superuser=True` is what actually guarantees
+    unconditional access, via Django's own permission backend."""
+    user = User.objects.create_user(username="root1", profile=Profile.SUPER_ADMIN)
+
+    assert user.is_superuser is True
+    assert user.is_staff is True
+
+
+def test_changing_a_users_profile_to_super_admin_grants_full_access():
+    user = User.objects.create_user(username="joana", profile=Profile.TEACHER)
+    assert user.is_superuser is False
+
+    user.profile = Profile.SUPER_ADMIN
+    user.save()
+
+    assert user.is_superuser is True
+    assert user.is_staff is True
+
+
+def test_moving_a_super_admin_to_another_profile_does_not_revoke_is_superuser():
+    """Positive-only enforcement: this never *takes away* `is_superuser`,
+    since some other, unrelated reason may still justify a user keeping
+    it (e.g. a `createsuperuser`-provisioned account)."""
+    user = User.objects.create_user(username="root2", profile=Profile.SUPER_ADMIN)
+    assert user.is_superuser is True
+
+    user.profile = Profile.TEACHER
+    user.save()
+
+    assert user.is_superuser is True
+    assert user.is_staff is True

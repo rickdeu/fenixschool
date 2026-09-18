@@ -188,6 +188,8 @@ def sync_profile_group_membership(user: User) -> None:
     """
     from django.contrib.auth.models import Group
 
+    ensure_super_admin_has_full_access(user)
+
     group_name = PROFILE_GROUP_NAMES.get(user.profile)
     if group_name is None:
         return
@@ -199,3 +201,27 @@ def sync_profile_group_membership(user: User) -> None:
         return
     if list(user.groups.values_list("pk", flat=True)) != [group.pk]:
         user.groups.set([group])
+
+
+def ensure_super_admin_has_full_access(user: User) -> None:
+    """ "Super Administrador deve ter acesso a tudo, sem restrição alguma" --
+    Django's own permission backend already grants a superuser every
+    permission unconditionally (`is_superuser=True` short-circuits every
+    `has_perm()` check), so this is the only real guarantee that Group-based
+    RBAC (which every other profile is built on, e.g.
+    `accounts.migrations.0013_grade_permissions` only granting Super
+    Administrador *view-only* on `Grade`) can never under-provision this
+    profile. Positive-only: never revokes `is_superuser`/`is_staff` from a
+    user whose profile moves away from Super Administrador, since some
+    other, unrelated reason may still justify them keeping it.
+    """
+    if user.profile != Profile.SUPER_ADMIN or (user.is_superuser and user.is_staff):
+        return
+    # `.update()`, not `user.save()`: this runs from `User`'s own
+    # `post_save` signal, and calling `.save()` again here would re-trigger
+    # that same signal (infinite recursion) -- `.update()` writes directly,
+    # bypassing signals, and the in-memory `user` is patched too so the
+    # rest of the current request/process already sees the correct values.
+    User.objects.filter(pk=user.pk).update(is_superuser=True, is_staff=True)
+    user.is_superuser = True
+    user.is_staff = True
