@@ -22,7 +22,7 @@ def _origin():
 
 
 @pytest.fixture
-def admin_client(institution):
+def admin_client(institution, verify_two_factor):
     admin = User.objects.create_user(
         username="admin1",
         institution=institution,
@@ -32,6 +32,7 @@ def admin_client(institution):
     admin.groups.add(Group.objects.get(name="Administrador da Instituição"))
     client = Client()
     client.login(username="admin1", password="senha-forte-123")
+    verify_two_factor(client, admin)
     return client
 
 
@@ -95,15 +96,18 @@ def test_config_view_requires_permission(institution):
     assert response.status_code == 403
 
 
-def test_config_view_redirects_gracefully_without_a_selected_institution(institution):
+def test_config_view_redirects_gracefully_without_a_selected_institution(
+    institution, verify_two_factor
+):
     """A Super Administrator has no `institution` of their own until they
     pick one to view (issue #18's bug found via manual Docker verification:
     this used to crash with a 500 instead)."""
-    User.objects.create_user(
+    super_admin = User.objects.create_user(
         username="superadmin1", profile=Profile.SUPER_ADMIN, password="pw12345", is_superuser=True
     )
     client = Client()
     client.login(username="superadmin1", password="pw12345")
+    verify_two_factor(client, super_admin)
 
     response = client.get(reverse("admin_panel:grading_formula_config"), follow=True)
 

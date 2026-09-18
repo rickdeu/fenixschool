@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Configurar autenticação de dois factores" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>{% translate "Configurar autenticação de dois factores" %}</h1>
+
+<p>
+    {% blocktranslate %}
+    O seu perfil exige autenticação de dois factores (2FA). Instale uma aplicação
+    autenticadora (ex.: Google Authenticator, Aegis, FreeOTP) no seu telemóvel e
+    digitalize o código abaixo -- funciona sem ligação à Internet.
+    {% endblocktranslate %}
+</p>
+
+<img src="{{ qr_code_data_uri }}" alt="{% translate 'Código QR de configuração do 2FA' %}" width="220" height="220">
+
+<p>
+    {% translate "Não consegue digitalizar o código? Introduza esta chave manualmente na sua aplicação:" %}
+    <code>{{ manual_entry_key }}</code>
+</p>
+
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    {% for error in form.token.errors %}<p>{{ error }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% translate "Confirmar" %}</button>
+</form>
+{% endblock %}

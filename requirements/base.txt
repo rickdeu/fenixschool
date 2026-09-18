@@ -27,3 +27,8 @@ Pillow==12.3.0
 # Content-Security-Policy header -- docs/09-seguranca-e-privacidade.md §9.7 and
 # config/settings/base.py's "Security headers" section (issue #146).
 django-csp==4.0
+
+# 2FA (TOTP) -- docs/09-seguranca-e-privacidade.md §9.2, RNF-SEC-05 (issue #25).
+# TOTP works fully offline (no SMS/network dependency), unlike SMS-based 2FA.
+django-otp==1.7.3
+qrcode[pil]==8.2

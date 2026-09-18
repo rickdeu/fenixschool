@@ -13,6 +13,9 @@ urlpatterns = [
     # -- Autenticação --------------------------------------------------------
     path("login/", views.LoginView.as_view(), name="login"),
     path("logout/", views.LogoutView.as_view(), name="logout"),
+    # -- 2FA (issue #25) ---------------------------------------------------------
+    path("2fa/configurar/", views.two_factor_setup_view, name="two_factor_setup"),
+    path("2fa/verificar/", views.two_factor_verify_view, name="two_factor_verify"),
     # -- Preferências ----------------------------------------------------------
     path(
         "idioma/",
