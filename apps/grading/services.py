@@ -10,9 +10,11 @@ opcional por Curso/Disciplina.
 
 from decimal import Decimal
 
+from django.utils import timezone
+
 from apps.academic.models import Schedule
 
-from .models import EvaluationType, Grade, GradingFormulaOverride
+from .models import EvaluationType, FinalGrade, Grade, GradingFormulaOverride
 
 # Tolerância na soma dos pesos: evita rejeitar `Decimal("0.333") * 3 ==
 # Decimal("0.999")` só por causa de arredondamento na representação decimal.
@@ -266,3 +268,87 @@ def calculate_average(grades: dict[str, Decimal], formula: dict[str, Decimal]) -
         (Decimal(str(grades[name])) * Decimal(str(weight)) for name, weight in formula.items()),
         start=Decimal("0"),
     )
+
+
+class JustificacaoObrigatoriaError(Exception):
+    """RF-AVAL-02: um ajuste manual à média final tem sempre de vir
+    acompanhado de uma justificação -- sem uma, a auditoria (issue #140)
+    registaria *que* alguém mudou o valor, mas nunca *porquê*."""
+
+    def __init__(self):
+        super().__init__("O ajuste manual da média exige uma justificação.")
+
+
+def calcular_media_disciplina(*, enrollment, subject, academic_term) -> Decimal:
+    """RF-AVAL-02's exemplo de implementação: reaproveita a fórmula
+    parametrizada (`resolve_grading_formula`, RF-INST-06) e as `Nota`s já
+    lançadas para esta matrícula/disciplina/período para calcular a média.
+
+    Levanta `ValueError` (de `calculate_average`) se ainda faltar lançar
+    alguma nota exigida pela fórmula -- não há média possível sem todas as
+    classificações que a fórmula pondera.
+    """
+    grades = {
+        grade.evaluation_type.name: grade.value
+        for grade in Grade.objects.filter(
+            enrollment=enrollment, subject=subject, academic_term=academic_term
+        ).select_related("evaluation_type")
+    }
+    formula = resolve_grading_formula(
+        institution=enrollment.institution, course=enrollment.course, subject=subject
+    )
+    return calculate_average(grades, formula)
+
+
+def registar_media_final(*, enrollment, subject, academic_term, origin_node_id) -> FinalGrade:
+    """Calcula (`calcular_media_disciplina`) e grava a média -- idempotente e
+    recalculável a qualquer momento (ex.: issue #61's avaliação de recurso
+    altera uma nota já lançada e a média tem de reflectir isso), sem nunca
+    tocar num ajuste manual já registado: só `calculated_value` é
+    actualizado, `manual_override_value`/`override_reason` ficam intocados.
+    """
+    calculated_value = calcular_media_disciplina(
+        enrollment=enrollment, subject=subject, academic_term=academic_term
+    )
+
+    final_grade = FinalGrade.all_objects.filter(
+        institution_id=enrollment.institution_id,
+        enrollment=enrollment,
+        subject=subject,
+        academic_term=academic_term,
+    ).first()
+    if final_grade is None:
+        return FinalGrade.objects.create(
+            institution=enrollment.institution,
+            origin_node_id=origin_node_id,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            calculated_value=calculated_value,
+        )
+
+    final_grade.calculated_value = calculated_value
+    final_grade.save()
+    return final_grade
+
+
+def ajustar_media_manualmente(*, final_grade, user, value, reason) -> FinalGrade:
+    """RF-AVAL-02's "ajuste manual justificado": overrides a média calculada
+    com `value`, exigindo sempre uma `reason` não vazia -- o `clean()` do
+    próprio `FinalGrade` é a garantia estrutural por baixo desta, a mesma
+    relação que `GradeReportClosedError`/`GradeAdminForm.clean()` já têm
+    para `Grade` (issue #55).
+    """
+    if not reason or not reason.strip():
+        raise JustificacaoObrigatoriaError()
+
+    decimal_value = Decimal(str(value))
+    if not (Decimal("0") <= decimal_value <= Decimal("20")):
+        raise NotaForaDaEscalaError(decimal_value)
+
+    final_grade.manual_override_value = decimal_value
+    final_grade.override_reason = reason
+    final_grade.overridden_by = user
+    final_grade.overridden_at = timezone.now()
+    final_grade.save()
+    return final_grade

@@ -7,14 +7,18 @@ import pytest
 
 from apps.academic.models import Schedule, SchoolClass
 from apps.core.context import tenant_context
-from apps.grading.models import EvaluationType, Grade, GradingFormulaOverride
+from apps.grading.models import EvaluationType, FinalGrade, Grade, GradingFormulaOverride
 from apps.grading.services import (
     DocenteNaoAssociadoError,
     InvalidGradingFormulaError,
+    JustificacaoObrigatoriaError,
     NotaForaDaEscalaError,
+    ajustar_media_manualmente,
+    calcular_media_disciplina,
     calculate_average,
     ensure_default_evaluation_types,
     lancar_nota,
+    registar_media_final,
     resolve_grading_formula,
     seed_default_grading_formula,
     set_course_formula_override,
@@ -95,9 +99,7 @@ def test_validate_formula_accepts_weights_summing_to_one(institution):
             institution=institution, origin_node_id=_origin(), name="Exame", default_weight="0.4"
         )
         # Does not raise.
-        validate_formula(
-            {"MAC": Decimal("0.6"), "Exame": Decimal("0.4")}, institution=institution
-        )
+        validate_formula({"MAC": Decimal("0.6"), "Exame": Decimal("0.4")}, institution=institution)
 
 
 def test_set_institution_default_formula_persists_it(institution):
@@ -202,9 +204,9 @@ def test_calculate_average_applies_the_weights(institution):
         formula={"MAC": Decimal("0.3"), "PT": Decimal("0.3"), "Exame": Decimal("0.4")},
     )
 
-    assert average == Decimal("14") * Decimal("0.3") + Decimal("16") * Decimal(
-        "0.3"
-    ) + Decimal("12") * Decimal("0.4")
+    assert average == Decimal("14") * Decimal("0.3") + Decimal("16") * Decimal("0.3") + Decimal(
+        "12"
+    ) * Decimal("0.4")
 
 
 def test_seed_default_grading_formula_activates_a_working_formula(institution):
@@ -350,3 +352,254 @@ def test_lancar_nota_rejects_a_teacher_scheduled_for_a_different_turma(
                 value=Decimal("15"),
                 origin_node_id=uuid.uuid4(),
             )
+
+
+def _seed_single_component_formula(institution, evaluation_type):
+    """A trivial one-component (weight 1) formula -- keeps the média tests
+    focused on `calcular_media_disciplina`/`registar_media_final`'s own
+    behaviour instead of re-testing `calculate_average`'s weighting math."""
+    set_institution_default_formula(institution, {evaluation_type.name: Decimal("1")})
+
+
+def test_calcular_media_disciplina_computes_the_weighted_average(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+        Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+
+        average = calcular_media_disciplina(
+            enrollment=enrollment, subject=subject, academic_term=academic_term
+        )
+
+    assert average == Decimal("15")
+
+
+def test_calcular_media_disciplina_raises_when_a_required_grade_is_missing(
+    institution, enrollment, subject, evaluation_type, academic_term
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+
+        with pytest.raises(ValueError, match=evaluation_type.name):
+            calcular_media_disciplina(
+                enrollment=enrollment, subject=subject, academic_term=academic_term
+            )
+
+
+def test_registar_media_final_creates_a_final_grade(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+        Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("17"),
+            teacher=teacher,
+        )
+
+        final_grade = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+    assert final_grade.calculated_value == Decimal("17")
+    assert final_grade.final_value == Decimal("17")
+    assert final_grade.qualitative_level.qualitative_level == "Excelente"
+
+
+def test_registar_media_final_is_idempotent_and_updates_in_place(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("10"),
+            teacher=teacher,
+        )
+
+        first = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+        grade.value = Decimal("18")
+        grade.save()
+        second = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+        assert FinalGrade.objects.filter(enrollment=enrollment, subject=subject).count() == 1
+
+    assert first.pk == second.pk
+    assert second.calculated_value == Decimal("18")
+
+
+def test_registar_media_final_never_overwrites_an_existing_manual_override(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("10"),
+            teacher=teacher,
+        )
+        final_grade = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+        ajustar_media_manualmente(
+            final_grade=final_grade, user=teacher, value=Decimal("16"), reason="Recurso oral."
+        )
+
+        grade.value = Decimal("11")
+        grade.save()
+        updated = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+    assert updated.calculated_value == Decimal("11")
+    assert updated.manual_override_value == Decimal("16")
+    assert updated.override_reason == "Recurso oral."
+    assert updated.final_value == Decimal("16")
+
+
+def test_ajustar_media_manualmente_requires_a_reason(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+        Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("10"),
+            teacher=teacher,
+        )
+        final_grade = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+        with pytest.raises(JustificacaoObrigatoriaError):
+            ajustar_media_manualmente(
+                final_grade=final_grade, user=teacher, value=Decimal("15"), reason="   "
+            )
+
+        final_grade.refresh_from_db()
+
+    assert final_grade.manual_override_value is None
+
+
+def test_ajustar_media_manualmente_rejects_a_value_outside_the_0_20_scale(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+        Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("10"),
+            teacher=teacher,
+        )
+        final_grade = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+        with pytest.raises(NotaForaDaEscalaError):
+            ajustar_media_manualmente(
+                final_grade=final_grade,
+                user=teacher,
+                value=Decimal("21"),
+                reason="Fora da escala.",
+            )
+
+
+def test_ajustar_media_manualmente_records_who_and_when(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        _seed_single_component_formula(institution, evaluation_type)
+        Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("10"),
+            teacher=teacher,
+        )
+        final_grade = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+        updated = ajustar_media_manualmente(
+            final_grade=final_grade,
+            user=teacher,
+            value=Decimal("14"),
+            reason="Trabalho de recuperação avaliado.",
+        )
+
+    assert updated.overridden_by_id == teacher.id
+    assert updated.overridden_at is not None
