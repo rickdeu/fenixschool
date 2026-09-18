@@ -91,6 +91,23 @@ def test_lists_the_pautas_grades(
     assert "Yolene Hangalo" in response.content.decode()
 
 
+def test_lists_existing_occurrences_without_a_query(
+    admin_client, grade, school_class, subject, evaluation_type
+):
+    response = admin_client.get(URL)
+
+    assert response.status_code == 200
+    occurrences = response.context["occurrences"]
+    assert len(occurrences) == 1
+    assert occurrences[0]["school_class_id"] == school_class.id
+    assert occurrences[0]["subject_id"] == subject.id
+    assert occurrences[0]["total"] == 1
+    assert occurrences[0]["is_closed"] is False
+    content = response.content.decode()
+    assert school_class.designation in content
+    assert subject.name in content
+
+
 def test_homologar_closes_the_grades(
     admin_client, institution, grade, school_class, subject, evaluation_type, academic_term
 ):
