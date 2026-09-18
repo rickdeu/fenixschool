@@ -24,6 +24,7 @@ PROFILE_LANDING_URL_NAMES = {
     Profile.SECRETARY: "admin:index",
     Profile.FINANCE: "admin:index",
     Profile.HR: "admin:index",
+    Profile.GUARDIAN: "guardian_portal:dashboard",
 }
 
 
