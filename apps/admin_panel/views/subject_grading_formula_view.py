@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.academic.models import Subject
 from apps.core.context import get_current_node_id
+from apps.core.view_helpers import require_institution_context
 from apps.grading.services import (
     ensure_default_evaluation_types,
     resolve_grading_formula,
@@ -14,7 +15,7 @@ from apps.grading.services import (
 )
 
 from ..forms import GradingFormulaForm
-from .grading_formula_config_view import _build_preview, require_institution_context
+from .grading_formula_config_view import _build_preview
 
 
 @login_required

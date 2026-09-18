@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import get_object_or_404, render
 
 from apps.core.context import get_current_node_id
+from apps.core.view_helpers import require_institution_context
 
 from ..forms import EnrollmentForm
 from ..models import Student
@@ -23,6 +24,10 @@ def enrollment_create_view(request, student_id):
     not fabricated in this view -- the success page says so plainly instead
     of pretending to offer a download that doesn't exist.
     """
+    redirect_response = require_institution_context(request)
+    if redirect_response:
+        return redirect_response
+
     institution = request.institution
     student = get_object_or_404(Student, pk=student_id, institution=institution)
 

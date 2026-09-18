@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import redirect, render
 
 from apps.core.context import get_current_node_id
+from apps.core.view_helpers import require_institution_context
 from apps.grading.services import (
     calculate_average,
     ensure_default_evaluation_types,
@@ -32,24 +33,6 @@ def _build_preview(formula, evaluation_types):
         if evaluation_type.name in formula
     }
     return {"grades": sample_grades, "average": calculate_average(sample_grades, formula)}
-
-
-def require_institution_context(request):
-    """A Super Administrator has no `institution` of their own (`request.institution`
-    is only set once they explicitly pick one to view -- see
-    `apps.core.middleware.TenantMiddleware`, and that picker isn't built yet).
-    Every grading-formula view is inherently institution-scoped, so redirect
-    instead of crashing on a missing `institution` rather than assuming, like
-    most other institution-scoped views in this codebase, that it's always set.
-    """
-    if request.institution is None:
-        messages.error(
-            request,
-            "Esta página configura a fórmula de média de uma instituição específica -- "
-            "nenhuma instituição está seleccionada.",
-        )
-        return redirect("accounts:landing_placeholder")
-    return None
 
 
 @login_required

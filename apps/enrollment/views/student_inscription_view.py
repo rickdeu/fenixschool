@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render
 
 from apps.core.context import get_current_node_id
+from apps.core.view_helpers import require_institution_context
 
 from ..forms import (
     GuardianConsentForm,
@@ -28,6 +29,10 @@ def student_inscription_view(request):
     both are rendered inside the same `<form>`, so each uses a distinct
     `prefix` to avoid their POST data colliding.
     """
+    redirect_response = require_institution_context(request)
+    if redirect_response:
+        return redirect_response
+
     institution = request.institution
     found_guardian = None
     guardian_not_found = False
