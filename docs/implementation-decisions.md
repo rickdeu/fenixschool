@@ -155,3 +155,28 @@ própria issue #29 a explicar o porquê e a apontar para #36/#85.
 existirem; a issue deve ser revisitada nessa altura para adicionar
 `SchoolClass`/`Nota`/`Presenca.objects.for_docente(user)` seguindo exactamente o
 mesmo padrão (`TenantQuerySet` subclass + `for_<perfil>()`).
+
+## 2026-09-18 — Issue #140 (RegistoAuditoria): apenas 2 das 5 entidades críticas
+
+**Contexto**: RNF-AUD-01 pede histórico completo para 5 entidades críticas: Nota,
+Matrícula, Pagamento, Utilizador, Permissão.
+
+**Problema**: `grading.Nota` e `finance.Pagamento` não existem ainda (os módulos
+`grading`/`finance` só têm, respectivamente, a configuração da fórmula de média e
+nada). Ligar sinais de auditoria a modelos inexistentes é impossível por definição.
+
+**Decisão**: implementar `audit.AuditLogEntry` (imutável -- `save()`/`delete()`
+recusam qualquer alteração/eliminação depois da criação) e o conector genérico
+reutilizável `apps.audit.signals.audit_model(Model, exclude=...)`, ligado agora a
+`accounts.User` (Utilizador) e `enrollment.Enrollment` (Matrícula) -- as 2 das 5
+entidades que já existem. "Permissão" é coberta parcialmente por
+`audit_group_membership`, que regista a alteração de grupos de um `User` (a única
+forma real de alteração de permissões que já existe no sistema, via RBAC por
+Django Groups). O "quem"/"IP de origem" são capturados via `apps.audit.context`
+(mesmo padrão de `contextvars` do `apps.core.context` para o tenant), preenchidos
+por `AuditActorMiddleware` a cada pedido.
+
+**Impacto**: assim que `grading.Nota`/`finance.Pagamento` existirem, ligar com uma
+única linha (`audit_model(Nota)`/`audit_model(Pagamento)`) em `AuditConfig.ready()`
+-- o resto do mecanismo (snapshot antes/depois, detecção de soft-delete,
+imutabilidade) já está pronto e testado. #140 permanece aberta até essa altura.
