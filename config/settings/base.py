@@ -63,6 +63,11 @@ THIRD_PARTY_APPS = [
     # Content-Security-Policy header -- see the "Security headers" section
     # below and docs/09-seguranca-e-privacidade.md §9.7 (issue #146).
     "csp",
+    # 2FA (TOTP) -- docs/09-seguranca-e-privacidade.md §9.2, RNF-SEC-05
+    # (issue #25). See the "MIDDLEWARE" list below and
+    # apps/accounts/middleware.py for enforcement.
+    "django_otp",
+    "django_otp.plugins.otp_totp",
 ]
 
 # FenixSchool's own business apps -- see
@@ -97,6 +102,14 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Sets request.user.is_verified() -- must run right after
+    # AuthenticationMiddleware, which sets request.user (issue #25).
+    "django_otp.middleware.OTPMiddleware",
+    # Blocks Administrador da Instituição/Super Administrador/Financeiro from
+    # any page until they've completed 2FA (RNF-SEC-05) -- must run after
+    # OTPMiddleware, which is what request.user.is_verified() depends on. See
+    # apps/accounts/middleware.py.
+    "apps.accounts.middleware.RequireTwoFactorMiddleware",
     # Resolves the interface language from request.user.preferred_language,
     # never the browser (issue #149, RNF-LOC-06/07) -- replaces Django's own
     # `LocaleMiddleware` entirely, since that one's Accept-Language/session

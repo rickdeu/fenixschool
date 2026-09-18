@@ -8,6 +8,8 @@ fluxos.md §7.1), construídas a partir das `factory_boy` factories de cada app
 """
 
 import pytest
+from django_otp import DEVICE_ID_SESSION_KEY
+from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from apps.accounts.factories import UserFactory
 from apps.accounts.models import Profile
@@ -41,3 +43,28 @@ def user_factory(db):
         return UserFactory(profile=profile, institution=institution, **kwargs)
 
     return _create
+
+
+@pytest.fixture
+def verify_two_factor():
+    """Return a function that marks a Django test `Client`'s session as
+    having already completed 2FA for `user` (issue #25) -- for tests of
+    views *other than* the 2FA flow itself, that use a Client logged in as
+    one of RNF-SEC-05's mandatory profiles (Administrador da Instituição/
+    Super Administrador/Financeiro) and would otherwise be redirected to
+    the 2FA setup/verify screen by `RequireTwoFactorMiddleware` on every
+    request.
+
+    Mirrors what `django_otp.login()` does to the session, without needing
+    a real `HttpRequest` -- confirms a `TOTPDevice` for `user` and injects
+    its id under the same session key `OTPMiddleware` reads back.
+    """
+
+    def _verify(client, user):
+        device = TOTPDevice.objects.create(user=user, name="default", confirmed=True)
+        session = client.session
+        session[DEVICE_ID_SESSION_KEY] = device.persistent_id
+        session.save()
+        return device
+
+    return _verify
