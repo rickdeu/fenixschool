@@ -33,6 +33,10 @@ if [ "${SKIP_MIGRATIONS:-false}" != "true" ]; then
     # once-per-`docker compose up` block as migrations, purely for local
     # dev convenience.
     python manage.py create_dev_superuser
+    # Also DEBUG-only and idempotent -- gives `root` (and every other demo
+    # user it creates) a full institution to explore locally, without ever
+    # touching a real deployment's data.
+    python manage.py seed_demo_data
 fi
 
 if [ "${SKIP_COLLECTSTATIC:-false}" != "true" ]; then

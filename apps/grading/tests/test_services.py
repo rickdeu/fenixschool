@@ -390,6 +390,60 @@ def test_calcular_media_disciplina_computes_the_weighted_average(
     assert average == Decimal("15")
 
 
+def test_calcular_media_disciplina_rounds_to_2_decimal_places(
+    institution, enrollment, subject, academic_term, teacher
+):
+    """Regression test: a 3-component formula (e.g. the real default MAC
+    0.3/Prova Trimestral 0.3/Exame 0.4) multiplied by a 1-decimal-place Nota
+    can produce up to 4 decimal places of raw Decimal arithmetic --
+    `FinalGrade.calculated_value` only has 2, and Django's `DecimalValidator`
+    counts trailing zeros as real digits, so an unrounded result can
+    overflow `max_digits` outright (caught via the full demo-data seeder,
+    `apps.core.demo_data`) instead of just losing precision silently."""
+    with tenant_context(institution.id):
+        mac = EvaluationType.objects.create(
+            institution=institution, origin_node_id=uuid.uuid4(), name="MAC", default_weight="0.3"
+        )
+        prova = EvaluationType.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            name="Prova Trimestral",
+            default_weight="0.3",
+        )
+        exame = EvaluationType.objects.create(
+            institution=institution, origin_node_id=uuid.uuid4(), name="Exame", default_weight="0.4"
+        )
+        set_institution_default_formula(
+            institution,
+            {"MAC": Decimal("0.3"), "Prova Trimestral": Decimal("0.3"), "Exame": Decimal("0.4")},
+        )
+        for evaluation_type, value in ((mac, "13.2"), (prova, "11.7"), (exame, "13.5")):
+            Grade.objects.create(
+                institution=institution,
+                origin_node_id=uuid.uuid4(),
+                student=enrollment.student,
+                enrollment=enrollment,
+                subject=subject,
+                academic_term=academic_term,
+                evaluation_type=evaluation_type,
+                value=Decimal(value),
+                teacher=teacher,
+            )
+
+        average = calcular_media_disciplina(
+            enrollment=enrollment, subject=subject, academic_term=academic_term
+        )
+        final_grade = registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+    assert average.as_tuple().exponent >= -2
+    assert final_grade.calculated_value == average
+
+
 def test_calcular_media_disciplina_raises_when_a_required_grade_is_missing(
     institution, enrollment, subject, evaluation_type, academic_term
 ):
