@@ -12,7 +12,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.utils import timezone
 
-from apps.academic.models import Schedule, Subject
+from apps.academic.models import Schedule, SchoolClass, Subject
 
 from .models import EvaluationType, FinalGrade, FinalSituation, Grade, GradingFormulaOverride
 
@@ -231,6 +231,13 @@ def _validate_grade_scale(value) -> Decimal:
 
 
 def _validate_teacher_is_scheduled(*, teacher, enrollment, subject) -> None:
+    # "Super Administrador deve ter acesso a tudo, sem restrição alguma" --
+    # unlike a real Docente/Diretor de Turma, not tied to any actual
+    # Schedule row, so this object-level check would otherwise block them
+    # from every turma/disciplina outright.
+    if teacher.is_superuser:
+        return
+
     is_associated = Schedule.all_objects.filter(
         institution_id=enrollment.institution_id,
         teacher_id=teacher.id,
@@ -241,18 +248,53 @@ def _validate_teacher_is_scheduled(*, teacher, enrollment, subject) -> None:
         raise DocenteNaoAssociadoError(teacher, enrollment.school_class, subject)
 
 
+class _Assignment:
+    """A turma/disciplina pair, shaped just enough like `academic.Schedule`
+    (`.school_class`/`.subject`/`.school_class_id`/`.subject_id`) for
+    `GradeGridSelectionForm`/`get_docente_assignments`'s own callers to use
+    either interchangeably -- used only for a Super Administrador's
+    "every turma/disciplina" listing below, which has no real `Schedule`
+    row to point at."""
+
+    def __init__(self, school_class, subject):
+        self.school_class = school_class
+        self.subject = subject
+        self.school_class_id = school_class.id
+        self.subject_id = subject.id
+
+
 def get_docente_assignments(teacher) -> list:
-    """The distinct turma/disciplina pairs `teacher` actually teaches
-    (`academic.Schedule`, issue #36) -- issue #59's grelha de lançamento only
-    ever lets a docente pick from these, never any turma/disciplina in the
+    """The turma/disciplina pairs `teacher` may pick from in issue #59's
+    grelha de lançamento.
+
+    For a real Docente/Diretor de Turma, only the ones they actually teach
+    (`academic.Schedule`, issue #36) -- never any turma/disciplina in the
     institution (the same object-level scoping
     `_validate_teacher_is_scheduled` enforces at the point of actually
-    launching a Nota).
+    launching a Nota). For a Super Administrador -- "acesso a tudo, sem
+    restrição alguma" -- every turma/disciplina combination valid for that
+    turma's ano curricular, since they are never actually scheduled to
+    teach anything themselves.
 
     Deduplicated in Python, not via `QuerySet.distinct("field", ...)`: that
     form is Postgres-only, and this project's tests (and some
     local-node deployments) run on SQLite.
     """
+    if teacher.is_superuser:
+        school_classes = SchoolClass.all_objects.filter(
+            institution_id=teacher.institution_id
+        ).select_related("curricular_year")
+        assignments = [
+            _Assignment(school_class, subject)
+            for school_class in school_classes
+            for subject in Subject.all_objects.filter(
+                institution_id=teacher.institution_id,
+                curricular_year_id=school_class.curricular_year_id,
+            )
+        ]
+        assignments.sort(key=lambda a: (a.school_class.designation, a.subject.name))
+        return assignments
+
     schedules = (
         Schedule.all_objects.filter(teacher=teacher)
         .select_related("school_class", "subject")

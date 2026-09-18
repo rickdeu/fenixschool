@@ -31,12 +31,18 @@ def grade_grid_view(request):
     # Same object-level scoping `lancar_ou_atualizar_nota` itself enforces
     # -- checked again here, up front, so a docente can't view (not just
     # save into) a turma/disciplina they don't teach by tampering with the
-    # query string.
-    is_associated = Schedule.objects.filter(
-        institution=institution, teacher=request.user, school_class=school_class, subject=subject
-    ).exists()
-    if not is_associated:
-        raise PermissionDenied
+    # query string. A Super Administrador bypasses this too ("acesso a
+    # tudo, sem restrição alguma") -- they are never actually scheduled to
+    # teach anything themselves.
+    if not request.user.is_superuser:
+        is_associated = Schedule.objects.filter(
+            institution=institution,
+            teacher=request.user,
+            school_class=school_class,
+            subject=subject,
+        ).exists()
+        if not is_associated:
+            raise PermissionDenied
 
     enrollments = (
         Enrollment.objects.filter(

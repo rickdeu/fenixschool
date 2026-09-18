@@ -52,8 +52,7 @@ def test_super_admin_is_never_blocked_by_the_docente_profile_check(
     """ "Super Administrador deve ter acesso a tudo, sem restrição alguma" --
     a Super Admin's own profile is neither Docente nor Diretor de Turma, but
     `docente_required` (via `apps.accounts.permissions.require_profile`)
-    must still let them open the screen (with, naturally, no assignments of
-    their own to pick from)."""
+    must still let them open the screen."""
     super_admin = user_factory(profile=Profile.SUPER_ADMIN, institution=institution)
     client = Client()
     client.force_login(super_admin)
@@ -62,6 +61,66 @@ def test_super_admin_is_never_blocked_by_the_docente_profile_check(
     response = client.get(SELECTION_URL)
 
     assert response.status_code == 200
+
+
+def test_super_admin_sees_every_turma_disciplina_even_without_a_schedule(
+    institution, user_factory, verify_two_factor, school_class, subject
+):
+    """Unlike a real Docente (`test_selection_view_shows_nothing_for_a_teacher_with_no_schedule`),
+    a Super Admin isn't limited to their own `Schedule` rows -- they have
+    none, and still see every turma/disciplina valid for that turma's ano
+    curricular."""
+    super_admin = user_factory(profile=Profile.SUPER_ADMIN, institution=institution)
+    client = Client()
+    client.force_login(super_admin)
+    verify_two_factor(client, super_admin)
+
+    response = client.get(SELECTION_URL)
+
+    content = response.content.decode()
+    assert school_class.designation in content
+    assert subject.name in content
+
+
+def test_super_admin_can_open_and_save_into_a_grid_with_no_schedule_of_their_own(
+    institution,
+    user_factory,
+    verify_two_factor,
+    enrollment,
+    school_class,
+    subject,
+    evaluation_type,
+    academic_term,
+):
+    super_admin = user_factory(profile=Profile.SUPER_ADMIN, institution=institution)
+    client = Client()
+    client.force_login(super_admin)
+    verify_two_factor(client, super_admin)
+
+    grid_response = client.get(
+        GRID_URL,
+        {
+            "turma": school_class.id,
+            "disciplina": subject.id,
+            "tipo": evaluation_type.id,
+            "periodo": academic_term.id,
+        },
+    )
+    assert grid_response.status_code == 200
+
+    save_response = client.post(
+        CELL_SAVE_URL,
+        {
+            "enrollment": str(enrollment.id),
+            "subject": str(subject.id),
+            "evaluation_type": str(evaluation_type.id),
+            "academic_term": str(academic_term.id),
+            "value": "18",
+        },
+    )
+
+    assert save_response.status_code == 200
+    assert "Gravado" in save_response.content.decode()
 
 
 def test_sidebar_shows_the_lancar_notas_link_to_super_admin(
