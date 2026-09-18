@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render
 
 from apps.core.context import get_current_node_id
-from apps.core.view_helpers import require_institution_context
+from apps.core.view_helpers import first_section_with_errors, require_institution_context
 
 from ..forms import (
     GuardianConsentForm,
@@ -15,6 +15,42 @@ from ..forms import (
 )
 from ..models import Candidate, Guardian, StudentGuardian
 from ..services import DuplicateStudentDocumentError, MissingGuardianConsentError, register_student
+
+# The student half of the wizard (steps 1-3): grouped by topic, not by the
+# model's own field order, so "Endereço e Contactos" reads as one step
+# instead of an undifferentiated 19-field wall. Steps 4-5 (Encarregado de
+# Educação, Consentimento) are each a whole separate Django form, not a
+# subset of this one's fields -- see `student_inscription_form.html`.
+STUDENT_SECTIONS = [
+    {
+        "title": "Dados Pessoais",
+        "fields": ["first_name", "last_name", "birth_date", "gender", "photo"],
+    },
+    {
+        "title": "Documento",
+        "fields": [
+            "document_type",
+            "document_number",
+            "document_issue_date",
+            "document_issue_place",
+        ],
+    },
+    {
+        "title": "Endereço e Contactos",
+        "fields": [
+            "province",
+            "municipality",
+            "district_or_commune",
+            "neighborhood",
+            "street",
+            "house_number",
+            "profession",
+            "mobile_phone",
+            "landline_phone",
+            "email",
+        ],
+    },
+]
 
 
 @login_required
@@ -126,6 +162,15 @@ def student_inscription_view(request):
             guardian_not_found = found_guardian is None
         guardian_form = None if found_guardian else GuardianInscriptionForm(prefix="guardian")
 
+    if student_form.errors:
+        initial_step = first_section_with_errors(student_form, STUDENT_SECTIONS)
+    elif guardian_form is not None and guardian_form.errors:
+        initial_step = 4
+    elif consent_form.errors:
+        initial_step = 5
+    else:
+        initial_step = 1
+
     return render(
         request,
         "enrollment/student_inscription_form.html",
@@ -137,5 +182,7 @@ def student_inscription_view(request):
             "found_guardian": found_guardian,
             "guardian_not_found": guardian_not_found,
             "candidate": candidate,
+            "student_sections": STUDENT_SECTIONS,
+            "initial_step": initial_step,
         },
     )

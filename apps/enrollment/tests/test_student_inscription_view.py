@@ -280,3 +280,44 @@ def test_an_already_admitted_candidate_cannot_be_admitted_again(
     assert response.status_code == 200
     assert response.context["candidate"] is None
     assert response.context["student_form"].initial == {}
+
+
+def test_wizard_opens_on_step_1_by_default(secretary_client):
+    response = secretary_client.get(URL)
+
+    assert response.context["initial_step"] == 1
+
+
+def test_wizard_reopens_on_the_step_with_a_student_field_error(
+    secretary_client, document_type
+):
+    data = _valid_post_data(document_type)
+    del data["student-first_name"]
+
+    response = secretary_client.post(URL, data)
+
+    assert response.status_code == 200
+    assert response.context["initial_step"] == 1  # "Dados Pessoais"
+
+
+def test_wizard_reopens_on_the_document_step_for_a_duplicate_document(
+    secretary_client, document_type
+):
+    secretary_client.post(URL, _valid_post_data(document_type))
+
+    response = secretary_client.post(
+        URL, _valid_post_data(document_type, **{"guardian-document_number": "ENC-002"})
+    )
+
+    assert response.status_code == 200
+    assert response.context["initial_step"] == 2  # "Documento"
+
+
+def test_wizard_reopens_on_the_consent_step_when_missing(secretary_client, document_type):
+    data = _valid_post_data(document_type)
+    del data["guardian_consent_given"]
+
+    response = secretary_client.post(URL, data)
+
+    assert response.status_code == 200
+    assert response.context["initial_step"] == 5  # "Consentimento"

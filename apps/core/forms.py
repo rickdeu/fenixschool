@@ -25,6 +25,7 @@ from .models import (
     Profession,
     Province,
 )
+from .widgets import MunicipalitySelect
 
 
 class SlugFromNameFormMixin(forms.ModelForm):
@@ -110,6 +111,7 @@ class InstitutionSetupForm(forms.ModelForm):
             "email",
             "website",
         ]
+        widgets = {"municipality": MunicipalitySelect}
 
 
 class ManagerSetupForm(forms.ModelForm):
@@ -177,6 +179,7 @@ class InstitutionEditForm(forms.ModelForm):
             "website",
             "logo",
         ]
+        widgets = {"municipality": MunicipalitySelect}
 
 
 class AcademicYearForm(forms.ModelForm):
