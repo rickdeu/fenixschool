@@ -6,6 +6,7 @@ views normais e endpoints de API) e testes unitários isolados.
 
 from datetime import timedelta
 
+from django.conf import settings
 from django.utils import timezone
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
@@ -104,6 +105,21 @@ def reset_lockout_state(user: User) -> None:
         user.locked_until = None
         user.lockout_count = 0
         user.save(update_fields=["failed_login_attempts", "locked_until", "lockout_count"])
+
+
+# -- Expiração de sessão por inactividade -- issue #27, docs/09-seguranca-e-
+# privacidade.md §9.2
+
+
+def get_session_timeout_seconds(user: User) -> int:
+    """How long `user`'s session may sit idle before expiring, in seconds --
+    shorter for higher-risk/shared-workstation profiles (see
+    `settings.SESSION_TIMEOUT_MINUTES_BY_PROFILE`'s own comment for the
+    reasoning behind each value)."""
+    minutes = settings.SESSION_TIMEOUT_MINUTES_BY_PROFILE.get(
+        user.profile, settings.DEFAULT_SESSION_TIMEOUT_MINUTES
+    )
+    return minutes * 60
 
 
 def create_user(*, created_by: User, institution=None, **fields) -> User:

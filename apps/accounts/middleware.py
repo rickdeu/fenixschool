@@ -5,7 +5,11 @@ from django.shortcuts import redirect
 from django.urls import Resolver404, resolve, reverse
 from django.utils import translation
 
-from .services import get_two_factor_redirect_url_name, requires_two_factor
+from .services import (
+    get_session_timeout_seconds,
+    get_two_factor_redirect_url_name,
+    requires_two_factor,
+)
 
 
 class PreferredLanguageMiddleware:
@@ -40,6 +44,30 @@ class PreferredLanguageMiddleware:
             return self.get_response(request)
         finally:
             translation.deactivate()
+
+
+class SessionIdleTimeoutMiddleware:
+    """Expires a session after a period of inactivity, configurable by
+    profile (issue #27, docs/09-seguranca-e-privacidade.md §9.2) -- shorter
+    for higher-risk/shared-workstation profiles (see
+    `settings.SESSION_TIMEOUT_MINUTES_BY_PROFILE`).
+
+    Sets `request.session`'s expiry to that many seconds *from now* on
+    every authenticated request, together with `SESSION_SAVE_EVERY_REQUEST
+    = True` -- so it's a genuine sliding/inactivity window, not a fixed
+    time-since-login one: each request pushes the expiry further out,
+    and only a period of complete silence lets the session actually expire.
+    Must run after `AuthenticationMiddleware`, which sets `request.user`.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = getattr(request, "user", None)
+        if user is not None and user.is_authenticated:
+            request.session.set_expiry(get_session_timeout_seconds(user))
+        return self.get_response(request)
 
 
 class RequireTwoFactorMiddleware:
