@@ -20,7 +20,13 @@ de conformidade legal crítica, pois a legislação angolana é frequentemente a
 
 | Diploma | Estado | Nota |
 |---|---|---|
-| Decreto Executivo n.º 106/26 — Regulamento da Avaliação das Aprendizagens (RAA) dos Subsistemas da Educação Pré-Escolar, Ensino Geral e Educação de Adultos | Em vigor (revoga o Decreto Executivo n.º 424/25) | Não foi encontrado um PDF descarregável directamente; texto consultado via [angolex.com](https://angolex.com/paginas/decreto-executivo/regulamento-da-avaliacao-das-aprendizagens-dos-subsistemas-da-educacao-pre-escolar-ensino-geral-e-educacao-de-adultos-raa-106a-26a.html). Contém a **escala de avaliação oficial do Ensino Secundário** usada como base da parametrização de `grading` — ver resumo em [escala-avaliacao-secundario.md](escala-avaliacao-secundario.md) |
+| Decreto Executivo n.º 106/26 — Regulamento da Avaliação das Aprendizagens (RAA) dos Subsistemas da Educação Pré-Escolar, Ensino Geral e Educação de Adultos | Em vigor (revoga o Decreto Executivo n.º 424/25) | Não foi encontrado um PDF descarregável directamente; texto do corpo do diploma (Sumário + Artigos 1.º-36.º, parcial) colado directamente pelo utilizador a partir de [angolex.com](https://angolex.com/paginas/decreto-executivo/regulamento-da-avaliacao-das-aprendizagens-dos-subsistemas-da-educacao-pre-escolar-ensino-geral-e-educacao-de-adultos-raa-106a-26a.html) em 2026-09-18 — ver [decreto-executivo-106-26-raa-texto.md](decreto-executivo-106-26-raa-texto.md). Contém a **escala de avaliação oficial do Ensino Secundário** — ver [escala-avaliacao-secundario.md](escala-avaliacao-secundario.md) — mas **não** os Anexos (I-VII); o Anexo III, com as fórmulas de cálculo das médias (MAC/Prova Trimestral/Exame), ainda não foi obtido |
+
+## Documento revogado, mantido apenas como referência histórica
+
+| Ficheiro | Diploma | Estado | Nota |
+|---|---|---|---|
+| `decreto-executivo-424-25-revogado-avaliacao-aprendizagens.pdf` | Decreto Executivo n.º 424/25, de 18 de Junho — Regulamento da Avaliação das Aprendizagens (versão anterior do RAA) | **Revogado** pelo Decreto Executivo n.º 106/26 (acima) | PDF oficial obtido de [lex.ao](https://lex.ao/docs/ministerio-da-educacao/2025/decreto-executivo-n-o-424-25-de-18-de-junho/), mas **digitalizado como imagem** (sem camada de texto extraível por ferramentas como `pypdf` — precisaria de OCR). Guardado apenas por completude do histórico; **não usar para extrair a fórmula de cálculo de médias** — usar antes o Anexo III do 106/26, ainda por obter. Note também que uma pesquisa inicial confundiu este tema com o Diploma Ministerial n.º 59/2015 de **Moçambique** (mesmo texto genérico "Regulamento Geral de Avaliação", MAS de outro país) — esse documento foi descartado e não foi guardado aqui, para evitar confusão futura. |
 
 ## Como esta legislação molda o sistema
 

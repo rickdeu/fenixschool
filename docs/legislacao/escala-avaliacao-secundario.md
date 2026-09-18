@@ -7,6 +7,14 @@ Decreto Executivo n.º 424/25). Texto consultado em
 em 2026-09-12; não foi localizado PDF oficial descarregável directamente — **confirmar
 texto integral junto do Diário da República ou do MED antes de uso normativo**.
 
+**Actualização 2026-09-18**: o corpo do diploma (Artigos 1.º-36.º, parcial) foi
+confirmado directamente — ver
+[decreto-executivo-106-26-raa-texto.md](decreto-executivo-106-26-raa-texto.md). Confirma
+esta escala e os 3 componentes de avaliação (Avaliação Contínua/"MAC", Prova Trimestral,
+Exame Nacional), mas **a fórmula de cálculo das médias em si está no Anexo III**, ainda
+por obter — ver `apps/grading/services.py`'s `DEFAULT_EVALUATION_TYPES` e
+`docs/implementation-decisions.md` (issue #18).
+
 ## Escala oficial — Ensino Secundário Geral e de Jovens e Adultos (Anexo II)
 
 | Nível | Classificação quantitativa | Percentagem | Nível qualitativo |
