@@ -174,11 +174,13 @@ DATABASES = {
 AUTH_USER_MODEL = "accounts.User"
 
 # `EmailOrPhoneBackend` first (issue #24, docs/09-seguranca-e-privacidade.md
-# §9.2: login by email/phone, never username) -- `ModelBackend` stays too, so
-# username-based logins (the Django Admin's own login screen) keep working.
+# §9.2: login by email/phone, never username) -- `LockoutAwareModelBackend`
+# (issue #26's account lockout, not plain `ModelBackend`) stays too, so
+# username-based logins (the Django Admin's own login screen) keep working,
+# under the same lockout enforcement as everywhere else.
 AUTHENTICATION_BACKENDS = [
     "apps.accounts.backends.EmailOrPhoneBackend",
-    "django.contrib.auth.backends.ModelBackend",
+    "apps.accounts.backends.LockoutAwareModelBackend",
 ]
 
 LOGIN_URL = "accounts:login"
@@ -189,6 +191,19 @@ LOGIN_REDIRECT_URL = "accounts:landing_placeholder"
 # (the default) until then; see apps/core/context.py's get_current_node_id().
 NODE_ID = env("NODE_ID", default="")
 
+
+# Password hashing -- docs/09-seguranca-e-privacidade.md §9.2, RNF-SEC-02
+# (issue #26). Argon2 first: any password hashed while this was the default
+# is stored with it; the other hashers stay listed (Django's own
+# recommendation) purely so a pre-existing PBKDF2 hash (e.g. from before
+# this setting existed) still verifies and gets transparently upgraded to
+# Argon2 on that user's next successful login, rather than breaking it.
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

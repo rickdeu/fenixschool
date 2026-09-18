@@ -9,10 +9,23 @@ from django.db.models import Q
 from .models import User
 
 
-class EmailOrPhoneBackend(ModelBackend):
+class AccountLockoutMixin:
+    """Denies authentication outright for an account currently locked out
+    (issue #26, RNF-SEC-02) -- checked *before* trusting a correct
+    password, so a locked account can never authenticate (right password or
+    not) until the lockout expires or an Administrator unlocks it manually.
+    """
+
+    def user_can_authenticate(self, user):
+        if user.is_locked:
+            return False
+        return super().user_can_authenticate(user)
+
+
+class EmailOrPhoneBackend(AccountLockoutMixin, ModelBackend):
     """Authenticates by `email` or `phone` instead of `username`.
 
-    Kept alongside the default `ModelBackend` (see
+    Kept alongside `LockoutAwareModelBackend` (see
     `AUTHENTICATION_BACKENDS`, config/settings/base.py) rather than
     replacing it, so username-based logins (the Django Admin's own login
     screen, `createsuperuser`-created accounts) keep working unaffected --
@@ -31,3 +44,12 @@ class EmailOrPhoneBackend(ModelBackend):
         if user.check_password(password) and self.user_can_authenticate(user):
             return user
         return None
+
+
+class LockoutAwareModelBackend(AccountLockoutMixin, ModelBackend):
+    """Identical to Django's own `ModelBackend` (username-based -- used by
+    the Django Admin's own login screen), but also enforces the account
+    lockout (issue #26). A separate class, not just `ModelBackend` directly
+    in `AUTHENTICATION_BACKENDS`, so an admin login can't bypass the same
+    lockout enforced everywhere else.
+    """
