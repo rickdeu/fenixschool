@@ -61,3 +61,48 @@ fabricação nem omissão silenciosa) sem forçar um modelo de dados pouco natur
 **Impacto**: `academic.SchoolClass.academic_term` é `null=True, blank=True`. Se uma
 necessidade real de Turma-por-período surgir mais tarde (ex.: disciplinas semestrais
 lecionadas por uma sub-turma), revisitar esta decisão nessa altura.
+
+## 2026-09-18 — Issue #18 (fórmula de média): pesos por omissão sem fonte MED confirmada
+
+**Contexto**: RF-INST-06 pede que a fórmula de cálculo de média (pesos de MAC/Prova
+Trimestral/Exame) seja semeada com um valor por omissão logo na criação da instituição
+(não apenas sugerida lazily na primeira visita ao ecrã de configuração), idealmente
+reflectindo o que o Ministério da Educação (MED) exige.
+
+**Problema**: o regulamento angolano em vigor é o Decreto Executivo n.º 106/26 (RAA —
+ver docs/legislacao/escala-avaliacao-secundario.md, já registado numa issue anterior
+como sem PDF oficial descarregável directamente). Tentámos confirmar os pesos exactos
+por pesquisa na Internet:
+
+1. Uma fórmula inicialmente promissora (`MT = (2×MAC+PT)/3`) revelou-se, ao ler o texto
+   extraído do PDF, ser do **Diploma Ministerial n.º 59/2015 de Moçambique**, não de
+   Angola — descartada.
+2. O decreto revogado anterior (424/25) tem um PDF oficial real em `lex.ao`, mas é
+   digitalizado como imagem (sem texto extraível por `pypdf`); um resumo por IA de uma
+   página sobre esse decreto sugeriu `MT = (MACT+NPT)/2` (50%/50%), mas sem conseguir
+   verificar directamente no texto e sendo já revogado, não foi usado.
+3. A página do 106/26 (`angolex.com`) bloqueia scraping automático (HTTP 403); não foi
+   encontrado nenhum PDF de texto extraível para o regulamento em vigor.
+
+**Opções**:
+1. Bloquear a semeação de um valor por omissão até se confirmar o texto oficial do
+   106/26.
+2. Semear um valor genérico e claramente identificado como sugestão editável, não como
+   exigência confirmada do MED.
+
+**Decisão**: Opção 2 (confirmada com o utilizador via pergunta directa).
+
+**Justificação**: um formulário de fórmula vazio bloquearia todo o cálculo de médias
+até um Administrador o preencher manualmente, o que RF-INST-06 quer evitar. Apresentar
+um número como "exigência do MED" sem conseguir verificá-lo no texto oficial violaria a
+regra do projecto contra fabricação — a sugestão genérica (MAC 30% / Prova Trimestral
+30% / Exame 40%, os 3 nomes do próprio exemplo de implementação da issue) é claramente
+documentada como não confirmada (`apps/grading/services.py`'s `DEFAULT_EVALUATION_TYPES`)
+e o Administrador da Instituição pode alterá-la de imediato.
+
+**Impacto**: `core.services.setup_institution()` chama
+`apps.grading.services.seed_default_grading_formula()` logo após criar a Instituição,
+activando este valor genérico como fórmula por omissão (não deixando o formulário
+vazio) — mas nunca sobrepõe uma fórmula que um Administrador já tenha personalizado.
+Se o texto oficial do 106/26 for confirmado no futuro, actualizar
+`DEFAULT_EVALUATION_TYPES` e esta nota.

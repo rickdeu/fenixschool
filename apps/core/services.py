@@ -8,6 +8,7 @@ from django.db import transaction
 
 from apps.accounts.models import Profile, User
 
+from .context import get_current_node_id, tenant_context
 from .models import Institution
 
 
@@ -22,6 +23,12 @@ def setup_institution(*, institution_data: dict, manager_data: dict) -> tuple[In
     `apps.accounts.services.create_user` (which requires a `created_by`
     already tied to an institution, or a Super Administrator).
     """
+    # Local import: avoids `core` (a foundational app every other app already
+    # depends on) importing `grading` at module load time -- this is the one
+    # place `core` needs to reach into a business app, to seed a working
+    # grading formula (issue #18) at institution creation, not module scope.
+    from apps.grading.services import seed_default_grading_formula
+
     with transaction.atomic():
         institution = Institution.objects.create(**institution_data)
         manager = User.objects.create_user(
@@ -29,4 +36,6 @@ def setup_institution(*, institution_data: dict, manager_data: dict) -> tuple[In
             profile=Profile.INSTITUTION_ADMIN,
             **manager_data,
         )
+        with tenant_context(institution.id):
+            seed_default_grading_formula(institution, origin_node_id=get_current_node_id())
     return institution, manager

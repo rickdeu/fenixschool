@@ -16,10 +16,14 @@ from .models import EvaluationType, GradingFormulaOverride
 # Decimal("0.999")` só por causa de arredondamento na representação decimal.
 WEIGHT_SUM_TOLERANCE = Decimal("0.01")
 
-# Sugestão inicial (RF-INST-06's exemplo de implementação) para uma instituição
-# recém-criada -- editável de imediato pelo seu Administrador, nunca aplicada
-# como fórmula activa sem confirmação (`Institution.default_grading_formula`
-# só é preenchido quando o Administrador gravar o formulário).
+# Sugestão inicial genérica (RF-INST-06's próprio exemplo de implementação
+# usa estes 3 nomes) para uma instituição recém-criada -- **não é uma fórmula
+# confirmada junto do MED**: tentámos verificar os pesos oficiais do Decreto
+# Executivo n.º 106/26 (RAA, o regulamento em vigor -- ver
+# docs/legislacao/escala-avaliacao-secundario.md) mas a fonte oficial bloqueia
+# scraping automático e não localizámos um PDF de texto extraível. Fica como
+# ponto de partida editável de imediato pelo Administrador da Instituição, não
+# como um valor normativo -- ver docs/implementation-decisions.md.
 DEFAULT_EVALUATION_TYPES = (
     ("MAC", Decimal("0.3")),
     ("Prova Trimestral", Decimal("0.3")),
@@ -82,6 +86,27 @@ def set_institution_default_formula(institution, formula: dict[str, Decimal]) ->
         name: str(weight) for name, weight in formula.items()
     }
     institution.save(update_fields=["default_grading_formula"])
+
+
+def seed_default_grading_formula(institution, *, origin_node_id) -> None:
+    """Called once, from `core.services.setup_institution`, right after a new
+    Institution is created -- so it always has a *working* formula from day
+    one instead of an empty one blocking every average calculation until an
+    Administrator happens to visit the configuration screen (the concern
+    behind the "no acto da instalação" request that motivated this).
+
+    Only sets `default_grading_formula` if it's still empty: never overwrites
+    a formula an Administrator already customised -- also makes this safe to
+    call again (e.g. for an institution created before this function
+    existed).
+    """
+    evaluation_types = ensure_default_evaluation_types(institution, origin_node_id=origin_node_id)
+    if not institution.default_grading_formula:
+        formula = {
+            evaluation_type.name: evaluation_type.default_weight
+            for evaluation_type in evaluation_types
+        }
+        set_institution_default_formula(institution, formula)
 
 
 def set_course_formula_override(
