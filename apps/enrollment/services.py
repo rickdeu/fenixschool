@@ -29,17 +29,39 @@ class SchoolClassFullError(Exception):
         )
 
 
-def register_student(*, institution, document_type, document_number, **fields) -> Student:
+class MissingGuardianConsentError(Exception):
+    """Issue #143, RNF-AUD-02 (Lei 22/11): Inscrição is blocked without a
+    Guardian's recorded consent for processing the minor's personal data."""
+
+    def __init__(self):
+        super().__init__(
+            "A inscrição não pode ser gravada sem o consentimento do Encarregado de "
+            "Educação para o tratamento dos dados do aluno."
+        )
+
+
+def register_student(
+    *, institution, document_type, document_number, guardian_consent_given_by, **fields
+) -> Student:
     """ "Inscrever aluno" (issue #44, RF-MAT-01/03).
 
-    Checked explicitly (via `all_objects`, independent of the ambient tenant
-    context) *before* attempting to create the row, so the caller gets
-    `DuplicateStudentDocumentError` -- a clear, operator-facing message --
-    instead of the database's own `IntegrityError`/`Student.save()`'s
-    `ValidationError` for what is fundamentally the same, expected business
-    rule violation. `all_objects` (not `objects`): a soft-deleted student's
-    document must still block a new duplicate registration.
+    Duplicate-document and missing-consent are both checked explicitly (via
+    `all_objects`, independent of the ambient tenant context) *before*
+    attempting to create the row, so the caller gets a clear, operator-facing
+    exception instead of the database's own `IntegrityError`/`Student.save()`'s
+    generic field-required `ValidationError` for what are fundamentally the
+    same, expected business rule violations. `all_objects` (not `objects`):
+    a soft-deleted student's document must still block a new duplicate
+    registration.
+
+    `guardian_consent_given_by` is a required keyword, not folded into
+    `**fields`, precisely so a caller can't accidentally omit the consent
+    Guardian without an explicit, named argument reminding them it exists
+    (issue #143's "Inscrição bloqueada sem consentimento registado").
     """
+    if guardian_consent_given_by is None:
+        raise MissingGuardianConsentError()
+
     if Student.all_objects.filter(
         institution=institution, document_type=document_type, document_number=document_number
     ).exists():
@@ -49,6 +71,7 @@ def register_student(*, institution, document_type, document_number, **fields) -
         institution=institution,
         document_type=document_type,
         document_number=document_number,
+        guardian_consent_given_by=guardian_consent_given_by,
         **fields,
     )
 

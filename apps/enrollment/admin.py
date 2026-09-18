@@ -31,8 +31,9 @@ class StudentAdmin(admin.ModelAdmin):
         "province",
         "municipality",
         "profession",
+        "guardian_consent_given_by",
     )
-    readonly_fields = ("student_number", "registration_date")
+    readonly_fields = ("student_number", "registration_date", "guardian_consent_given_at")
     inlines = [StudentGuardianInline]
 
 
