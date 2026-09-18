@@ -59,6 +59,7 @@ def test_lists_enrollments_with_no_situation_yet(admin_client, enrollment):
     content = response.content.decode()
     assert "Yolene Hangalo" in content
     assert "Ainda não calculada" in content
+    assert 'id="select-all-enrollments"' in content
 
 
 def test_calculating_shows_the_resulting_situation(

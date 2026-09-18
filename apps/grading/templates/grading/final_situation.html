@@ -38,7 +38,7 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th></th>
+                        <th><input type="checkbox" id="select-all-enrollments" aria-label="{% translate 'Seleccionar tudo' %}"></th>
                         <th>{% translate "Aluno" %}</th>
                         <th>{% translate "Turma" %}</th>
                         <th>{% translate "Situação" %}</th>
@@ -49,7 +49,7 @@
                 <tbody>
                     {% for row in rows %}
                     <tr>
-                        <td><input type="checkbox" name="enrollment_ids" value="{{ row.enrollment.id }}"></td>
+                        <td><input type="checkbox" class="enrollment-checkbox" name="enrollment_ids" value="{{ row.enrollment.id }}"></td>
                         <td>{{ row.enrollment.student }}</td>
                         <td>{{ row.enrollment.school_class.designation }}</td>
                         <td>
@@ -80,4 +80,14 @@
         </div>
     </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById("select-all-enrollments").addEventListener("change", function () {
+        document.querySelectorAll(".enrollment-checkbox").forEach(function (checkbox) {
+            checkbox.checked = this.checked;
+        }, this);
+    });
+</script>
 {% endblock %}

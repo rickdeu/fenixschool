@@ -7,52 +7,7 @@
 <h1 class="h3 mb-4">{% translate "Homologação de pautas" %}</h1>
 
 <div class="card mb-4">
-    <div class="card-header">{% translate "Pautas existentes" %}</div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>{% translate "Turma" %}</th>
-                    <th>{% translate "Disciplina" %}</th>
-                    <th>{% translate "Tipo de avaliação" %}</th>
-                    <th>{% translate "Trimestre" %}</th>
-                    <th>{% translate "Notas lançadas" %}</th>
-                    <th>{% translate "Estado" %}</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for o in occurrences %}
-                <tr>
-                    <td>{{ o.school_class__designation }}</td>
-                    <td>{{ o.subject__name }}</td>
-                    <td>{{ o.evaluation_type__name }}</td>
-                    <td>{{ o.academic_term_label }}</td>
-                    <td>{{ o.total }}</td>
-                    <td>
-                        {% if o.is_closed %}
-                        <span class="text-muted small"><i class="bi bi-lock-fill"></i> {% translate "Fechada" %}</span>
-                        {% else %}
-                        <span class="text-success small"><i class="bi bi-unlock-fill"></i> {% translate "Aberta" %}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a class="btn btn-sm btn-outline-primary"
-                           href="{% url 'grading:pauta_management' %}?turma={{ o.school_class_id }}&disciplina={{ o.subject_id }}&tipo={{ o.evaluation_type_id }}&periodo={{ o.academic_term_id }}">
-                            {% translate "Ver pauta" %}
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="7" class="text-muted">{% translate "Ainda não há notas lançadas para nenhuma turma/disciplina." %}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header">{% translate "Ou seleccione manualmente" %}</div>
+    <div class="card-header">{% translate "Seleccionar manualmente" %}</div>
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-3">
@@ -97,6 +52,51 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">{% translate "Pautas existentes" %}</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Turma" %}</th>
+                    <th>{% translate "Disciplina" %}</th>
+                    <th>{% translate "Tipo de avaliação" %}</th>
+                    <th>{% translate "Trimestre" %}</th>
+                    <th>{% translate "Notas lançadas" %}</th>
+                    <th>{% translate "Estado" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in occurrences %}
+                <tr>
+                    <td>{{ o.school_class__designation }}</td>
+                    <td>{{ o.subject__name }}</td>
+                    <td>{{ o.evaluation_type__name }}</td>
+                    <td>{{ o.academic_term_label }}</td>
+                    <td>{{ o.total }}</td>
+                    <td>
+                        {% if o.is_closed %}
+                        <span class="text-muted small"><i class="bi bi-lock-fill"></i> {% translate "Fechada" %}</span>
+                        {% else %}
+                        <span class="text-success small"><i class="bi bi-unlock-fill"></i> {% translate "Aberta" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary"
+                           href="{% url 'grading:pauta_management' %}?turma={{ o.school_class_id }}&disciplina={{ o.subject_id }}&tipo={{ o.evaluation_type_id }}&periodo={{ o.academic_term_id }}">
+                            {% translate "Ver pauta" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-muted">{% translate "Ainda não há notas lançadas para nenhuma turma/disciplina." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
