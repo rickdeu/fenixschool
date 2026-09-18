@@ -24,17 +24,30 @@ def require_institution_context(request):
     return None
 
 
-def first_section_with_errors(form, sections) -> int:
-    """For a stepped form (`templates/components/stepped_form.html`) redisplayed
-    after a failed submission: which step (1-indexed) the browser should open
-    on, so a validation error on e.g. "Contactos" doesn't get silently hidden
-    behind whichever step happened to be showing when the page reloads.
-    Defaults to the first step when nothing points anywhere more specific
-    (a first render with no errors yet, or a non-field error not tied to any
-    particular section's fields).
+def first_section_with_errors(default_form, sections) -> int:
+    """For a stepped form (`templates/components/stepped_form.html`, or a
+    hand-rolled multi-form wizard like `enrollment/student_inscription_form.html`)
+    redisplayed after a failed submission: which step (1-indexed) the browser
+    should open on, so a validation error on e.g. "Contactos" doesn't get
+    silently hidden behind whichever step happened to be showing when the
+    page reloads. Defaults to the first step when nothing points anywhere
+    more specific (a first render with no errors yet, or a non-field error
+    not tied to any particular section's fields).
+
+    Each section may specify its own `"form"` (falling back to `default_form`
+    when omitted) -- needed for a wizard spanning several distinct Django
+    forms, not just one form's fields split across steps. A section with a
+    `"fields"` list only counts an error there as belonging to that step;
+    without one, any error anywhere in that section's form counts (used for
+    a step that's really a whole separate form, e.g. "Encarregado de
+    Educação" or "Consentimento").
     """
-    erroring_fields = set(form.errors)
     for index, section in enumerate(sections, start=1):
-        if erroring_fields & set(section["fields"]):
+        form = section.get("form", default_form)
+        fields = section.get("fields")
+        if fields is not None:
+            if set(form.errors) & set(fields):
+                return index
+        elif form.errors:
             return index
     return 1

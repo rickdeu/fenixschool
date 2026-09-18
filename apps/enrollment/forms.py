@@ -4,6 +4,7 @@ Matrícula (issue #47)."""
 from django import forms
 
 from apps.academic.models import SchoolClass
+from apps.core.widgets import MunicipalitySelect
 
 from .models import Enrollment, Guardian, Student
 
@@ -43,6 +44,7 @@ class StudentInscriptionForm(forms.ModelForm):
         widgets = {
             "birth_date": forms.DateInput(attrs={"type": "date"}),
             "document_issue_date": forms.DateInput(attrs={"type": "date"}),
+            "municipality": MunicipalitySelect,
         }
 
 
@@ -73,6 +75,7 @@ class GuardianInscriptionForm(forms.ModelForm):
             "street",
             "house_number",
         ]
+        widgets = {"municipality": MunicipalitySelect}
 
 
 class GuardianConsentForm(forms.Form):
