@@ -20,6 +20,7 @@ actually need them instead of being fabricated ahead of time:
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 from uuid6 import uuid7
 
 
@@ -80,9 +81,47 @@ class User(AbstractUser):
             "a different interface language at the same time."
         ),
     )
+    failed_login_attempts = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            "Consecutive failed login attempts since the last successful login "
+            "or lockout (issue #26, RNF-SEC-02)."
+        ),
+    )
+    locked_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=(
+            "Account locked out until this moment (issue #26) -- empty means "
+            "not locked. An Administrator can clear this early via the "
+            '"Desbloquear conta(s) seleccionada(s)" Django Admin action.'
+        ),
+    )
+    lockout_count = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            "How many times this account has been locked out so far -- each "
+            "further lockout is progressively longer (issue #26). Reset to 0 "
+            "by a successful login or a manual Administrator unlock."
+        ),
+    )
+
     @property
     def is_super_admin(self) -> bool:
         return self.profile == Profile.SUPER_ADMIN
+
+    @property
+    def is_locked(self) -> bool:
+        return self.locked_until is not None and self.locked_until > timezone.now()
+
+    def unlock(self) -> None:
+        """Manual administrative unlock (issue #26's acceptance criterion) --
+        also resets the progressive lockout counter, so the account gets a
+        fresh set of attempts rather than an already-elevated one."""
+        self.failed_login_attempts = 0
+        self.locked_until = None
+        self.lockout_count = 0
+        self.save(update_fields=["failed_login_attempts", "locked_until", "lockout_count"])
 
     @property
     def is_2fa_active(self) -> bool:

@@ -32,3 +32,7 @@ django-csp==4.0
 # TOTP works fully offline (no SMS/network dependency), unlike SMS-based 2FA.
 django-otp==1.7.3
 qrcode[pil]==8.2
+
+# Argon2 password hashing -- docs/09-seguranca-e-privacidade.md §9.2,
+# RNF-SEC-02 (issue #26). Required for Django's Argon2PasswordHasher.
+argon2-cffi==25.1.0

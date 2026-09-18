@@ -4,6 +4,9 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
+from datetime import timedelta
+
+from django.utils import timezone
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from .models import Profile, User
@@ -56,6 +59,51 @@ def get_two_factor_redirect_url_name(user: User) -> str:
         if user_has_confirmed_totp_device(user)
         else "accounts:two_factor_setup"
     )
+
+
+# -- Bloqueio progressivo de conta -- issue #26, RNF-SEC-02,
+# docs/09-seguranca-e-privacidade.md §9.2
+
+MAX_FAILED_LOGIN_ATTEMPTS = 5
+BASE_LOCKOUT_MINUTES = 1
+LOCKOUT_BACKOFF_FACTOR = 2
+MAX_LOCKOUT_MINUTES = 60
+
+
+def lockout_duration_minutes(lockout_count: int) -> int:
+    """Each further lockout is twice as long as the last one (progressive
+    back-off), capped so a legitimate user already locked out several
+    times in a row is never shut out for an unreasonable amount of time."""
+    return min(BASE_LOCKOUT_MINUTES * (LOCKOUT_BACKOFF_FACTOR**lockout_count), MAX_LOCKOUT_MINUTES)
+
+
+def register_failed_login(user: User) -> None:
+    """Called once per failed login attempt for a *known* user. A no-op
+    while already locked -- otherwise repeated attempts during an active
+    lockout would keep extending it indefinitely, since a locked account
+    also fails to authenticate on every further attempt.
+    """
+    if user.is_locked:
+        return
+
+    user.failed_login_attempts += 1
+    if user.failed_login_attempts >= MAX_FAILED_LOGIN_ATTEMPTS:
+        user.locked_until = timezone.now() + timedelta(
+            minutes=lockout_duration_minutes(user.lockout_count)
+        )
+        user.lockout_count += 1
+        user.failed_login_attempts = 0
+    user.save(update_fields=["failed_login_attempts", "locked_until", "lockout_count"])
+
+
+def reset_lockout_state(user: User) -> None:
+    """Called on every successful login -- proves the account is back in
+    its owner's hands, so past failures no longer count against it."""
+    if user.failed_login_attempts or user.locked_until or user.lockout_count:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        user.lockout_count = 0
+        user.save(update_fields=["failed_login_attempts", "locked_until", "lockout_count"])
 
 
 def create_user(*, created_by: User, institution=None, **fields) -> User:

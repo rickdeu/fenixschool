@@ -8,3 +8,6 @@ class AccountsConfig(AppConfig):
     name = "apps.accounts"
     label = "accounts"
     verbose_name = "Contas e Autenticação"
+
+    def ready(self) -> None:
+        from . import signals  # noqa: F401 -- connects its @receiver-decorated functions
