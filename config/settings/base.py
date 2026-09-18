@@ -94,10 +94,15 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Resolves the interface language from request.user.preferred_language,
+    # never the browser (issue #149, RNF-LOC-06/07) -- replaces Django's own
+    # `LocaleMiddleware` entirely, since that one's Accept-Language/session
+    # detection is exactly what these requirements rule out. Must run after
+    # AuthenticationMiddleware, which sets request.user.
+    "apps.accounts.middleware.PreferredLanguageMiddleware",
     # Resolves the current tenant (institution) from the authenticated user --
     # must run after AuthenticationMiddleware, which sets request.user. See
     # docs/04-arquitetura-tecnica.md §4.4.4 and apps/core/middleware.py.
@@ -188,11 +193,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization -- see docs/10-stack-tecnologica-e-estrutura-projeto.md §10.4
-# NOTE: `accounts.User` will eventually get a `preferred_language` field that a thin
-# custom middleware uses to activate the authenticated user's language before the
-# standard LocaleMiddleware acts on anonymous users. That middleware is not part of
-# this technical-foundation phase yet.
+# Internationalization -- see docs/10-stack-tecnologica-e-estrutura-projeto.md
+# §10.4/§10.4.1. `accounts.User.preferred_language` (issue #21) + the
+# MIDDLEWARE entry above (issue #149) activate the authenticated user's own
+# language on every request, never the browser's.
 
 LANGUAGE_CODE = "pt"
 
