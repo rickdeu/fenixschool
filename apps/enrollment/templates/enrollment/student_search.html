@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Matrícula — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>Inscrições → Matrículas → Nova Matrícula</h1>
+
+<form method="get">
+    {{ search_form.as_p }}
+    <button type="submit">Procurar</button>
+</form>
+
+{% if students %}
+<table>
+    <thead>
+        <tr>
+            <th>Nº</th>
+            <th>Nome</th>
+            <th>Documento</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ student.student_number }}</td>
+            <td>{{ student.first_name }} {{ student.last_name }}</td>
+            <td>{{ student.document_number }}</td>
+            <td>
+                <a href="{% url 'enrollment:enrollment_create' student.id %}">Matricular</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% elif search_form.is_bound %}
+<p>Nenhum aluno encontrado.</p>
+{% endif %}
+{% endblock %}

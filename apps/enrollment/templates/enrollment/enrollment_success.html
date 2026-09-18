@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Matrícula concluída — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>Matrícula concluída</h1>
+<p>
+    Matrícula <strong>#{{ enrollment.enrollment_number }}</strong> de
+    <strong>{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</strong>
+    na turma <strong>{{ enrollment.school_class.designation }}</strong>
+    ({{ enrollment.academic_year }}).
+</p>
+<p>
+    O comprovativo de matrícula em PDF (RF-MAT-06) ainda não está disponível --
+    é gerado por uma funcionalidade dedicada, por implementar.
+</p>
+<a href="{% url 'enrollment:student_search' %}">Nova matrícula</a>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Inscrições — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>Inscrições</h1>
+<ul>
+    <li><a href="{% url 'enrollment:student_inscription' %}">Alunos → Novo Aluno</a></li>
+    <li><a href="{% url 'enrollment:student_search' %}">Matrículas → Nova Matrícula</a></li>
+</ul>
+{% endblock %}
