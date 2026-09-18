@@ -82,12 +82,16 @@ class CustomUserAdmin(UserAdmin):
         # #25), never directly settable. `failed_login_attempts`/
         # `locked_until` (issue #26) are also read-only here -- unlocking
         # is done via the "Desbloquear conta(s)" action below, not by
-        # hand-editing these counters.
+        # hand-editing these counters. `groups` (issue #113) is always
+        # derived from `profile` (see `accounts.signals.
+        # sync_group_on_profile_change`) -- editing it directly here would
+        # look like it worked, then silently revert on the next save.
         readonly = (
             *super().get_readonly_fields(request, obj),
             "is_2fa_active",
             "failed_login_attempts",
             "locked_until",
+            "groups",
         )
         if obj is not None:
             return (*readonly, "institution")
