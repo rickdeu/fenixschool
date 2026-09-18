@@ -45,6 +45,10 @@ from apps.grading.services import registar_media_final
 DEMO_INSTITUTION_NAME = "Escola Demo FenixSchool"
 DEMO_PASSWORD = "Demo@1234"
 DEMO_STUDENT_COUNT = 55
+# Namespaced ("-DEMO") so it can never collide with a code a real
+# institution already uses, when seeding into one that already existed on
+# this node instead of a brand new one.
+DEMO_SCHOOL_CLASS_CODE = "10A-DEMO"
 
 _FIRST_NAMES = [
     "Ana",
@@ -107,38 +111,55 @@ def _origin():
 
 
 def seed_demo_data() -> bool:
-    """Idempotent entry point: returns `False` (no-op) if the demo
-    institution already exists, `True` if it just created everything.
-    Only ever does anything when `settings.DEBUG` is `True`."""
+    """Idempotent entry point: returns `False` (no-op) if this node already
+    has the demo turma seeded, `True` if it just created everything. Only
+    ever does anything when `settings.DEBUG` is `True`.
+
+    Seeds into whichever `Institution` this node already has (creating one
+    via `setup_institution` only if there's truly none yet) instead of
+    always creating a brand new, separately named one:
+    `apps.core.middleware.TenantMiddleware`'s own fallback for a Super
+    Administrador with no institution "picker" UI (not built yet) is
+    `Institution.objects.first()` -- a second, competing institution here
+    would just never be the one `root` (or any other Super Administrador)
+    actually lands on. Local nodes are single-tenant by design
+    (docs/04-arquitetura-tecnica.md §4.4.1) -- there should only ever be one
+    anyway.
+    """
     if not settings.DEBUG:
         return False
 
     from apps.core.models import Institution
 
-    if Institution.objects.filter(name=DEMO_INSTITUTION_NAME).exists():
-        return False
+    institution = Institution.objects.first()
+    if institution is not None:
+        with tenant_context(institution.id):
+            if SchoolClass.objects.filter(code=DEMO_SCHOOL_CLASS_CODE).exists():
+                return False
+        with transaction.atomic():
+            _seed(random.Random(2026), institution)
+        return True
 
     with transaction.atomic():
-        _seed(random.Random(2026))
+        institution, _manager = setup_institution(
+            institution_data={"name": DEMO_INSTITUTION_NAME, "tax_id": "5401234567"},
+            manager_data={
+                "username": "admin.demo",
+                "first_name": "Administradora",
+                "last_name": "Demo",
+                "email": "admin.demo@escola-demo.ao",
+                "password": DEMO_PASSWORD,
+            },
+        )
+        _seed(random.Random(2026), institution)
     return True
 
 
-def _seed(rng: random.Random) -> None:
-    institution, admin = setup_institution(
-        institution_data={"name": DEMO_INSTITUTION_NAME, "tax_id": "5401234567"},
-        manager_data={
-            "username": "admin.demo",
-            "first_name": "Administradora",
-            "last_name": "Demo",
-            "email": "admin.demo@escola-demo.ao",
-            "password": DEMO_PASSWORD,
-        },
-    )
-
+def _seed(rng: random.Random, institution) -> None:
     # `root` (issue accounts.create_dev_superuser) is only useful as a demo
     # tour guide if it's actually looking at this institution's data --
-    # TenantMiddleware/TenantManager scope every ordinary view by the
-    # logged-in user's own `institution`.
+    # ordinary (non-Super-Admin) views scope by the logged-in user's own
+    # `institution`.
     User.objects.filter(username="root").update(institution=institution)
 
     with tenant_context(institution.id):
@@ -221,19 +242,19 @@ def _seed(rng: random.Random) -> None:
         # -- Estrutura curricular (docs/05-modelo-de-dados.md §5.4-5.9) -----
         document_type = IdentificationDocumentType.objects.get(code="bilhete-de-identidade")
         department = Department.objects.create(
-            institution=institution, origin_node_id=origin_node_id, name="Ciências e Letras"
+            institution=institution, origin_node_id=origin_node_id, name="Ciências e Letras (Demo)"
         )
         cycle = AcademicCycle.objects.create(
             institution=institution,
             origin_node_id=origin_node_id,
-            designation="2.º Ciclo do Ensino Secundário",
+            designation="2.º Ciclo do Ensino Secundário (Demo)",
             order=1,
         )
         course = Course.objects.create(
             institution=institution,
             origin_node_id=origin_node_id,
-            code="CTEC",
-            name="Ciências Físicas e Biológicas",
+            code="CTEC-DEMO",
+            name="Ciências Físicas e Biológicas (Demo)",
             created_on=date(2020, 1, 1),
             department=department,
             cycle=cycle,
@@ -268,10 +289,10 @@ def _seed(rng: random.Random) -> None:
                 weekly_hours=4,
             )
             for code, name in (
-                ("MAT10", "Matemática"),
-                ("POR10", "Português"),
-                ("FIS10", "Física"),
-                ("HIS10", "História"),
+                ("MAT10-DEMO", "Matemática"),
+                ("POR10-DEMO", "Português"),
+                ("FIS10-DEMO", "Física"),
+                ("HIS10-DEMO", "História"),
             )
         }
         subjects_11 = {
@@ -287,7 +308,7 @@ def _seed(rng: random.Random) -> None:
                 subject_type=Subject.SubjectType.MANDATORY,
                 weekly_hours=4,
             )
-            for code, name in (("MAT11", "Matemática"), ("POR11", "Português"))
+            for code, name in (("MAT11-DEMO", "Matemática"), ("POR11-DEMO", "Português"))
         }
 
         academic_year = AcademicYear.objects.create(
@@ -326,21 +347,21 @@ def _seed(rng: random.Random) -> None:
         room_1 = Room.objects.create(
             institution=institution,
             origin_node_id=origin_node_id,
-            designation="Sala 1",
+            designation="Sala 1 (Demo)",
             capacity=60,
         )
         room_2 = Room.objects.create(
             institution=institution,
             origin_node_id=origin_node_id,
-            designation="Sala 2",
+            designation="Sala 2 (Demo)",
             capacity=40,
         )
 
         school_class_10a = SchoolClass.objects.create(
             institution=institution,
             origin_node_id=origin_node_id,
-            code="10A",
-            designation="10.ª A",
+            code=DEMO_SCHOOL_CLASS_CODE,
+            designation="10.ª A (Demo)",
             academic_year=academic_year,
             course=course,
             curricular_year=curricular_year_10,
@@ -350,8 +371,8 @@ def _seed(rng: random.Random) -> None:
         school_class_11a = SchoolClass.objects.create(
             institution=institution,
             origin_node_id=origin_node_id,
-            code="11A",
-            designation="11.ª A",
+            code="11A-DEMO",
+            designation="11.ª A (Demo)",
             academic_year=academic_year,
             course=course,
             curricular_year=curricular_year_11,
