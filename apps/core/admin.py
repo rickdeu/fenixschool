@@ -141,6 +141,7 @@ class AcademicYearAdmin(admin.ModelAdmin):
 class AcademicTermAdmin(admin.ModelAdmin):
     list_display = ("academic_year", "number", "start_date", "end_date")
     list_filter = ("academic_year__institution",)
+    search_fields = ("academic_year__designation",)
     autocomplete_fields = ("academic_year", "institution")
 
 

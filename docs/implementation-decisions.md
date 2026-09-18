@@ -32,3 +32,32 @@ do projecto contra funcionalidades fictícias/mockadas.
 **Impacto**: issue #142 permanece aberta (não marcada como `DONE`) com um comentário a
 explicar a parte entregue e a parte em falta; será fechada quando a autenticação mútua
 Nó-Nó for implementada junto dos endpoints `apps.api` de sincronização (M5).
+
+## 2026-09-18 — Issue #34 (`academic.SchoolClass`): `academic_term` opcional
+
+**Contexto**: docs/05-modelo-de-dados.md §5.8 lista `periodo_lectivo_id` (FK
+`PeriodoLectivo`) como campo de `Turma`, sem a marca "novo" que os restantes campos
+acrescentados nesta reformulação carregam.
+
+**Problema**: uma Turma agrupa alunos tipicamente durante todo o Ano Lectivo, não apenas
+um Período Lectivo (trimestre/semestre) — obrigar `academic_term` a um valor fixo exigiria
+criar uma Turma por período (3 linhas por ano lectivo num sistema trimestral), o que
+contradiz a forma como turmas são geridas na prática (a mesma turma atravessa os vários
+períodos).
+
+**Opções**:
+1. Seguir a tabela à letra: `academic_term` obrigatório.
+2. Tornar `academic_term` opcional (`null=True, blank=True`), preservando o campo para
+   os casos em que uma turma esteja de facto ligada a um único período.
+
+**Decisão**: Opção 2.
+
+**Justificação**: Tornar o campo obrigatório introduziria um comportamento
+operacionalmente estranho sem que nenhum requisito funcional (RF-CURR-05) o exija
+explicitamente — RF-CURR-05 nem sequer menciona período lectivo na descrição da Turma,
+apenas o exemplo de implementação o lista. Mantê-lo opcional preserva o campo (não é
+fabricação nem omissão silenciosa) sem forçar um modelo de dados pouco natural.
+
+**Impacto**: `academic.SchoolClass.academic_term` é `null=True, blank=True`. Se uma
+necessidade real de Turma-por-período surgir mais tarde (ex.: disciplinas semestrais
+lecionadas por uma sub-turma), revisitar esta decisão nessa altura.
