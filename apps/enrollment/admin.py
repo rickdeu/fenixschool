@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models import Guardian, Student, StudentGuardian
+from .models import Candidate, Enrollment, Guardian, Student, StudentGuardian
 
 
 class StudentGuardianInline(admin.TabularInline):
@@ -55,3 +55,39 @@ class StudentGuardianAdmin(admin.ModelAdmin):
     list_display = ("student", "guardian", "is_primary", "financially_responsible")
     list_filter = ("institution", "is_primary")
     autocomplete_fields = ("institution", "student", "guardian")
+
+
+@admin.register(Candidate)
+class CandidateAdmin(admin.ModelAdmin):
+    list_display = ("full_name", "desired_course", "status", "application_date", "institution")
+    list_filter = ("institution", "status", "desired_course")
+    search_fields = ("full_name", "contact")
+    autocomplete_fields = ("institution", "desired_course")
+    readonly_fields = ("application_date",)
+
+
+@admin.register(Enrollment)
+class EnrollmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "enrollment_number",
+        "student",
+        "academic_year",
+        "school_class",
+        "status",
+        "is_repeating",
+        "institution",
+    )
+    list_filter = ("institution", "academic_year", "status", "is_repeating")
+    search_fields = ("student__first_name", "student__last_name", "enrollment_number")
+    autocomplete_fields = (
+        "institution",
+        "student",
+        "course",
+        "academic_year",
+        "school_class",
+        "cycle",
+        "curricular_year",
+        "presented_document_type",
+        "previous_enrollment",
+    )
+    readonly_fields = ("enrollment_number", "date")
