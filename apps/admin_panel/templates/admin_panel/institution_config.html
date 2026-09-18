@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Configuração da instituição" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>{% translate "Configuração da instituição" %}</h1>
+
+<ul>
+    {% for section in sections %}
+    <li>
+        {% if section.available %}
+        <a href="{{ section.url }}">{{ section.title }}</a>
+        {% else %}
+        {{ section.title }} ({% translate "indisponível" %})
+        {% endif %}
+        <p>{{ section.description }}</p>
+        {% if not section.available %}
+        <p><em>{{ section.unavailable_reason }}</em></p>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
