@@ -1,10 +1,11 @@
-"""Rotas da app `public_site`.
-
-Incluído em `config.urls` (ou num app agregador) quando a app tiver views implementadas.
-"""
+"""Rotas da app `public_site`."""
 
 from django.urls import path
 
+from . import views
+
 app_name = "public_site"
 
-urlpatterns: list[path] = []
+urlpatterns = [
+    path("", views.home_view, name="home"),
+]

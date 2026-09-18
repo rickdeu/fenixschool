@@ -35,7 +35,10 @@ class InstitutionAdmin(admin.ModelAdmin):
     search_fields = ("name", "tax_id", "ministry_of_education_code")
     autocomplete_fields = ("province", "municipality")
     fieldsets = (
-        ("Identificação", {"fields": ("name", "tax_id", "ministry_of_education_code")}),
+        (
+            "Identificação",
+            {"fields": ("name", "tax_id", "ministry_of_education_code", "description")},
+        ),
         (
             "Morada",
             {

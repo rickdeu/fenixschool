@@ -30,6 +30,16 @@ class Institution(models.Model):
     ministry_of_education_code = models.CharField(
         "código MED", max_length=50, blank=True, default=""
     )
+    description = models.TextField(
+        "apresentação",
+        blank=True,
+        default="",
+        help_text=(
+            "Apresentação/missão institucional (RF-PUB-01, issue #100) -- mostrada na "
+            "página pública, editável por agora via Django Admin até existir uma UI "
+            "dedicada (issue #114)."
+        ),
+    )
 
     # -- Morada -----------------------------------------------------------
     province = models.ForeignKey(
