@@ -8,7 +8,7 @@ ou quaisquer outros `EvaluationType` que a instituição defina), com sobreposi�
 opcional por Curso/Disciplina.
 """
 
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.utils import timezone
 
@@ -373,7 +373,14 @@ def calcular_media_disciplina(*, enrollment, subject, academic_term) -> Decimal:
     formula = resolve_grading_formula(
         institution=enrollment.institution, course=enrollment.course, subject=subject
     )
-    return calculate_average(grades, formula)
+    average = calculate_average(grades, formula)
+    # `calculate_average`'s raw Decimal arithmetic keeps every decimal place
+    # its inputs happen to produce (a value * a 3-decimal-place peso can
+    # already need 4) -- `FinalGrade.calculated_value` only has 2, and
+    # Django's `DecimalValidator` counts trailing zeros as real digits, so
+    # an unrounded result can overflow `max_digits` outright instead of
+    # just losing precision silently.
+    return average.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def registar_media_final(*, enrollment, subject, academic_term, origin_node_id) -> FinalGrade:
