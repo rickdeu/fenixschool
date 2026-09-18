@@ -15,9 +15,9 @@ from .grading_scale_model import GradingScale
 
 class GradeReportClosedError(Exception):
     """RF-AVAL-04: a Nota can't be edited once its pauta is closed (`Grade.
-    is_grade_report_closed`), without explicit authorisation. A future
-    service (issue #57's `lancar_nota()`/issue #60's reabertura restrita)
-    is where that authorisation actually gets checked against the current
+    is_grade_report_closed`), without explicit authorisation.
+    `apps.grading.services.homologar_pauta`/`reabrir_pauta` (issue #60) is
+    where that authorisation actually gets checked against the current
     user's permissions -- this is the structural guarantee under it:
     without going through `Grade.save(authorize_closed_edit=True)`
     explicitly, an edit to a closed Nota simply cannot happen, not even by
@@ -128,6 +128,17 @@ class Grade(SyncedModel):
         "pauta fechada",
         default=False,
         help_text="RF-AVAL-04: impede edição sem autorização quando activo.",
+    )
+    reopening_reason = models.TextField(
+        "justificação da reabertura",
+        blank=True,
+        default="",
+        help_text=(
+            "RF-AVAL-04/§7.4: preenchida pela Direção Pedagógica sempre que "
+            "reabre uma pauta já homologada (issue #60) -- fica também no "
+            "histórico de auditoria (issue #140), junto de quem reabriu e "
+            "quando."
+        ),
     )
 
     class Meta(SyncedModel.Meta):
