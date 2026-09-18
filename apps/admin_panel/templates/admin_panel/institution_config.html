@@ -4,21 +4,27 @@
 {% block title %}{% translate "Configuração da instituição" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>{% translate "Configuração da instituição" %}</h1>
+<h1 class="h3 mb-4">{% translate "Configuração da instituição" %}</h1>
 
-<ul>
+<div class="row g-3">
     {% for section in sections %}
-    <li>
-        {% if section.available %}
-        <a href="{{ section.url }}">{{ section.title }}</a>
-        {% else %}
-        {{ section.title }} ({% translate "indisponível" %})
-        {% endif %}
-        <p>{{ section.description }}</p>
-        {% if not section.available %}
-        <p><em>{{ section.unavailable_reason }}</em></p>
-        {% endif %}
-    </li>
+    <div class="col-md-6">
+        <div class="card h-100 {% if not section.available %}opacity-75{% endif %}">
+            <div class="card-body">
+                <h2 class="h5 card-title">
+                    {% if section.available %}
+                    <a href="{{ section.url }}" class="text-decoration-none">{{ section.title }}</a>
+                    {% else %}
+                    {{ section.title }} <span class="badge text-bg-secondary">{% translate "indisponível" %}</span>
+                    {% endif %}
+                </h2>
+                <p class="card-text text-muted">{{ section.description }}</p>
+                {% if not section.available %}
+                <p class="card-text"><em class="text-muted small">{{ section.unavailable_reason }}</em></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
     {% endfor %}
-</ul>
+</div>
 {% endblock %}

@@ -1,45 +1,57 @@
-{% extends "base.html" %}
+{% extends "public_base.html" %}
 {% load i18n %}
 
 {% block title %}{% translate "Calendário escolar" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>{% translate "Calendário escolar" %}</h1>
+<h1 class="h3 mb-4">{% translate "Calendário escolar" %}</h1>
 
 {% if not academic_year %}
-<p>{% translate "Ainda não há nenhum ano lectivo corrente definido." %}</p>
+<p class="text-muted">{% translate "Ainda não há nenhum ano lectivo corrente definido." %}</p>
 {% else %}
 
-<section>
-    <h2>{% translate "Ano lectivo" %}: {{ academic_year.designation }}</h2>
-    <p>{{ academic_year.start_date }} &ndash; {{ academic_year.end_date }}</p>
-</section>
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5 card-title">{% translate "Ano lectivo" %}: {{ academic_year.designation }}</h2>
+        <p class="mb-0 text-muted">{{ academic_year.start_date }} &ndash; {{ academic_year.end_date }}</p>
+    </div>
+</div>
 
-<section>
-    <h2>{% translate "Períodos lectivos" %}</h2>
-    {% if terms %}
-    <ul>
-        {% for term in terms %}
-        <li>{{ term.number }}.º {% translate "Período" %}: {{ term.start_date }} &ndash; {{ term.end_date }}</li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>{% translate "Ainda não há períodos lectivos configurados." %}</p>
-    {% endif %}
-</section>
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title"><i class="bi bi-calendar-range me-2"></i>{% translate "Períodos lectivos" %}</h2>
+                {% if terms %}
+                <ul class="list-unstyled mb-0">
+                    {% for term in terms %}
+                    <li class="mb-2">{{ term.number }}.º {% translate "Período" %}: {{ term.start_date }} &ndash; {{ term.end_date }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">{% translate "Ainda não há períodos lectivos configurados." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-<section>
-    <h2>{% translate "Feriados e dias não lectivos" %}</h2>
-    {% if non_teaching_days %}
-    <ul>
-        {% for day in non_teaching_days %}
-        <li>{{ day.date }} &mdash; {{ day.description }} ({{ day.get_scope_display }})</li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>{% translate "Ainda não há feriados configurados para este ano lectivo." %}</p>
-    {% endif %}
-</section>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title"><i class="bi bi-calendar-x me-2"></i>{% translate "Feriados e dias não lectivos" %}</h2>
+                {% if non_teaching_days %}
+                <ul class="list-unstyled mb-0">
+                    {% for day in non_teaching_days %}
+                    <li class="mb-2">{{ day.date }} &mdash; {{ day.description }} <span class="text-muted">({{ day.get_scope_display }})</span></li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">{% translate "Ainda não há feriados configurados para este ano lectivo." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endif %}
 {% endblock %}

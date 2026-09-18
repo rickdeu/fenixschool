@@ -4,44 +4,54 @@
 {% block title %}{% translate "Fórmula de média" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>{% translate "Fórmula de cálculo de média" %}</h1>
-<p>{{ scope_label }}</p>
+<h1 class="h3 mb-1">{% translate "Fórmula de cálculo de média" %}</h1>
+<p class="text-muted mb-4">{{ scope_label }}</p>
 
-<form method="post" novalidate>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" name="save">{% translate "Guardar" %}</button>
-    {% if can_clear %}
-    <button type="submit" name="clear" value="1">
-        {% translate "Remover sobreposição (usar fórmula da instituição)" %}
-    </button>
-    {% endif %}
-</form>
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "components/bootstrap_form.html" %}
+            <div class="d-flex gap-2">
+                <button type="submit" name="save" class="btn btn-primary">{% translate "Guardar" %}</button>
+                {% if can_clear %}
+                <button type="submit" name="clear" value="1" class="btn btn-outline-secondary">
+                    {% translate "Remover sobreposição (usar fórmula da instituição)" %}
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
 
 {% if preview %}
-<section>
-    <h2>{% translate "Pré-visualização do cálculo" %}</h2>
-    <p>
-        {% translate "Exemplo ilustrativo (não são classificações reais de nenhum aluno), calculado com a fórmula acima:" %}
-    </p>
-    <table>
-        <thead>
-            <tr>
-                {% for name in preview.grades.keys %}
-                <th>{{ name }}</th>
-                {% endfor %}
-                <th>{% translate "Média" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                {% for grade in preview.grades.values %}
-                <td>{{ grade }}</td>
-                {% endfor %}
-                <td><strong>{{ preview.average }}</strong></td>
-            </tr>
-        </tbody>
-    </table>
-</section>
+<div class="card">
+    <div class="card-body">
+        <h2 class="h5 card-title">{% translate "Pré-visualização do cálculo" %}</h2>
+        <p class="text-muted">
+            {% translate "Exemplo ilustrativo (não são classificações reais de nenhum aluno), calculado com a fórmula acima:" %}
+        </p>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0">
+                <thead>
+                    <tr>
+                        {% for name in preview.grades.keys %}
+                        <th>{{ name }}</th>
+                        {% endfor %}
+                        <th>{% translate "Média" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for grade in preview.grades.values %}
+                        <td>{{ grade }}</td>
+                        {% endfor %}
+                        <td><strong>{{ preview.average }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endif %}
 {% endblock %}

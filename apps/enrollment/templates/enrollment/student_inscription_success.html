@@ -4,9 +4,14 @@
 {% block title %}{% translate "Inscrição concluída" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>{% translate "Inscrição concluída" %}</h1>
-<p>
-    {% blocktranslate with first_name=student.first_name last_name=student.last_name number=student.student_number %}Aluno <strong>{{ first_name }} {{ last_name }}</strong> inscrito com o número de aluno <strong>#{{ number }}</strong>.{% endblocktranslate %}
-</p>
-<a href="{% url 'enrollment:student_inscription' %}">{% translate "Nova inscrição" %}</a>
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+        <h1 class="h3 mt-3">{% translate "Inscrição concluída" %}</h1>
+        <p class="mb-4">
+            {% blocktranslate with first_name=student.first_name last_name=student.last_name number=student.student_number %}Aluno <strong>{{ first_name }} {{ last_name }}</strong> inscrito com o número de aluno <strong>#{{ number }}</strong>.{% endblocktranslate %}
+        </p>
+        <a href="{% url 'enrollment:student_inscription' %}" class="btn btn-primary">{% translate "Nova inscrição" %}</a>
+    </div>
+</div>
 {% endblock %}
