@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ institution.name }}{% endblock %}
+
+{% block content %}
+{% if institution.logo %}
+<img src="{{ institution.logo.url }}" alt="{{ institution.name }}" style="max-height: 120px;">
+{% endif %}
+
+<h1>{{ institution.name }}</h1>
+
+{% if institution.description %}
+<section>
+    <p>{{ institution.description|linebreaks }}</p>
+</section>
+{% endif %}
+
+<section>
+    <h2>{% translate "Cursos" %}</h2>
+    {% if courses %}
+    <ul>
+        {% for course in courses %}
+        <li>
+            {{ course.name }}
+            {% if course.abbreviation %}({{ course.abbreviation }}){% endif %}
+            {% if course.department %} -- {{ course.department.name }}{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>{% translate "Ainda não há cursos publicados." %}</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>{% translate "Contactos e localização" %}</h2>
+    <address>
+        {% if institution.street %}{{ institution.street }} {{ institution.house_number }}<br>{% endif %}
+        {% if institution.neighborhood %}{{ institution.neighborhood }}<br>{% endif %}
+        {% if institution.district_or_commune %}{{ institution.district_or_commune }}<br>{% endif %}
+        {% if institution.municipality %}{{ institution.municipality }}, {% endif %}{% if institution.province %}{{ institution.province }}{% endif %}
+    </address>
+    <ul>
+        {% if institution.landline_phone %}<li>{% translate "Telefone fixo" %}: {{ institution.landline_phone }}</li>{% endif %}
+        {% if institution.unitel_phone %}<li>Unitel: {{ institution.unitel_phone }}</li>{% endif %}
+        {% if institution.movicel_phone %}<li>Movicel: {{ institution.movicel_phone }}</li>{% endif %}
+        {% if institution.africell_phone %}<li>Africell: {{ institution.africell_phone }}</li>{% endif %}
+        {% if institution.email %}<li>{% translate "Email" %}: {{ institution.email }}</li>{% endif %}
+        {% if institution.website %}<li>{% translate "Sítio" %}: <a href="{{ institution.website }}">{{ institution.website }}</a></li>{% endif %}
+    </ul>
+</section>
+{% endblock %}
