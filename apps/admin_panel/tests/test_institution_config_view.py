@@ -55,6 +55,7 @@ def test_lists_every_section_of_2_1(admin_client):
     assert "Fórmula de cálculo de média" in content
     assert "Feriados e dias não lectivos" in content
     assert "Tabelas de preços" in content
+    assert "Cópias de segurança" in content
 
 
 def test_links_to_the_real_grading_formula_screen(admin_client):

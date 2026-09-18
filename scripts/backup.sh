@@ -1,7 +1,12 @@
 #!/bin/sh
 # A minimal logical (pg_dump) backup, written to the shared `backups` volume --
-# see docs/11-implantacao-e-operacoes.md §11.4. Run it manually, or wire it
-# into the host's own cron/systemd timer, e.g.:
+# see docs/11-implantacao-e-operacoes.md §11.4. Runs *inside the `db`
+# container itself* -- issue #166's "backup automático" is instead handled by
+# apps.core.services.backup_database(), scheduled daily via Django-Q2
+# (apps.core.signals.schedule_automatic_backup), which does the equivalent
+# dump from `web`/`qcluster` over the network instead. This script stays as
+# the manual, no-Django-required fallback -- run it by hand, or wire it into
+# the host's own cron/systemd timer, e.g.:
 #
 #   docker compose -f docker-compose.local-node.yml exec -T db \
 #       /usr/local/bin/backup.sh

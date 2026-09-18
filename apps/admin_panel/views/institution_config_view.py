@@ -59,6 +59,12 @@ def institution_config_view(request):
             "available": False,
             "unavailable_reason": "Ainda não implementado -- issue #70.",
         },
+        {
+            "title": "Cópias de segurança",
+            "description": "Cópia de segurança diária automática, manual e transferência.",
+            "url": reverse("admin_panel:backup_list"),
+            "available": True,
+        },
     ]
 
     return render(request, "admin_panel/institution_config.html", {"sections": sections})
