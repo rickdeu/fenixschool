@@ -13,6 +13,12 @@ urlpatterns = [
     # -- Autenticação --------------------------------------------------------
     path("login/", views.LoginView.as_view(), name="login"),
     path("logout/", views.LogoutView.as_view(), name="logout"),
+    # -- Preferências ----------------------------------------------------------
+    path(
+        "idioma/",
+        views.set_preferred_language_view,
+        name="set_preferred_language",
+    ),
     # -- Área do utilizador ----------------------------------------------------
     # Not "" / the bare root: that belongs to the public site's own homepage
     # (apps.public_site, issue #100), not to this post-login placeholder.
