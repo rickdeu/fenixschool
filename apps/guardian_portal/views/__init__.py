@@ -1,0 +1,5 @@
+from .dashboard_view import dashboard_view
+
+__all__ = [
+    "dashboard_view",
+]

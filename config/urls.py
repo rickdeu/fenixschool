@@ -14,4 +14,5 @@ urlpatterns = [
     path("", include("apps.accounts.urls")),
     path("inscricoes/", include("apps.enrollment.urls")),
     path("admin-painel/", include("apps.admin_panel.urls")),
+    path("encarregado/", include("apps.guardian_portal.urls")),
 ]

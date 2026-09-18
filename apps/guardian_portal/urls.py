@@ -1,10 +1,11 @@
-"""Rotas da app `guardian_portal`.
-
-Incluído em `config.urls` (ou num app agregador) quando a app tiver views implementadas.
-"""
+"""Rotas da app `guardian_portal`."""
 
 from django.urls import path
 
+from . import views
+
 app_name = "guardian_portal"
 
-urlpatterns: list[path] = []
+urlpatterns = [
+    path("", views.dashboard_view, name="dashboard"),
+]
