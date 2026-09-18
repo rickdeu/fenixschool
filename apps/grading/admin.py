@@ -5,7 +5,14 @@ from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.template.response import TemplateResponse
 
 from .forms import FinalGradeAdminForm, GradeAdminForm
-from .models import EvaluationType, FinalGrade, Grade, GradingFormulaOverride, GradingScale
+from .models import (
+    EvaluationType,
+    FinalGrade,
+    FinalSituation,
+    Grade,
+    GradingFormulaOverride,
+    GradingScale,
+)
 from .services import (
     ReaberturaSemJustificacaoError,
     ajustar_media_manualmente,
@@ -158,3 +165,26 @@ class FinalGradeAdmin(admin.ModelAdmin):
             )
         else:
             super().save_model(request, obj, form, change)
+
+
+@admin.register(FinalSituation)
+class FinalSituationAdmin(admin.ModelAdmin):
+    list_display = ("enrollment", "status", "calculated_at", "institution")
+    list_select_related = ("enrollment", "institution")
+    list_filter = ("institution", "status")
+    search_fields = ("enrollment__student__first_name", "enrollment__student__last_name")
+    autocomplete_fields = ("institution", "enrollment", "failed_subjects")
+    readonly_fields = ("status", "failed_subjects", "calculated_at")
+
+    def has_add_permission(self, request):
+        # Uma FinalSituation só existe a partir de um cálculo real
+        # (`apps.grading.services.calcular_situacao_final`, accionado pela
+        # acção "Calcular situação final" em EnrollmentAdmin) -- nunca
+        # inserida à mão, mesmo raciocínio dos campos derivados de `Grade`/
+        # `FinalGrade`.
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # Todos os campos são readonly (calculados) -- nada aqui é editável
+        # à mão, só recalculável via a mesma acção.
+        return False

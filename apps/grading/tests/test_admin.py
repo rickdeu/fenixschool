@@ -260,3 +260,48 @@ def test_reabrir_pauta_action_without_a_reason_is_rejected(admin_client, institu
     assert "justificação" in response.content.decode().lower()
     grade.refresh_from_db()
     assert grade.is_grade_report_closed is True
+
+
+def test_calcular_situacao_final_action_on_enrollment_admin(
+    admin_client, institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    """`EnrollmentAdmin`'s "Calcular situação final" action (issue #62) is
+    the only entry point that ever creates a `FinalSituation` --
+    `FinalSituationAdmin` itself disables add/change."""
+    from apps.grading.models import FinalSituation
+    from apps.grading.services import set_institution_default_formula
+
+    with tenant_context(institution.id):
+        set_institution_default_formula(institution, {evaluation_type.name: Decimal("1")})
+        Grade.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+        registar_media_final(
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            origin_node_id=_origin(),
+        )
+
+    response = admin_client.post(
+        reverse("admin:enrollment_enrollment_changelist"),
+        {
+            "action": "calcular_situacao_final_action",
+            "_selected_action": [str(enrollment.pk)],
+            "index": "0",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        situation = FinalSituation.objects.get(enrollment=enrollment)
+    assert situation.status == FinalSituation.Status.APPROVED
