@@ -29,7 +29,7 @@ def institution_config_view(request):
             "available": True,
         },
         {
-            "title": "Anos lectivos e períodos",
+            "title": "Anos lectivos e trimestres",
             "description": "Datas, ano lectivo corrente, trimestres/semestres (RF-INST-03/04).",
             "url": reverse("admin_panel:academic_year_list"),
             "available": True,

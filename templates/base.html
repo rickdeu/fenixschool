@@ -87,15 +87,31 @@
             </div>
             {% endif %}
 
-            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" or user.is_superuser %}
+            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" or user.is_superuser or perms.grading.change_grade or perms.grading.view_finalsituation %}
             <div class="menu-section">
                 <div class="menu-section-title">{% translate "Avaliação" %}</div>
                 <ul class="nav flex-column">
+                    {% if user.profile == "teacher" or user.profile == "homeroom_teacher" or user.is_superuser %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'grading:grade_grid_selection' %}">
                             <i class="bi bi-journal-check"></i> <span>{% translate "Lançar notas" %}</span>
                         </a>
                     </li>
+                    {% endif %}
+                    {% if perms.grading.change_grade %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'grading:pauta_management' %}">
+                            <i class="bi bi-clipboard-check"></i> <span>{% translate "Pautas" %}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.grading.view_finalsituation %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'grading:final_situation' %}">
+                            <i class="bi bi-flag-fill"></i> <span>{% translate "Situação final" %}</span>
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}

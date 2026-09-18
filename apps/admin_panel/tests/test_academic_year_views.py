@@ -1,4 +1,4 @@
-"""Tests for the dedicated "Anos lectivos e períodos" screen (issue #16,
+"""Tests for the dedicated "Anos lectivos e trimestres" screen (issue #16,
 RF-INST-03/04)."""
 
 import uuid

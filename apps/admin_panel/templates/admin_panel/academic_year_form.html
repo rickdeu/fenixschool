@@ -23,7 +23,7 @@
                 <button type="submit" class="btn btn-primary">{% translate "Guardar" %}</button>
                 {% if not is_create and perms.core.delete_academicyear %}
                 <button type="submit" name="delete" value="1" class="btn btn-outline-danger"
-                        onclick="return confirm('{% translate "Remover este ano lectivo e todos os seus períodos?" %}')">
+                        onclick="return confirm('{% translate "Remover este ano lectivo e todos os seus trimestres?" %}')">
                     {% translate "Remover" %}
                 </button>
                 {% endif %}

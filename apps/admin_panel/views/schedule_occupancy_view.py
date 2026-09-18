@@ -49,7 +49,7 @@ def schedule_occupancy_view(request):
             "rooms": Room.objects.filter(institution=institution).order_by("designation"),
             "teachers": User.objects.filter(
                 institution=institution, profile__in=[Profile.TEACHER, Profile.HOMEROOM_TEACHER]
-            ).order_by("last_name", "first_name"),
+            ).order_by("first_name", "last_name"),
             "school_classes": SchoolClass.objects.filter(institution=institution).order_by(
                 "designation"
             ),

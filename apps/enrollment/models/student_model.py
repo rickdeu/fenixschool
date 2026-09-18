@@ -149,7 +149,7 @@ class Student(SyncedModel):
     class Meta(SyncedModel.Meta):
         verbose_name = "aluno"
         verbose_name_plural = "alunos"
-        ordering = ["last_name", "first_name"]
+        ordering = ["first_name", "last_name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["institution", "student_number"],

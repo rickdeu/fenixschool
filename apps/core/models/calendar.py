@@ -51,7 +51,9 @@ class AcademicYear(SyncedModel):
 
 
 class AcademicTerm(SyncedModel):
-    """ "Período Lectivo" (RF-INST-04) -- a trimester/semester within an `AcademicYear`."""
+    """ "Trimestre" (RF-INST-04, "Período Lectivo" no modelo de dados) -- a
+    trimester/semester within an `AcademicYear`. Chamado de "Trimestre" em
+    toda a interface, por pedido explícito do utilizador."""
 
     academic_year = models.ForeignKey(
         AcademicYear, verbose_name="ano lectivo", on_delete=models.CASCADE, related_name="terms"
@@ -61,8 +63,8 @@ class AcademicTerm(SyncedModel):
     end_date = models.DateField("data de fim")
 
     class Meta(SyncedModel.Meta):
-        verbose_name = "período lectivo"
-        verbose_name_plural = "períodos lectivos"
+        verbose_name = "trimestre"
+        verbose_name_plural = "trimestres"
         ordering = ["academic_year", "number"]
         constraints = [
             models.UniqueConstraint(
@@ -72,7 +74,7 @@ class AcademicTerm(SyncedModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.number}.º Período — {self.academic_year}"
+        return f"{self.number}.º Trimestre — {self.academic_year}"
 
     def clean(self):
         errors = {}
@@ -89,9 +91,7 @@ class AcademicTerm(SyncedModel):
                     self.start_date < self.academic_year.start_date
                     or self.end_date > self.academic_year.end_date
                 ):
-                    errors["__all__"] = (
-                        "O período lectivo tem de estar contido dentro do ano lectivo."
-                    )
+                    errors["__all__"] = "O trimestre tem de estar contido dentro do ano lectivo."
         if errors:
             raise ValidationError(errors)
 

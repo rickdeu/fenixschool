@@ -108,9 +108,7 @@ class GradeGridSelectionForm(forms.Form):
     evaluation_type = forms.ModelChoiceField(
         queryset=EvaluationType.objects.none(), label="Tipo de avaliação"
     )
-    academic_term = forms.ModelChoiceField(
-        queryset=AcademicTerm.objects.none(), label="Período lectivo"
-    )
+    academic_term = forms.ModelChoiceField(queryset=AcademicTerm.objects.none(), label="Trimestre")
 
     def __init__(self, *args, teacher, institution, **kwargs):
         super().__init__(*args, **kwargs)

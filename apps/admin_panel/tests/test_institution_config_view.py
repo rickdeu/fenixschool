@@ -50,7 +50,7 @@ def test_lists_every_section_of_2_1(admin_client):
     content = response.content.decode()
     assert response.status_code == 200
     assert "Dados da instituição" in content
-    assert "Anos lectivos e períodos" in content
+    assert "Anos lectivos e trimestres" in content
     assert "Ciclos lectivos" in content
     assert "Fórmula de cálculo de média" in content
     assert "Feriados e dias não lectivos" in content

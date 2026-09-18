@@ -226,3 +226,130 @@ def test_str(institution, enrollment, subject, evaluation_type, academic_term, t
 
     assert "Yolene Hangalo" in str(situation)
     assert "Aprovado" in str(situation)
+
+
+# -- lancar_nota_recurso() (issue #61, RF-AVAL-06) --------------------------
+
+
+def test_lancar_nota_recurso_resolves_a_failed_subject(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    from apps.grading.services import lancar_nota_recurso
+
+    _grade_and_final(institution, enrollment, subject, evaluation_type, academic_term, teacher, "6")
+    situation = calcular_situacao_final(enrollment)
+    assert situation.status == FinalSituation.Status.PENDING_RECOVERY
+
+    with tenant_context(institution.id):
+        grade = lancar_nota_recurso(
+            enrollment=enrollment,
+            subject=subject,
+            value=Decimal("12"),
+            teacher=teacher,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+    assert grade.evaluation_type.name == "Exame de Recurso"
+    situation.refresh_from_db()
+    assert situation.status == FinalSituation.Status.APPROVED
+    with tenant_context(institution.id):
+        assert list(situation.failed_subjects.all()) == []
+
+
+def test_lancar_nota_recurso_rejects_a_subject_that_is_not_failed(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    from apps.grading.services import DisciplinaNaoEstaEmRecursoError, lancar_nota_recurso
+
+    _grade_and_final(
+        institution, enrollment, subject, evaluation_type, academic_term, teacher, "15"
+    )
+    calcular_situacao_final(enrollment)
+
+    with tenant_context(institution.id), pytest.raises(DisciplinaNaoEstaEmRecursoError):
+        lancar_nota_recurso(
+            enrollment=enrollment,
+            subject=subject,
+            value=Decimal("18"),
+            teacher=teacher,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+
+def test_lancar_nota_recurso_rejects_a_subject_with_no_final_situation_yet(
+    institution, enrollment, subject, teacher, academic_term
+):
+    from apps.grading.services import DisciplinaNaoEstaEmRecursoError, lancar_nota_recurso
+
+    with tenant_context(institution.id), pytest.raises(DisciplinaNaoEstaEmRecursoError):
+        lancar_nota_recurso(
+            enrollment=enrollment,
+            subject=subject,
+            value=Decimal("18"),
+            teacher=teacher,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+
+def test_lancar_nota_recurso_below_the_passing_grade_does_not_resolve_it(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    from apps.grading.services import lancar_nota_recurso
+
+    _grade_and_final(institution, enrollment, subject, evaluation_type, academic_term, teacher, "6")
+    situation = calcular_situacao_final(enrollment)
+
+    with tenant_context(institution.id):
+        lancar_nota_recurso(
+            enrollment=enrollment,
+            subject=subject,
+            value=Decimal("8"),
+            teacher=teacher,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+    situation.refresh_from_db()
+    assert situation.status == FinalSituation.Status.PENDING_RECOVERY
+    with tenant_context(institution.id):
+        assert list(situation.failed_subjects.all()) == [subject]
+
+
+def test_lancar_nota_recurso_is_idempotent_updates_the_same_grade(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    from apps.grading.services import lancar_nota_recurso
+
+    _grade_and_final(institution, enrollment, subject, evaluation_type, academic_term, teacher, "6")
+    calcular_situacao_final(enrollment)
+
+    with tenant_context(institution.id):
+        first = lancar_nota_recurso(
+            enrollment=enrollment,
+            subject=subject,
+            value=Decimal("8"),
+            teacher=teacher,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+        second = lancar_nota_recurso(
+            enrollment=enrollment,
+            subject=subject,
+            value=Decimal("15"),
+            teacher=teacher,
+            academic_term=academic_term,
+            origin_node_id=uuid.uuid4(),
+        )
+
+        assert (
+            Grade.objects.filter(
+                enrollment=enrollment, subject=subject, evaluation_type__name="Exame de Recurso"
+            ).count()
+            == 1
+        )
+
+    assert first.pk == second.pk
+    assert second.value == Decimal("15.0")

@@ -72,7 +72,7 @@ class Grade(SyncedModel):
     )
     academic_term = models.ForeignKey(
         "core.AcademicTerm",
-        verbose_name="período lectivo",
+        verbose_name="trimestre",
         on_delete=models.PROTECT,
         related_name="grades",
     )
@@ -158,8 +158,8 @@ class Grade(SyncedModel):
             "-academic_year__start_date",
             "school_class__designation",
             "subject__name",
-            "student__last_name",
             "student__first_name",
+            "student__last_name",
         ]
         constraints = [
             models.UniqueConstraint(

@@ -32,7 +32,7 @@ def academic_term_create_view(request, academic_year_id):
             except ValidationError as error:
                 form.add_error(None, error)
             else:
-                success(request, f'Período {term.number} adicionado a "{year.designation}".')
+                success(request, f'Trimestre {term.number} adicionado a "{year.designation}".')
                 return redirect("admin_panel:academic_year_list")
     else:
         form = AcademicTermForm()

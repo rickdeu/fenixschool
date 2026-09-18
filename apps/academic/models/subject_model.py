@@ -32,7 +32,7 @@ class Subject(SyncedModel):
     )
     term = models.ForeignKey(
         "core.AcademicTerm",
-        verbose_name="período lectivo",
+        verbose_name="trimestre",
         on_delete=models.PROTECT,
         related_name="subjects",
         null=True,
@@ -64,7 +64,7 @@ class Subject(SyncedModel):
             if self.curricular_year.course_id != self.course_id:
                 errors["curricular_year"] = "O ano curricular tem de pertencer ao mesmo curso."
         if self.term_id and self.institution_id and self.term.institution_id != self.institution_id:
-            errors["term"] = "O período lectivo tem de pertencer à mesma instituição."
+            errors["term"] = "O trimestre tem de pertencer à mesma instituição."
         if (
             self.cycle_id
             and self.institution_id

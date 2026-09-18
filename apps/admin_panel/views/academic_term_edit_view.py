@@ -17,9 +17,7 @@ def academic_term_edit_view(request, academic_term_id):
     if redirect_response:
         return redirect_response
 
-    term = get_object_or_404(
-        AcademicTerm, pk=academic_term_id, institution=request.institution
-    )
+    term = get_object_or_404(AcademicTerm, pk=academic_term_id, institution=request.institution)
 
     if request.method == "POST" and "delete" in request.POST:
         if not request.user.has_perm("core.delete_academicterm"):
@@ -27,7 +25,7 @@ def academic_term_edit_view(request, academic_term_id):
         number = term.number
         year = term.academic_year
         term.delete()
-        success(request, f'Período {number} de "{year.designation}" removido.')
+        success(request, f'Trimestre {number} de "{year.designation}" removido.')
         return redirect("admin_panel:academic_year_list")
 
     if request.method == "POST":
@@ -38,7 +36,7 @@ def academic_term_edit_view(request, academic_term_id):
             except ValidationError as error:
                 form.add_error(None, error)
             else:
-                success(request, f'Período {term.number} actualizado.')
+                success(request, f"Trimestre {term.number} actualizado.")
                 return redirect("admin_panel:academic_year_list")
     else:
         form = AcademicTermForm(instance=term)

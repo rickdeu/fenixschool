@@ -50,7 +50,7 @@ class FinalGrade(SyncedModel):
     )
     academic_term = models.ForeignKey(
         "core.AcademicTerm",
-        verbose_name="período lectivo",
+        verbose_name="trimestre",
         on_delete=models.PROTECT,
         related_name="final_grades",
     )
@@ -90,6 +90,7 @@ class FinalGrade(SyncedModel):
         # over for a single changelist query.
         ordering = [
             "-academic_term__start_date",
+            "enrollment__student__first_name",
             "enrollment__student__last_name",
             "subject__name",
         ]
@@ -125,7 +126,7 @@ class FinalGrade(SyncedModel):
         for field_name, label in (
             ("enrollment", "matrícula"),
             ("subject", "disciplina"),
-            ("academic_term", "período lectivo"),
+            ("academic_term", "trimestre"),
             ("overridden_by", "utilizador que ajustou"),
         ):
             related = getattr(self, field_name, None)

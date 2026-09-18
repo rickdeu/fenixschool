@@ -10,4 +10,6 @@ urlpatterns = [
     path("lancar/", views.grade_grid_selection_view, name="grade_grid_selection"),
     path("lancar/grelha/", views.grade_grid_view, name="grade_grid"),
     path("lancar/grelha/gravar/", views.grade_cell_save_view, name="grade_cell_save"),
+    path("pautas/", views.pauta_management_view, name="pauta_management"),
+    path("situacao-final/", views.final_situation_view, name="final_situation"),
 ]

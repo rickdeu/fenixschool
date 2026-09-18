@@ -19,8 +19,6 @@ def user_list_view(request):
     # Administrador), so there's no automatic tenant filtering here --
     # without this, an Administrador da Instituição would see every
     # institution's staff.
-    users = User.objects.filter(institution=request.institution).order_by(
-        "last_name", "first_name"
-    )
+    users = User.objects.filter(institution=request.institution).order_by("first_name", "last_name")
 
     return render(request, "admin_panel/user_list.html", {"users": users})
