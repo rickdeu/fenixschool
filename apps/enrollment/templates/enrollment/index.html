@@ -7,7 +7,17 @@
 <h1 class="h3 mb-4">{% translate "Inscrições" %}</h1>
 
 <div class="row g-3">
-    <div class="col-md-6">
+    <div class="col-md-4">
+        <a href="{% url 'enrollment:candidate_list' %}" class="text-decoration-none">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5 card-title"><i class="bi bi-person-lines-fill me-2"></i>{% translate "Candidatos" %}</h2>
+                    <p class="card-text text-muted mb-0">{% translate "Admitir candidatos pendentes" %}</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
         <a href="{% url 'enrollment:student_inscription' %}" class="text-decoration-none">
             <div class="card h-100">
                 <div class="card-body">
@@ -17,12 +27,22 @@
             </div>
         </a>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
         <a href="{% url 'enrollment:student_search' %}" class="text-decoration-none">
             <div class="card h-100">
                 <div class="card-body">
                     <h2 class="h5 card-title"><i class="bi bi-journal-check me-2"></i>{% translate "Matrículas" %}</h2>
                     <p class="card-text text-muted mb-0">{% translate "Nova Matrícula" %}</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'enrollment:bulk_enrollment' %}" class="text-decoration-none">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5 card-title"><i class="bi bi-people-fill me-2"></i>{% translate "Matricular admitidos" %}</h2>
+                    <p class="card-text text-muted mb-0">{% translate "Matrícula em lote por curso" %}</p>
                 </div>
             </div>
         </a>

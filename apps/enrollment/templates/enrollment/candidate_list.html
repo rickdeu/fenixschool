@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Candidatos" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Candidatos pendentes" %}</h1>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Nome" %}</th>
+                    <th>{% translate "Documento" %}</th>
+                    <th>{% translate "Curso pretendido" %}</th>
+                    <th>{% translate "Data de candidatura" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for candidate in candidates %}
+                <tr>
+                    <td>{{ candidate.full_name }}</td>
+                    <td>{{ candidate.document_type.name }} {{ candidate.document_number }}</td>
+                    <td>{{ candidate.desired_course.name }}</td>
+                    <td>{{ candidate.application_date }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'enrollment:student_inscription' %}?candidate={{ candidate.id }}" class="btn btn-sm btn-primary">
+                            {% translate "Admitir" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">{% translate "Nenhum candidato pendente." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

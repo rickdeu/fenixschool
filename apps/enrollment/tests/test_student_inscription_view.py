@@ -2,16 +2,18 @@
 funcionalidades.md §6.4)."""
 
 import uuid
+from datetime import date
 
 import pytest
 from django.contrib.auth.models import Group
 from django.test import Client
 from django.urls import reverse
 
+from apps.academic.models import Course, Department
 from apps.accounts.models import Profile, User
 from apps.core.context import tenant_context
-from apps.core.models import IdentificationDocumentType
-from apps.enrollment.models import Guardian, Student, StudentGuardian
+from apps.core.models import AcademicCycle, IdentificationDocumentType
+from apps.enrollment.models import Candidate, Guardian, Student, StudentGuardian
 
 pytestmark = pytest.mark.django_db
 
@@ -188,3 +190,93 @@ def test_invalid_student_data_does_not_create_a_guardian_either(secretary_client
 
     assert not Student.all_objects.exists()
     assert not Guardian.all_objects.exists()
+
+
+@pytest.fixture
+def course(institution):
+    with tenant_context(institution.id):
+        department = Department.objects.create(
+            institution=institution, origin_node_id=uuid.uuid4(), name="Ciências"
+        )
+        cycle = AcademicCycle.objects.create(
+            institution=institution, origin_node_id=uuid.uuid4(), designation="1.º Ciclo", order=1
+        )
+        return Course.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            code="INF",
+            name="Informática",
+            created_on=date(2020, 1, 1),
+            department=department,
+            cycle=cycle,
+            duration_years=4,
+        )
+
+
+@pytest.fixture
+def pending_candidate(institution, course, document_type):
+    with tenant_context(institution.id):
+        return Candidate.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            full_name="Yolene Hangalo",
+            birth_date=date(2012, 4, 10),
+            document_type=document_type,
+            document_number="005LA00123",
+            document_expiry_date=date(2030, 1, 1),
+            desired_course=course,
+            contact="923000000",
+        )
+
+
+def test_admitting_a_candidate_prefills_the_student_form(secretary_client, pending_candidate):
+    response = secretary_client.get(URL, {"candidate": str(pending_candidate.pk)})
+
+    assert response.status_code == 200
+    assert response.context["candidate"] == pending_candidate
+    assert response.context["student_form"].initial["first_name"] == "Yolene"
+    assert response.context["student_form"].initial["last_name"] == "Hangalo"
+    assert response.context["student_form"].initial["document_number"] == "005LA00123"
+
+
+def test_admitting_a_candidate_marks_it_admitted_once_the_student_is_created(
+    secretary_client, pending_candidate, document_type, institution
+):
+    data = _valid_post_data(document_type)
+    data["candidate_id"] = str(pending_candidate.pk)
+
+    response = secretary_client.post(URL, data)
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        pending_candidate.refresh_from_db()
+    assert pending_candidate.status == Candidate.Status.ADMITTED
+
+
+def test_a_candidate_is_not_marked_admitted_if_registration_fails(
+    secretary_client, pending_candidate, document_type, institution
+):
+    data = _valid_post_data(document_type)
+    data["candidate_id"] = str(pending_candidate.pk)
+    del data["guardian_consent_given"]
+
+    response = secretary_client.post(URL, data)
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        pending_candidate.refresh_from_db()
+    assert pending_candidate.status == Candidate.Status.PENDING
+
+
+def test_an_already_admitted_candidate_cannot_be_admitted_again(
+    secretary_client, pending_candidate, institution
+):
+    with tenant_context(institution.id):
+        pending_candidate.status = Candidate.Status.ADMITTED
+        pending_candidate.save(update_fields=["status"])
+
+    response = secretary_client.get(URL, {"candidate": str(pending_candidate.pk)})
+
+    assert response.status_code == 200
+    assert response.context["candidate"] is None
+    assert response.context["student_form"].initial == {}

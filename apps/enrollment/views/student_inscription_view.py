@@ -13,7 +13,7 @@ from ..forms import (
     GuardianSearchForm,
     StudentInscriptionForm,
 )
-from ..models import Guardian, StudentGuardian
+from ..models import Candidate, Guardian, StudentGuardian
 from ..services import DuplicateStudentDocumentError, MissingGuardianConsentError, register_student
 
 
@@ -28,6 +28,14 @@ def student_inscription_view(request):
     field names (`document_type`, `document_number`, `mobile_phone`, ...) --
     both are rendered inside the same `<form>`, so each uses a distinct
     `prefix` to avoid their POST data colliding.
+
+    Admitting a `Candidate` (issue #42, either from the internal candidate
+    list or the public pre-application form, issue #102) lands here with
+    `?candidate=<id>`: `Candidate.student_defaults()` pre-fills the form
+    instead of fabricating a separate "admission" flow that would just
+    duplicate this one. The candidate is only actually marked Admitido once
+    the Student is successfully created -- never on the redirect alone, so
+    an abandoned form never leaves a candidate wrongly marked as admitted.
     """
     redirect_response = require_institution_context(request)
     if redirect_response:
@@ -36,6 +44,14 @@ def student_inscription_view(request):
     institution = request.institution
     found_guardian = None
     guardian_not_found = False
+    candidate_id = request.POST.get("candidate_id") or request.GET.get("candidate")
+    candidate = (
+        Candidate.objects.filter(
+            institution=institution, pk=candidate_id, status=Candidate.Status.PENDING
+        ).first()
+        if candidate_id
+        else None
+    )
 
     if request.method == "POST":
         student_form = StudentInscriptionForm(request.POST, request.FILES, prefix="student")
@@ -74,6 +90,7 @@ def student_inscription_view(request):
                     institution=institution,
                     origin_node_id=origin_node_id,
                     guardian_consent_given_by=guardian,
+                    admitted_from_candidate=candidate,
                     **student_form.cleaned_data,
                 )
             except DuplicateStudentDocumentError as error:
@@ -89,11 +106,16 @@ def student_inscription_view(request):
                     is_primary=True,
                     financially_responsible=True,
                 )
+                if candidate is not None:
+                    candidate.status = Candidate.Status.ADMITTED
+                    candidate.save(update_fields=["status"])
                 return render(
                     request, "enrollment/student_inscription_success.html", {"student": student}
                 )
     else:
-        student_form = StudentInscriptionForm(prefix="student")
+        student_form = StudentInscriptionForm(
+            prefix="student", initial=candidate.student_defaults() if candidate else None
+        )
         consent_form = GuardianConsentForm()
         search_form = GuardianSearchForm(request.GET or None)
         if search_form.is_valid() and search_form.cleaned_data["document_number"]:
@@ -114,5 +136,6 @@ def student_inscription_view(request):
             "consent_form": consent_form,
             "found_guardian": found_guardian,
             "guardian_not_found": guardian_not_found,
+            "candidate": candidate,
         },
     )
