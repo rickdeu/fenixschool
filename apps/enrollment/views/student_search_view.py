@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
 from django.shortcuts import render
 
+from apps.core.view_helpers import require_institution_context
+
 from ..forms import StudentSearchForm
 from ..models import Student
 
@@ -13,6 +15,10 @@ from ..models import Student
 def student_search_view(request):
     """ "Inscrições → Matrículas → Nova Matrícula": localizar o aluno por
     número de aluno, número de documento ou nome (RF-MAT-04)."""
+    redirect_response = require_institution_context(request)
+    if redirect_response:
+        return redirect_response
+
     institution = request.institution
     search_form = StudentSearchForm(request.GET or None)
     students = Student.objects.none()

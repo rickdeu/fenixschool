@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render
 from django.urls import reverse
 
-from .grading_formula_config_view import require_institution_context
+from apps.core.view_helpers import require_institution_context
 
 
 @login_required

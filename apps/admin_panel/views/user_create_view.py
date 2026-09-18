@@ -5,9 +5,9 @@ from django.contrib.messages import success
 from django.shortcuts import redirect, render
 
 from apps.accounts.services import create_user
+from apps.core.view_helpers import require_institution_context
 
 from ..forms import UserCreateForm
-from .grading_formula_config_view import require_institution_context
 
 
 @login_required
