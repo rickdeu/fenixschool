@@ -49,6 +49,21 @@ parte deste ficheiro. Assim que forem obtidos, actualizar
 confirmados e remover a ressalva de "não confirmado" em
 `docs/implementation-decisions.md` (entrada de 2026-09-18, issue #18).
 
+**Pesquisa adicional em 2026-09-18 (concluída sem sucesso)**: confirmado, por
+acesso directo ao texto integral da página do `angolex.com` (contornando o
+bloqueio HTTP 403 via um proxy leitor), que **essa página termina mesmo a
+seguir ao Anexo II** — o Anexo III simplesmente não está publicado nela.
+Tentativas adicionais sem sucesso: site do INADE (só administração de
+exames, sem fórmulas), secção de legislação do `med.gov.ao` (não lista nem
+o 106/26 nem o 424/25), e vários documentos no Scribd sobre avaliação em
+Angola -- um deles tinha uma fórmula (`MT = (MAC+NPP+NPT)/3`,
+`CF = 0,4×MFD + 0,6×MEC`), mas usa um componente ("NPP") que não existe na
+terminologia confirmada do 106/26 (só MAC/Prova Trimestral/Exame Nacional),
+pelo que é quase certamente de um sistema diferente/mais antigo -- **não
+usado**. Por decisão do utilizador, a pesquisa automática deste Anexo III
+foi encerrada aqui; não repetir esta pesquisa sem uma pista nova e concreta
+(ex.: um link ou PDF fornecido directamente).
+
 ## Texto (Sumário e Artigos 1.º a 36.º, parcial)
 
 > Convindo estabelecer as normas que regulam a avaliação ao serviço das
