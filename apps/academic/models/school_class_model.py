@@ -70,6 +70,20 @@ class SchoolClass(SyncedModel):
     def __str__(self) -> str:
         return f"{self.designation} ({self.academic_year})"
 
+    def active_enrollment_count(self) -> int:
+        """Enrollments that currently occupy a vacancy in this class (issue
+        #46, RF-MAT-07). Imports `Enrollment` locally, not at module level:
+        `enrollment.Enrollment` refers back to `academic.SchoolClass` (via a
+        lazy string FK), so importing it while this module is still being
+        defined would be load-order-fragile -- safe once this method
+        actually runs, since every app is fully loaded by then.
+        """
+        from apps.enrollment.models import Enrollment
+
+        return self.enrollments.filter(
+            status__in=[Enrollment.Status.PENDING, Enrollment.Status.ACTIVE]
+        ).count()
+
     def clean(self):
         errors = {}
         for field_name, label in (
