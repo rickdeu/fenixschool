@@ -35,6 +35,7 @@ class GradeAdmin(admin.ModelAdmin):
         "subject",
         "evaluation_type",
         "value",
+        "qualitative_level",
         "school_class",
         "is_grade_report_closed",
         "institution",
@@ -57,4 +58,5 @@ class GradeAdmin(admin.ModelAdmin):
         "curricular_year",
         "school_class",
         "department",
+        "qualitative_level",
     )

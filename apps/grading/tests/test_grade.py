@@ -180,6 +180,13 @@ def test_creating_a_grade_derives_the_denormalized_fields(setup):
     assert grade.department_id == setup["department"].id
 
 
+def test_qualitative_level_matches_the_official_grading_scale(setup):
+    with tenant_context(setup["institution"].id):
+        grade = _make_grade(setup, value=Decimal("15"))
+
+    assert grade.qualitative_level.qualitative_level == "Bom"
+
+
 def test_str(setup):
     with tenant_context(setup["institution"].id):
         grade = _make_grade(setup)
