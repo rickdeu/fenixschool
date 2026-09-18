@@ -2,7 +2,8 @@
 
 from django.contrib import admin
 
-from .models import Course, CurricularYear, Department, Room, SchoolClass, Subject
+from .forms import ScheduleAdminForm
+from .models import Course, CurricularYear, Department, Room, Schedule, SchoolClass, Subject
 
 
 @admin.register(Department)
@@ -74,3 +75,21 @@ class SchoolClassAdmin(admin.ModelAdmin):
         "course",
         "curricular_year",
     )
+
+
+@admin.register(Schedule)
+class ScheduleAdmin(admin.ModelAdmin):
+    form = ScheduleAdminForm
+    list_display = (
+        "school_class",
+        "subject",
+        "weekday",
+        "start_time",
+        "end_time",
+        "room",
+        "teacher",
+        "institution",
+    )
+    list_filter = ("institution", "weekday", "regime")
+    search_fields = ("school_class__designation", "subject__name")
+    autocomplete_fields = ("institution", "school_class", "subject", "room", "teacher")

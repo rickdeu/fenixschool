@@ -82,6 +82,12 @@ urlpatterns = [
         views.backup_download_view,
         name="backup_download",
     ),
+    # -- Mapa de ocupação de salas e docentes (RF-CURR-06, issue #38) -----------
+    path(
+        "academico/mapa-ocupacao/",
+        views.schedule_occupancy_view,
+        name="schedule_occupancy",
+    ),
     # -- Configuração da fórmula de média (RF-INST-06, issue #18) --------------
     path(
         "avaliacao/formula/",
