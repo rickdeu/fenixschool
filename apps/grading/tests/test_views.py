@@ -49,7 +49,7 @@ def test_non_teacher_profile_is_forbidden(institution, user_factory):
 def test_super_admin_is_never_blocked_by_the_docente_profile_check(
     institution, user_factory, verify_two_factor
 ):
-    """"Super Administrador deve ter acesso a tudo, sem restrição alguma" --
+    """ "Super Administrador deve ter acesso a tudo, sem restrição alguma" --
     a Super Admin's own profile is neither Docente nor Diretor de Turma, but
     `docente_required` (via `apps.accounts.permissions.require_profile`)
     must still let them open the screen (with, naturally, no assignments of
@@ -62,6 +62,24 @@ def test_super_admin_is_never_blocked_by_the_docente_profile_check(
     response = client.get(SELECTION_URL)
 
     assert response.status_code == 200
+
+
+def test_sidebar_shows_the_lancar_notas_link_to_super_admin(
+    institution, user_factory, verify_two_factor
+):
+    """Regression test: `docente_required` letting a Super Admin through
+    doesn't help if the sidebar link itself is still hidden from them --
+    `templates/base.html` gated this section on a raw `user.profile`
+    check, which (unlike `perms.*`) isn't automatically satisfied by
+    `is_superuser`."""
+    super_admin = user_factory(profile=Profile.SUPER_ADMIN, institution=institution)
+    client = Client()
+    client.force_login(super_admin)
+    verify_two_factor(client, super_admin)
+
+    response = client.get(SELECTION_URL)
+
+    assert "Lançar notas" in response.content.decode()
 
 
 def test_selection_view_lists_the_teachers_own_schedule_assignments(

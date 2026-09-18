@@ -87,7 +87,7 @@
             </div>
             {% endif %}
 
-            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" %}
+            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" or user.is_superuser %}
             <div class="menu-section">
                 <div class="menu-section-title">{% translate "Avaliação" %}</div>
                 <ul class="nav flex-column">
