@@ -6,9 +6,6 @@
     <title>{% block title %}FenixSchool{% endblock %}</title>
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
 
-    {# Kiaalap (Colorlib, licença MIT -- ver static/vendor/kiaalap/NOTICE.md) --
-    apenas o Bootstrap 5 + ícones compilados, sem o layout de dashboard: o
-    sítio público não é uma área administrativa. #}
     <link rel="stylesheet" href="{% static 'vendor/kiaalap/main.css' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     {% block extra_css %}{% endblock %}
@@ -37,8 +34,7 @@
     </main>
 
     <footer class="border-top py-3 mt-5 text-center text-muted small">
-        &copy; {% now "Y" %} FenixSchool &middot;
-        {% translate "Visual base" %}: <a href="https://github.com/puikinsh/kiaalap" class="text-muted">Kiaalap</a>, {% translate "por" %} <a href="https://colorlib.com/" class="text-muted">Colorlib</a> (MIT)
+        &copy; {% now "Y" %} FenixSchool
     </footer>
 
     <script src="{% static 'js/htmx.min.js' %}" defer></script>

@@ -6,8 +6,6 @@
     <title>{% block title %}FenixSchool{% endblock %}</title>
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
 
-    {# Kiaalap (Colorlib, licença MIT -- ver static/vendor/kiaalap/NOTICE.md) #}
-    {# vendorizado localmente, sem dependência de CDN externo, issue #187. #}
     <link rel="stylesheet" href="{% static 'vendor/kiaalap/main.css' %}">
     <link rel="stylesheet" href="{% static 'vendor/kiaalap/dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
@@ -130,16 +128,7 @@
 
         <footer class="dashboard-footer">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p class="mb-0">&copy; {% now "Y" %} FenixSchool</p>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <p class="mb-0 text-muted small">
-                            {% translate "Visual base" %}: <a href="https://github.com/puikinsh/kiaalap" class="text-muted">Kiaalap</a>, {% translate "por" %} <a href="https://colorlib.com/" class="text-muted">Colorlib</a> (MIT)
-                        </p>
-                    </div>
-                </div>
+                <p class="mb-0">&copy; {% now "Y" %} FenixSchool</p>
             </div>
         </footer>
     </div>
