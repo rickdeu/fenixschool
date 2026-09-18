@@ -10,6 +10,8 @@ from . import views
 app_name = "admin_panel"
 
 urlpatterns = [
+    # -- Configuração da instituição (RF-ADM-02, issue #114) --------------------
+    path("configuracao/", views.institution_config_view, name="institution_config"),
     # -- Configuração da fórmula de média (RF-INST-06, issue #18) --------------
     path(
         "avaliacao/formula/",
