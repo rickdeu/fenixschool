@@ -195,7 +195,7 @@ class AcademicYearForm(forms.ModelForm):
 
 
 class AcademicTermForm(forms.ModelForm):
-    """Período lectivo dentro de um ano lectivo (issue #16, RF-INST-04)."""
+    """Trimestre dentro de um ano lectivo (issue #16, RF-INST-04)."""
 
     class Meta:
         model = AcademicTerm

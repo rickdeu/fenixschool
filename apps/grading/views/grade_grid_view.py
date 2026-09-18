@@ -51,7 +51,7 @@ def grade_grid_view(request):
             status__in=[Enrollment.Status.PENDING, Enrollment.Status.ACTIVE],
         )
         .select_related("student")
-        .order_by("student__last_name", "student__first_name")
+        .order_by("student__first_name", "student__last_name")
     )
     existing_grades_by_student_id = {
         grade.student_id: grade

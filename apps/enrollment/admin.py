@@ -54,6 +54,10 @@ class GuardianAdmin(admin.ModelAdmin):
 @admin.register(StudentGuardian)
 class StudentGuardianAdmin(admin.ModelAdmin):
     list_display = ("student", "guardian", "is_primary", "financially_responsible")
+    # Terminal (non-relation) fields only, not a bare "student" -- see
+    # `grading.Grade.Meta`'s own comment on why ordering by a bare FK risks
+    # a runaway join explosion via that related model's own `Meta.ordering`.
+    ordering = ("student__first_name", "student__last_name")
     list_filter = ("institution", "is_primary")
     autocomplete_fields = ("institution", "student", "guardian")
 
@@ -79,6 +83,12 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "institution",
     )
     actions = ["calcular_situacao_final_action"]
+    # Terminal (non-relation) fields only, not a bare "student" -- same
+    # reasoning as `StudentGuardianAdmin.ordering`. Overrides `Enrollment`'s
+    # own `Meta.ordering` (most recent matrícula first) only for this
+    # listing -- the model's default still serves other consumers (e.g. a
+    # student's own enrolment history) correctly as-is.
+    ordering = ("student__first_name", "student__last_name")
     list_filter = ("institution", "academic_year", "status", "is_repeating")
     search_fields = ("student__first_name", "student__last_name", "enrollment_number")
     autocomplete_fields = (

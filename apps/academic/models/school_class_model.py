@@ -36,7 +36,7 @@ class SchoolClass(SyncedModel):
     )
     academic_term = models.ForeignKey(
         "core.AcademicTerm",
-        verbose_name="período lectivo",
+        verbose_name="trimestre",
         on_delete=models.PROTECT,
         related_name="school_classes",
         null=True,
@@ -88,7 +88,7 @@ class SchoolClass(SyncedModel):
         errors = {}
         for field_name, label in (
             ("academic_year", "ano lectivo"),
-            ("academic_term", "período lectivo"),
+            ("academic_term", "trimestre"),
             ("course", "curso"),
             ("curricular_year", "ano curricular"),
         ):

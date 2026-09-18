@@ -21,15 +21,15 @@
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-body">
-                <h2 class="h5 card-title"><i class="bi bi-calendar-range me-2"></i>{% translate "Períodos lectivos" %}</h2>
+                <h2 class="h5 card-title"><i class="bi bi-calendar-range me-2"></i>{% translate "Trimestres" %}</h2>
                 {% if terms %}
                 <ul class="list-unstyled mb-0">
                     {% for term in terms %}
-                    <li class="mb-2">{{ term.number }}.º {% translate "Período" %}: {{ term.start_date }} &ndash; {{ term.end_date }}</li>
+                    <li class="mb-2">{{ term.number }}.º {% translate "Trimestre" %}: {{ term.start_date }} &ndash; {{ term.end_date }}</li>
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="text-muted mb-0">{% translate "Ainda não há períodos lectivos configurados." %}</p>
+                <p class="text-muted mb-0">{% translate "Ainda não há trimestres configurados." %}</p>
                 {% endif %}
             </div>
         </div>

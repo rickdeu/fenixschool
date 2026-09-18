@@ -21,6 +21,13 @@ from .models import EvaluationType, FinalGrade, FinalSituation, Grade, GradingFo
 # `Institution.max_recoverable_subjects`).
 PASSING_GRADE = Decimal("10")
 
+# RF-AVAL-06's own exemplo de implementação: "TipoAvaliacao adicional 'Exame
+# de Recurso'". Not part of any institution's normal weighted formula
+# (`resolve_grading_formula` never references it) -- it only ever resolves
+# `calcular_situacao_final`'s pass/fail decision for a disciplina already
+# marked "com disciplinas em atraso", never blended into a período's média.
+RECURSO_EVALUATION_TYPE_NAME = "Exame de Recurso"
+
 # Tolerância na soma dos pesos: evita rejeitar `Decimal("0.333") * 3 ==
 # Decimal("0.999")` só por causa de arredondamento na representação decimal.
 WEIGHT_SUM_TOLERANCE = Decimal("0.01")
@@ -541,6 +548,16 @@ def reabrir_pauta(grades, *, user, reason) -> int:
     return count
 
 
+def _has_passed_recurso(enrollment, subject) -> bool:
+    return Grade.all_objects.filter(
+        institution_id=enrollment.institution_id,
+        student_id=enrollment.student_id,
+        subject=subject,
+        evaluation_type__name=RECURSO_EVALUATION_TYPE_NAME,
+        value__gte=PASSING_GRADE,
+    ).exists()
+
+
 def calcular_situacao_final(enrollment) -> FinalSituation:
     """ "Calcular situação final" (issue #62, RF-AVAL-07): percorre todas as
     disciplinas do ano curricular da matrícula, calcula a média anual de
@@ -551,8 +568,9 @@ def calcular_situacao_final(enrollment) -> FinalSituation:
     valores, oficialmente confirmada -- ver `PASSING_GRADE`).
 
     Recalculável a qualquer momento (idempotente via `update_or_create`):
-    uma nota de recurso lançada mais tarde (issue #61) só precisa de chamar
-    isto de novo para reflectir-se na situação final, sem duplicar a linha.
+    uma nota de recurso lançada mais tarde (`lancar_nota_recurso`, issue
+    #61) só precisa de chamar isto de novo para reflectir-se na situação
+    final, sem duplicar a linha.
 
     `institution.max_recoverable_subjects` -- **não** um valor normativo
     confirmado, ver o próprio campo -- é o que separa "com disciplinas em
@@ -578,7 +596,7 @@ def calcular_situacao_final(enrollment) -> FinalSituation:
             for override, calculated in final_grades
         ]
         annual_average = sum(values) / len(values)
-        if annual_average < PASSING_GRADE:
+        if annual_average < PASSING_GRADE and not _has_passed_recurso(enrollment, subject):
             failed_subjects.append(subject)
 
     if not failed_subjects:
@@ -607,3 +625,85 @@ def calcular_situacao_final(enrollment) -> FinalSituation:
         situation.save()
     situation.failed_subjects.set(failed_subjects)
     return situation
+
+
+class DisciplinaNaoEstaEmRecursoError(Exception):
+    """RF-AVAL-06: uma avaliação de recurso só faz sentido para uma
+    disciplina que a matrícula já reprovou (consta em
+    `FinalSituation.failed_subjects`) -- nunca uma que já passou."""
+
+    def __init__(self, subject):
+        self.subject = subject
+        super().__init__(f'"{subject}" não está em situação de recurso para esta matrícula.')
+
+
+def lancar_nota_recurso(
+    *, enrollment, subject, value, teacher, academic_term, origin_node_id
+) -> Grade:
+    """ "Lançar nota de recurso" (issue #61, RF-AVAL-06): registra a
+    classificação obtida no exame de recurso/recuperação de uma disciplina
+    já reprovada, e recalcula de imediato a situação final da matrícula
+    (`calcular_situacao_final`) para reflectir a resolução.
+
+    Só é aceite para uma disciplina que a matrícula já reprova
+    (`DisciplinaNaoEstaEmRecursoError` caso contrário) -- a própria
+    `calcular_situacao_final` é quem decide, ao recalcular, se este valor
+    (>= 10 valores) resolve ou não a pendência (`_has_passed_recurso`); esta
+    função só regista a Nota, nunca decide a situação final directamente.
+
+    Idempotente por (aluno, disciplina, período, "Exame de Recurso"): uma
+    segunda chamada actualiza a mesma Nota em vez de colidir com a
+    `UniqueConstraint` de `Grade`.
+    """
+    situation = FinalSituation.all_objects.filter(
+        institution_id=enrollment.institution_id, enrollment=enrollment
+    ).first()
+    if situation is None or not situation.failed_subjects.filter(pk=subject.pk).exists():
+        raise DisciplinaNaoEstaEmRecursoError(subject)
+
+    decimal_value = _validate_grade_scale(value)
+    evaluation_type = ensure_recurso_evaluation_type(
+        enrollment.institution, origin_node_id=origin_node_id
+    )
+
+    existing = Grade.all_objects.filter(
+        institution_id=enrollment.institution_id,
+        student_id=enrollment.student_id,
+        subject=subject,
+        academic_term=academic_term,
+        evaluation_type=evaluation_type,
+    ).first()
+    if existing is not None:
+        existing.value = decimal_value
+        existing.teacher = teacher
+        existing.save()
+        grade = existing
+    else:
+        grade = Grade.objects.create(
+            institution=enrollment.institution,
+            origin_node_id=origin_node_id,
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=decimal_value,
+            teacher=teacher,
+        )
+
+    calcular_situacao_final(enrollment)
+    return grade
+
+
+def ensure_recurso_evaluation_type(institution, *, origin_node_id) -> EvaluationType:
+    """Get-or-create the institution's "Exame de Recurso" `EvaluationType`
+    (RF-AVAL-06's own exemplo de implementação) -- created lazily, on first
+    actual use, not seeded upfront for every institution like
+    `DEFAULT_EVALUATION_TYPES` (issue #18): most disciplinas most períodos
+    never need one."""
+    evaluation_type, _created = EvaluationType.objects.get_or_create(
+        institution=institution,
+        name=RECURSO_EVALUATION_TYPE_NAME,
+        defaults={"default_weight": Decimal("0"), "origin_node_id": origin_node_id},
+    )
+    return evaluation_type
