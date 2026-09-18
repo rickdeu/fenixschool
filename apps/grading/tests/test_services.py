@@ -12,6 +12,7 @@ from apps.grading.services import (
     calculate_average,
     ensure_default_evaluation_types,
     resolve_grading_formula,
+    seed_default_grading_formula,
     set_course_formula_override,
     set_institution_default_formula,
     set_subject_formula_override,
@@ -200,6 +201,31 @@ def test_calculate_average_applies_the_weights(institution):
     assert average == Decimal("14") * Decimal("0.3") + Decimal("16") * Decimal(
         "0.3"
     ) + Decimal("12") * Decimal("0.4")
+
+
+def test_seed_default_grading_formula_activates_a_working_formula(institution):
+    with tenant_context(institution.id):
+        seed_default_grading_formula(institution, origin_node_id=_origin())
+        institution.refresh_from_db()
+
+    assert institution.default_grading_formula == {
+        "MAC": "0.300",
+        "Prova Trimestral": "0.300",
+        "Exame": "0.400",
+    }
+
+
+def test_seed_default_grading_formula_never_overwrites_a_customised_formula(institution):
+    with tenant_context(institution.id):
+        EvaluationType.objects.create(
+            institution=institution, origin_node_id=_origin(), name="MAC", default_weight="1"
+        )
+        set_institution_default_formula(institution, {"MAC": Decimal("1")})
+
+        seed_default_grading_formula(institution, origin_node_id=_origin())
+        institution.refresh_from_db()
+
+    assert institution.default_grading_formula == {"MAC": "1"}
 
 
 def test_calculate_average_raises_when_a_grade_is_missing():

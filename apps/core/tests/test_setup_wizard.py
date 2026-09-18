@@ -1,12 +1,16 @@
 """Tests for the setup wizard (issue #17, docs/04-arquitetura-tecnica.md §4.4.2)."""
 
+from decimal import Decimal
+
 import pytest
 from django.db import IntegrityError
 from django.urls import reverse
 
 from apps.accounts.models import Profile, User
+from apps.core.context import tenant_context
 from apps.core.models import Institution
 from apps.core.services import setup_institution
+from apps.grading.models import EvaluationType
 
 pytestmark = pytest.mark.django_db
 
@@ -44,6 +48,23 @@ def test_wizard_creates_institution_and_manager_atomically(client):
     assert manager.institution == institution
     assert manager.profile == Profile.INSTITUTION_ADMIN
     assert manager.check_password("uma-password-bastante-forte-123")
+
+
+def test_wizard_seeds_a_working_default_grading_formula(client):
+    """Issue #18: an institution must have a working formula from day one,
+    not an empty one blocking every average calculation until an
+    Administrator happens to visit the configuration screen."""
+    client.post(reverse("core:setup_wizard"), VALID_POST_DATA)
+
+    institution = Institution.objects.get()
+    assert institution.default_grading_formula
+    assert sum(Decimal(w) for w in institution.default_grading_formula.values()) == Decimal("1.0")
+    with tenant_context(institution.id):
+        assert {t.name for t in EvaluationType.objects.filter(institution=institution)} == {
+            "MAC",
+            "Prova Trimestral",
+            "Exame",
+        }
 
 
 def test_wizard_rejects_mismatched_passwords_without_creating_anything(client):
