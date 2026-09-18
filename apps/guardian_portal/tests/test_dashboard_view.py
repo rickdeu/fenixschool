@@ -77,6 +77,26 @@ def test_denies_a_non_guardian_profile(institution):
     assert response.status_code == 403
 
 
+def test_super_admin_is_never_blocked_by_the_guardian_profile_check(
+    institution, verify_two_factor
+):
+    """"Super Administrador deve ter acesso a tudo, sem restrição alguma" --
+    a Super Admin's own profile is not Encarregado de Educação, but
+    `guardian_required` (via `apps.accounts.permissions.require_profile`)
+    must still let them open the portal (with, naturally, no educandos of
+    their own to show)."""
+    super_admin = User.objects.create_user(
+        username="root1", profile=Profile.SUPER_ADMIN, institution=institution
+    )
+    client = Client()
+    client.force_login(super_admin)
+    verify_two_factor(client, super_admin)
+
+    response = client.get(reverse("guardian_portal:dashboard"))
+
+    assert response.status_code == 200
+
+
 def test_shows_a_message_when_no_students_are_linked(institution):
     User.objects.create_user(
         username="enc0", profile=Profile.GUARDIAN, institution=institution, password="pw12345"
