@@ -14,12 +14,16 @@ from apps.grading.services import (
 )
 
 from ..forms import GradingFormulaForm
-from .grading_formula_config_view import _build_preview
+from .grading_formula_config_view import _build_preview, require_institution_context
 
 
 @login_required
 @permission_required("academic.change_subject", raise_exception=True)
 def subject_grading_formula_view(request, subject_id):
+    redirect_response = require_institution_context(request)
+    if redirect_response:
+        return redirect_response
+
     institution = request.institution
     subject = get_object_or_404(Subject, pk=subject_id, institution=institution)
     evaluation_types = ensure_default_evaluation_types(

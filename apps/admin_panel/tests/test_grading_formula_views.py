@@ -95,6 +95,23 @@ def test_config_view_requires_permission(institution):
     assert response.status_code == 403
 
 
+def test_config_view_redirects_gracefully_without_a_selected_institution(institution):
+    """A Super Administrator has no `institution` of their own until they
+    pick one to view (issue #18's bug found via manual Docker verification:
+    this used to crash with a 500 instead)."""
+    User.objects.create_user(
+        username="superadmin1", profile=Profile.SUPER_ADMIN, password="pw12345", is_superuser=True
+    )
+    client = Client()
+    client.login(username="superadmin1", password="pw12345")
+
+    response = client.get(reverse("admin_panel:grading_formula_config"), follow=True)
+
+    assert response.status_code == 200
+    assert response.redirect_chain
+    assert "nenhuma instituição está seleccionada" in response.content.decode()
+
+
 def test_config_view_auto_seeds_default_evaluation_types(admin_client, institution):
     response = admin_client.get(reverse("admin_panel:grading_formula_config"))
 
