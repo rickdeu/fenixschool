@@ -17,7 +17,9 @@ from apps.grading.services import (
     calcular_media_disciplina,
     calculate_average,
     ensure_default_evaluation_types,
+    get_docente_assignments,
     lancar_nota,
+    lancar_ou_atualizar_nota,
     registar_media_final,
     resolve_grading_formula,
     seed_default_grading_formula,
@@ -603,3 +605,107 @@ def test_ajustar_media_manualmente_records_who_and_when(
 
     assert updated.overridden_by_id == teacher.id
     assert updated.overridden_at is not None
+
+
+def test_get_docente_assignments_returns_only_this_teachers_schedule(
+    institution, school_class, subject, teacher, schedule
+):
+    with tenant_context(institution.id):
+        assignments = get_docente_assignments(teacher)
+
+    assert len(assignments) == 1
+    assert assignments[0].school_class_id == school_class.id
+    assert assignments[0].subject_id == subject.id
+
+
+def test_get_docente_assignments_is_empty_for_a_teacher_with_no_schedule(institution, teacher):
+    with tenant_context(institution.id):
+        assignments = get_docente_assignments(teacher)
+
+    assert assignments == []
+
+
+def test_get_docente_assignments_deduplicates_repeated_turma_disciplina_slots(
+    institution, school_class, subject, teacher, schedule, room
+):
+    from datetime import time
+
+    with tenant_context(institution.id):
+        Schedule.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            school_class=school_class,
+            subject=subject,
+            weekday=Schedule.Weekday.WEDNESDAY,
+            start_time=time(10, 0),
+            end_time=time(11, 0),
+            regime=Schedule.Regime.THEORETICAL,
+            room=room,
+            teacher=teacher,
+        )
+
+        assignments = get_docente_assignments(teacher)
+
+    assert len(assignments) == 1
+
+
+def test_lancar_ou_atualizar_nota_creates_when_no_grade_exists(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher, schedule
+):
+    with tenant_context(institution.id):
+        grade = lancar_ou_atualizar_nota(
+            teacher=teacher,
+            enrollment=enrollment,
+            subject=subject,
+            evaluation_type=evaluation_type,
+            academic_term=academic_term,
+            value=Decimal("12"),
+            origin_node_id=uuid.uuid4(),
+        )
+
+    assert grade.value == Decimal("12")
+
+
+def test_lancar_ou_atualizar_nota_updates_the_existing_grade_in_place(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher, schedule
+):
+    with tenant_context(institution.id):
+        first = lancar_ou_atualizar_nota(
+            teacher=teacher,
+            enrollment=enrollment,
+            subject=subject,
+            evaluation_type=evaluation_type,
+            academic_term=academic_term,
+            value=Decimal("12"),
+            origin_node_id=uuid.uuid4(),
+        )
+        second = lancar_ou_atualizar_nota(
+            teacher=teacher,
+            enrollment=enrollment,
+            subject=subject,
+            evaluation_type=evaluation_type,
+            academic_term=academic_term,
+            value=Decimal("19"),
+            origin_node_id=uuid.uuid4(),
+        )
+
+        assert Grade.objects.filter(enrollment=enrollment, subject=subject).count() == 1
+
+    assert first.pk == second.pk
+    assert second.value == Decimal("19")
+
+
+def test_lancar_ou_atualizar_nota_rejects_a_teacher_not_scheduled(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        with pytest.raises(DocenteNaoAssociadoError):
+            lancar_ou_atualizar_nota(
+                teacher=teacher,
+                enrollment=enrollment,
+                subject=subject,
+                evaluation_type=evaluation_type,
+                academic_term=academic_term,
+                value=Decimal("12"),
+                origin_node_id=uuid.uuid4(),
+            )

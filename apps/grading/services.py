@@ -218,6 +218,51 @@ class DocenteNaoAssociadoError(Exception):
         )
 
 
+def _validate_grade_scale(value) -> Decimal:
+    decimal_value = Decimal(str(value))
+    if not (Decimal("0") <= decimal_value <= Decimal("20")):
+        raise NotaForaDaEscalaError(decimal_value)
+    return decimal_value
+
+
+def _validate_teacher_is_scheduled(*, teacher, enrollment, subject) -> None:
+    is_associated = Schedule.all_objects.filter(
+        institution_id=enrollment.institution_id,
+        teacher_id=teacher.id,
+        school_class_id=enrollment.school_class_id,
+        subject_id=subject.id,
+    ).exists()
+    if not is_associated:
+        raise DocenteNaoAssociadoError(teacher, enrollment.school_class, subject)
+
+
+def get_docente_assignments(teacher) -> list:
+    """The distinct turma/disciplina pairs `teacher` actually teaches
+    (`academic.Schedule`, issue #36) -- issue #59's grelha de lançamento only
+    ever lets a docente pick from these, never any turma/disciplina in the
+    institution (the same object-level scoping
+    `_validate_teacher_is_scheduled` enforces at the point of actually
+    launching a Nota).
+
+    Deduplicated in Python, not via `QuerySet.distinct("field", ...)`: that
+    form is Postgres-only, and this project's tests (and some
+    local-node deployments) run on SQLite.
+    """
+    schedules = (
+        Schedule.all_objects.filter(teacher=teacher)
+        .select_related("school_class", "subject")
+        .order_by("school_class__designation", "subject__name")
+    )
+    seen = set()
+    assignments = []
+    for schedule in schedules:
+        key = (schedule.school_class_id, schedule.subject_id)
+        if key not in seen:
+            seen.add(key)
+            assignments.append(schedule)
+    return assignments
+
+
 def lancar_nota(
     *, teacher, enrollment, subject, evaluation_type, academic_term, value, origin_node_id
 ) -> Grade:
@@ -230,18 +275,49 @@ def lancar_nota(
     itself already enforces -- never something a caller could set
     inconsistently.
     """
-    decimal_value = Decimal(str(value))
-    if not (Decimal("0") <= decimal_value <= Decimal("20")):
-        raise NotaForaDaEscalaError(decimal_value)
+    decimal_value = _validate_grade_scale(value)
+    _validate_teacher_is_scheduled(teacher=teacher, enrollment=enrollment, subject=subject)
 
-    is_associated = Schedule.all_objects.filter(
+    return Grade.objects.create(
+        institution=enrollment.institution,
+        origin_node_id=origin_node_id,
+        student=enrollment.student,
+        enrollment=enrollment,
+        subject=subject,
+        academic_term=academic_term,
+        evaluation_type=evaluation_type,
+        value=decimal_value,
+        teacher=teacher,
+    )
+
+
+def lancar_ou_atualizar_nota(
+    *, teacher, enrollment, subject, evaluation_type, academic_term, value, origin_node_id
+) -> Grade:
+    """Issue #59's grelha de lançamento: unlike `lancar_nota` (issue #57,
+    create-only), a docente correcting a value already saved in the grid
+    must be able to just resubmit that same cell -- so this updates the
+    existing Nota in place when one already exists for this student/
+    disciplina/período/tipo de avaliação, instead of hitting `Grade`'s own
+    `UniqueConstraint`. Editing an already-closed pauta still goes through
+    `Grade.save()`'s own `GradeReportClosedError` -- not silently bypassed
+    here.
+    """
+    decimal_value = _validate_grade_scale(value)
+    _validate_teacher_is_scheduled(teacher=teacher, enrollment=enrollment, subject=subject)
+
+    existing = Grade.all_objects.filter(
         institution_id=enrollment.institution_id,
-        teacher_id=teacher.id,
-        school_class_id=enrollment.school_class_id,
-        subject_id=subject.id,
-    ).exists()
-    if not is_associated:
-        raise DocenteNaoAssociadoError(teacher, enrollment.school_class, subject)
+        student=enrollment.student,
+        subject=subject,
+        academic_term=academic_term,
+        evaluation_type=evaluation_type,
+    ).first()
+    if existing is not None:
+        existing.value = decimal_value
+        existing.teacher = teacher
+        existing.save()
+        return existing
 
     return Grade.objects.create(
         institution=enrollment.institution,
@@ -342,9 +418,7 @@ def ajustar_media_manualmente(*, final_grade, user, value, reason) -> FinalGrade
     if not reason or not reason.strip():
         raise JustificacaoObrigatoriaError()
 
-    decimal_value = Decimal(str(value))
-    if not (Decimal("0") <= decimal_value <= Decimal("20")):
-        raise NotaForaDaEscalaError(decimal_value)
+    decimal_value = _validate_grade_scale(value)
 
     final_grade.manual_override_value = decimal_value
     final_grade.override_reason = reason
