@@ -15,6 +15,9 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+# Compiled translation catalogues (issue #150) -- derived from locale/**/*.po,
+# generated via `django-admin compilemessages`, not committed.
+locale/**/*.mo
 
 # Environments
 .env
