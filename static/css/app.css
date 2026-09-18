@@ -1,3 +1,10 @@
 /* Estilos próprios do FenixSchool -- por cima da base Kiaalap/Bootstrap
    (static/vendor/kiaalap/). Mantém-se vazio até haver uma necessidade real
    de sobrepor algo do tema base, em vez de duplicar regras por omissão. */
+
+/* Alpine.js hides [x-cloak] elements only after it initialises -- without
+   this rule every step of a components/stepped_form.html wizard would flash
+   visible at once before Alpine hides all but the current one. */
+[x-cloak] {
+    display: none !important;
+}

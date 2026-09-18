@@ -16,6 +16,49 @@ urlpatterns = [
     path("utilizadores/<uuid:user_id>/editar/", views.user_edit_view, name="user_edit"),
     # -- Configuração da instituição (RF-ADM-02, issue #114) --------------------
     path("configuracao/", views.institution_config_view, name="institution_config"),
+    path("configuracao/dados/", views.institution_edit_view, name="institution_edit"),
+    # -- Anos lectivos e períodos (RF-INST-03/04, issue #16) --------------------
+    path(
+        "configuracao/anos-lectivos/",
+        views.academic_year_list_view,
+        name="academic_year_list",
+    ),
+    path(
+        "configuracao/anos-lectivos/novo/",
+        views.academic_year_create_view,
+        name="academic_year_create",
+    ),
+    path(
+        "configuracao/anos-lectivos/<uuid:academic_year_id>/editar/",
+        views.academic_year_edit_view,
+        name="academic_year_edit",
+    ),
+    path(
+        "configuracao/anos-lectivos/<uuid:academic_year_id>/periodos/novo/",
+        views.academic_term_create_view,
+        name="academic_term_create",
+    ),
+    path(
+        "configuracao/periodos/<uuid:academic_term_id>/editar/",
+        views.academic_term_edit_view,
+        name="academic_term_edit",
+    ),
+    # -- Ciclos lectivos (RF-INST-05, issue #16) --------------------------------
+    path(
+        "configuracao/ciclos-lectivos/",
+        views.academic_cycle_list_view,
+        name="academic_cycle_list",
+    ),
+    path(
+        "configuracao/ciclos-lectivos/novo/",
+        views.academic_cycle_create_view,
+        name="academic_cycle_create",
+    ),
+    path(
+        "configuracao/ciclos-lectivos/<uuid:academic_cycle_id>/editar/",
+        views.academic_cycle_edit_view,
+        name="academic_cycle_edit",
+    ),
     # -- Feriados e dias não lectivos (RF-INST-07, issue #20) -------------------
     path(
         "configuracao/feriados/",

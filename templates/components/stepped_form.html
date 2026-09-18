@@ -1,0 +1,53 @@
+{% load i18n %}
+{% comment %}
+Multi-step wizard for a form with many fields, grouped into sections (issue
+requested directly by the user: "separar por secções, usar Next/Next/Concluir").
+
+Usage: `{% include "components/stepped_form.html" with form=form sections=sections initial_step=initial_step %}`
+inside a `<form method="post" ...>{% csrf_token %}` block the caller still
+owns -- this partial only renders the sections and the Anterior/Seguinte/
+Concluir navigation, not the `<form>` tag itself, so the caller keeps control
+over `enctype`/action.
+
+`sections`: a list of `{"title": str, "fields": [field_name, ...]}`.
+`initial_step` (optional): 1-indexed step to open on -- pass
+`apps.core.view_helpers.first_section_with_errors(form, sections)` so a
+redisplay after a failed submission opens on the step that actually has the
+error, not always step 1.
+{% endcomment %}
+<div x-data="{ step: {{ initial_step|default:1 }}, total: {{ sections|length }} }">
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        {% for section in sections %}
+        <button type="button"
+                class="btn btn-sm"
+                :class="step === {{ forloop.counter }} ? 'btn-primary' : (step > {{ forloop.counter }} ? 'btn-outline-primary' : 'btn-outline-secondary')"
+                @click="step = {{ forloop.counter }}">
+            {{ forloop.counter }}. {{ section.title }}
+        </button>
+        {% endfor %}
+    </div>
+
+    {% for error in form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endfor %}
+
+    {% for section in sections %}
+    <div x-show="step === {{ forloop.counter }}" {% if not forloop.first %}x-cloak{% endif %}>
+        {% include "components/bootstrap_form.html" with form=form fields=section.fields hide_non_field_errors=True %}
+    </div>
+    {% endfor %}
+
+    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+        <button type="button" class="btn btn-outline-secondary" x-show="step > 1" @click="step--">
+            <i class="bi bi-arrow-left me-1"></i>{% translate "Anterior" %}
+        </button>
+        <div class="ms-auto">
+            <button type="button" class="btn btn-primary" x-show="step < total" @click="step++">
+                {% translate "Seguinte" %}<i class="bi bi-arrow-right ms-1"></i>
+            </button>
+            <button type="submit" class="btn btn-success" x-show="step >= total">
+                <i class="bi bi-check-lg me-1"></i>{% translate "Concluir" %}
+            </button>
+        </div>
+    </div>
+</div>

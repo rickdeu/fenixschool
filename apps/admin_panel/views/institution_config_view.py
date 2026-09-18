@@ -1,13 +1,9 @@
 """Painel único de configuração da instituição (issue #114, RF-ADM-02,
 docs/02-requisitos-funcionais.md §2.1).
 
-Agrega os ecrãs de configuração já existentes -- alguns ainda o próprio
-Django Admin, já registado para os respectivos modelos, em vez de um
-formulário dedicado duplicado só por duplicar (ver
-`apps/core/admin.py`/`apps/grading/admin.py`). "Fórmula de média" (issue
-#18) e "Feriados e dias não lectivos" (issue #20) têm ecrã dedicado
-próprio; "tabelas de preços" (RF-INST-08) fica assinalada como
-indisponível -- `finance.TabelaPrecos` (issue #70) ainda não existe, nada
+Agrega os ecrãs de configuração já existentes -- todos com ecrã dedicado
+próprio, excepto "tabelas de preços" (RF-INST-08), assinalada como
+indisponível: `finance.TabelaPrecos` (issue #70) ainda não existe, nada
 real para ligar.
 """
 
@@ -25,25 +21,23 @@ def institution_config_view(request):
     if redirect_response:
         return redirect_response
 
-    institution = request.institution
-
     sections = [
         {
             "title": "Dados da instituição",
             "description": "Nome, NIF, morada, contactos, logótipo, apresentação (RF-INST-01).",
-            "url": reverse("admin:core_institution_change", args=[institution.pk]),
+            "url": reverse("admin_panel:institution_edit"),
             "available": True,
         },
         {
             "title": "Anos lectivos e períodos",
             "description": "Datas, ano lectivo corrente, trimestres/semestres (RF-INST-03/04).",
-            "url": reverse("admin:core_academicyear_changelist"),
+            "url": reverse("admin_panel:academic_year_list"),
             "available": True,
         },
         {
             "title": "Ciclos lectivos",
             "description": "1.º/2.º Ciclo e a sua relação com os cursos (RF-INST-05).",
-            "url": reverse("admin:core_academiccycle_changelist"),
+            "url": reverse("admin_panel:academic_cycle_list"),
             "available": True,
         },
         {
