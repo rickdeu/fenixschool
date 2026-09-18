@@ -152,6 +152,29 @@ def test_user_without_permission_is_forbidden(institution):
     assert response.status_code == 403
 
 
+def test_submitting_the_course_filter_without_choosing_one_does_not_crash(secretary_client):
+    """Clicking "Ver" with the blank "Escolha um curso" option selected posts
+    `?course=` (an empty string), not a missing param -- `Course.objects.filter(pk="")`
+    used to raise a `ValidationError` ("not a valid UUID") instead of just
+    finding nothing, crashing the whole page with a 500 (found in manual
+    verification via Docker)."""
+    response = secretary_client.get(URL, {"course": ""})
+
+    assert response.status_code == 200
+    assert response.context["course"] is None
+
+
+def test_submitting_without_choosing_a_turma_does_not_crash(secretary_client, class_setup):
+    """Same bug class as above, on the turma dropdown: the "Nenhuma turma
+    configurada" placeholder option also posts an empty string."""
+    response = secretary_client.post(
+        URL,
+        {"course": str(class_setup["course"].pk), "school_class": "", "student_ids": []},
+    )
+
+    assert response.status_code == 200
+
+
 def test_lists_only_admitted_students_not_yet_enrolled_for_the_chosen_course(
     secretary_client, institution, document_type, class_setup
 ):
