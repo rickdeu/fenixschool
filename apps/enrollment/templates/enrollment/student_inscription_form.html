@@ -1,18 +1,19 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Nova Inscrição — FenixSchool{% endblock %}
+{% block title %}{% translate "Nova Inscrição" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>Inscrições → Alunos → Novo Aluno</h1>
+<h1>{% translate "Inscrições → Alunos → Novo Aluno" %}</h1>
 
 <section>
-    <h2>Encarregado de Educação — procurar existente</h2>
+    <h2>{% translate "Encarregado de Educação — procurar existente" %}</h2>
     <form method="get">
         {{ search_form.as_p }}
-        <button type="submit">Procurar</button>
+        <button type="submit">{% translate "Procurar" %}</button>
     </form>
     {% if guardian_not_found %}
-        <p>Nenhum encarregado encontrado com esse documento. Registe um novo abaixo.</p>
+        <p>{% translate "Nenhum encarregado encontrado com esse documento. Registe um novo abaixo." %}</p>
     {% endif %}
 </section>
 
@@ -20,16 +21,21 @@
     {% csrf_token %}
 
     <fieldset>
-        <legend>Dados Pessoais / Documento / Endereço / Contactos</legend>
+        <legend>{% translate "Dados Pessoais / Documento / Endereço / Contactos" %}</legend>
         {{ student_form.as_p }}
     </fieldset>
 
     <fieldset>
-        <legend>Encarregado de Educação</legend>
+        <legend>{% translate "Encarregado de Educação" %}</legend>
 
         {% if found_guardian %}
-            <p>Encarregado seleccionado: <strong>{{ found_guardian.full_name }}</strong>
-               ({{ found_guardian.get_kinship_display }}, {{ found_guardian.document_number }})</p>
+            {# Markup deliberately kept out of the translated string itself --
+               translatable text should never carry raw HTML tags. #}
+            <p>
+                {% translate "Encarregado seleccionado:" %}
+                <strong>{{ found_guardian.full_name }}</strong>
+                ({{ found_guardian.get_kinship_display }}, {{ found_guardian.document_number }})
+            </p>
             <input type="hidden" name="existing_guardian_id" value="{{ found_guardian.id }}">
         {% elif guardian_form %}
             {{ guardian_form.as_p }}
@@ -37,10 +43,10 @@
     </fieldset>
 
     <fieldset>
-        <legend>Consentimento</legend>
+        <legend>{% translate "Consentimento" %}</legend>
         {{ consent_form.as_p }}
     </fieldset>
 
-    <button type="submit">Guardar Inscrição</button>
+    <button type="submit">{% translate "Guardar Inscrição" %}</button>
 </form>
 {% endblock %}

@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Entrar — FenixSchool{% endblock %}
+{% block title %}{% translate "Entrar" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>Entrar</h1>
+<h1>{% translate "Entrar" %}</h1>
 
 {% if form.errors %}
 <div class="alert alert-danger" role="alert">
@@ -17,6 +18,6 @@
     {% csrf_token %}
     {{ form.as_p }}
     <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit">Entrar</button>
+    <button type="submit">{% translate "Entrar" %}</button>
 </form>
 {% endblock %}

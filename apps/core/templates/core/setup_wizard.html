@@ -1,28 +1,29 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Configuração inicial — FenixSchool{% endblock %}
+{% block title %}{% translate "Configuração inicial" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>Configuração inicial</h1>
+<h1>{% translate "Configuração inicial" %}</h1>
 <p>
-    Este assistente cria a instituição e a conta do respectivo Gestor
+    {% blocktranslate %}Este assistente cria a instituição e a conta do respectivo Gestor
     (Administrador da Instituição). Só está disponível enquanto não existir
-    nenhuma instituição configurada neste Nó.
+    nenhuma instituição configurada neste Nó.{% endblocktranslate %}
 </p>
 
 <form method="post" novalidate>
     {% csrf_token %}
 
     <fieldset>
-        <legend>Instituição</legend>
+        <legend>{% translate "Instituição" %}</legend>
         {{ institution_form.as_p }}
     </fieldset>
 
     <fieldset>
-        <legend>Gestor (Administrador da Instituição)</legend>
+        <legend>{% translate "Gestor (Administrador da Instituição)" %}</legend>
         {{ manager_form.as_p }}
     </fieldset>
 
-    <button type="submit">Concluir configuração</button>
+    <button type="submit">{% translate "Concluir configuração" %}</button>
 </form>
 {% endblock %}

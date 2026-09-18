@@ -1,12 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Inscrição concluída — FenixSchool{% endblock %}
+{% block title %}{% translate "Inscrição concluída" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>Inscrição concluída</h1>
+<h1>{% translate "Inscrição concluída" %}</h1>
 <p>
-    Aluno <strong>{{ student.first_name }} {{ student.last_name }}</strong> inscrito com o
-    número de aluno <strong>#{{ student.student_number }}</strong>.
+    {% blocktranslate with first_name=student.first_name last_name=student.last_name number=student.student_number %}Aluno <strong>{{ first_name }} {{ last_name }}</strong> inscrito com o número de aluno <strong>#{{ number }}</strong>.{% endblocktranslate %}
 </p>
-<a href="{% url 'enrollment:student_inscription' %}">Nova inscrição</a>
+<a href="{% url 'enrollment:student_inscription' %}">{% translate "Nova inscrição" %}</a>
 {% endblock %}

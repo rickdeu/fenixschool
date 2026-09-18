@@ -1,21 +1,22 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Matricular {{ student.first_name }} — FenixSchool{% endblock %}
+{% block title %}{% blocktranslate with name=student.first_name %}Matricular {{ name }}{% endblocktranslate %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>Matrícula</h1>
+<h1>{% translate "Matrícula" %}</h1>
 
 <section>
-    <h2>Aluno</h2>
+    <h2>{% translate "Aluno" %}</h2>
     <p>
         <strong>{{ student.first_name }} {{ student.last_name }}</strong>
-        (Nº {{ student.student_number }}, {{ student.document_number }})
+        ({% translate "Nº" %} {{ student.student_number }}, {{ student.document_number }})
     </p>
 </section>
 
 <form method="post" novalidate>
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Guardar e Imprimir</button>
+    <button type="submit">{% translate "Guardar e Imprimir" %}</button>
 </form>
 {% endblock %}
