@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Fórmula de média" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>{% translate "Fórmula de cálculo de média" %}</h1>
+<p>{{ scope_label }}</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" name="save">{% translate "Guardar" %}</button>
+    {% if can_clear %}
+    <button type="submit" name="clear" value="1">
+        {% translate "Remover sobreposição (usar fórmula da instituição)" %}
+    </button>
+    {% endif %}
+</form>
+
+{% if preview %}
+<section>
+    <h2>{% translate "Pré-visualização do cálculo" %}</h2>
+    <p>
+        {% translate "Exemplo ilustrativo (não são classificações reais de nenhum aluno), calculado com a fórmula acima:" %}
+    </p>
+    <table>
+        <thead>
+            <tr>
+                {% for name in preview.grades.keys %}
+                <th>{{ name }}</th>
+                {% endfor %}
+                <th>{% translate "Média" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for grade in preview.grades.values %}
+                <td>{{ grade }}</td>
+                {% endfor %}
+                <td><strong>{{ preview.average }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+{% endif %}
+{% endblock %}
