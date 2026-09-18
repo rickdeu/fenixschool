@@ -313,7 +313,18 @@ def test_non_teaching_day_str_includes_date_and_description(institution_factory)
     assert str(day) == "Ano Novo (01/01/2026)"
 
 
-def test_seed_national_holidays_creates_the_fixed_date_holidays(institution_factory):
+def test_easter_sunday_matches_known_dates():
+    """Cross-checked against `dateutil.easter.easter()`, already a real
+    (transitive, via celery) dependency of this project."""
+    from apps.core.services import _easter_sunday
+
+    assert _easter_sunday(2024) == date(2024, 3, 31)
+    assert _easter_sunday(2025) == date(2025, 4, 20)
+    assert _easter_sunday(2026) == date(2026, 4, 5)
+    assert _easter_sunday(2027) == date(2027, 3, 28)
+
+
+def test_seed_national_holidays_creates_fixed_and_movable_holidays(institution_factory):
     from apps.core.services import NATIONAL_HOLIDAYS, seed_national_holidays
 
     institution = institution_factory()
@@ -321,10 +332,18 @@ def test_seed_national_holidays_creates_the_fixed_date_holidays(institution_fact
         created = seed_national_holidays(institution, origin_node_id=_origin(), year=2027)
 
         holidays = NonTeachingDay.objects.filter(institution=institution)
-        assert created == len(NATIONAL_HOLIDAYS)
-        assert holidays.count() == len(NATIONAL_HOLIDAYS)
+        expected_count = len(NATIONAL_HOLIDAYS) + 2  # + Carnaval + Sexta-Feira Santa
+        assert created == expected_count
+        assert holidays.count() == expected_count
         assert all(day.scope == NonTeachingDay.Scope.NATIONAL for day in holidays)
         assert holidays.get(date=date(2027, 12, 25)).description == "Dia de Natal e da Família"
+        assert (
+            holidays.get(date=date(2027, 3, 23)).description
+            == "Dia da Libertação da África Austral"
+        )
+        # 2027's Easter Sunday is 2027-03-28 (verified against `dateutil.easter`).
+        assert holidays.get(date=date(2027, 2, 9)).description == "Carnaval"
+        assert holidays.get(date=date(2027, 3, 26)).description == "Sexta-Feira Santa"
 
 
 def test_seed_national_holidays_is_idempotent(institution_factory):
@@ -338,4 +357,4 @@ def test_seed_national_holidays_is_idempotent(institution_factory):
         assert created_again == 0
         assert NonTeachingDay.objects.filter(institution=institution).count() == len(
             NATIONAL_HOLIDAYS
-        )
+        ) + 2

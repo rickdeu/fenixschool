@@ -4,7 +4,7 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 from django.db import transaction
 
@@ -13,18 +13,16 @@ from apps.accounts.models import Profile, User
 from .context import get_current_node_id, tenant_context
 from .models import Institution, NonTeachingDay
 
-# Fixed-date national holidays only (Lei n.º 16/20, de 22 de Maio -- "Lei dos
-# Feriados"), as (month, day, description) -- month/day never change year to
-# year, unlike the movable ones below. Deliberately NOT included: Carnaval and
-# Sexta-Feira Santa, both tied to the date of Easter -- computing/verifying
-# those correctly is real, separate work (issue #20's acceptance criterion
-# only asks for the initial fixture to pre-load, not a full liturgical
-# calendar), so an Administrador da Instituição adds them by hand every year
-# via this same screen instead of trusting a silently wrong guess here.
+# Fixed-date national holidays (Lei n.º 10/11, de 16 de Fevereiro -- "Regime
+# Jurídico dos Feriados Nacionais e Locais e Datas de Celebração Nacional",
+# alterada pela Lei n.º 11/18, de 28 de Setembro), as (month, day,
+# description) -- month/day never change year to year, unlike the movable
+# ones below.
 NATIONAL_HOLIDAYS = [
     (1, 1, "Ano Novo"),
     (2, 4, "Dia do Início da Luta Armada de Libertação Nacional"),
     (3, 8, "Dia Internacional da Mulher"),
+    (3, 23, "Dia da Libertação da África Austral"),
     (4, 4, "Dia da Paz e Reconciliação Nacional"),
     (5, 1, "Dia Internacional do Trabalhador"),
     (9, 17, "Dia do Herói Nacional"),
@@ -34,21 +32,63 @@ NATIONAL_HOLIDAYS = [
 ]
 
 
+def _easter_sunday(year: int) -> date:
+    """Anonymous Gregorian algorithm (Computus) -- computes Easter Sunday for
+    any Gregorian-calendar year without a network call or a third-party
+    dependency, so the movable holidays below stay correct offline, on any
+    Nó Local, for any year (verified against 2024-03-31/2025-04-20/2026-04-05/
+    2027-03-28, the well-known Easter dates for those years).
+    """
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    ell = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * ell) // 451
+    month = (h + ell - 7 * m + 114) // 31
+    day_of_month = ((h + ell - 7 * m + 114) % 31) + 1
+    return date(year, month, day_of_month)
+
+
+def _movable_holidays(year: int) -> list[tuple[date, str]]:
+    """Carnaval and Sexta-Feira Santa (Lei n.º 10/11) -- both fixed relative to
+    Easter Sunday, not to the calendar, so they can't be listed in
+    `NATIONAL_HOLIDAYS` alongside the fixed-date ones above."""
+    easter = _easter_sunday(year)
+    return [
+        (easter - timedelta(days=47), "Carnaval"),
+        (easter - timedelta(days=2), "Sexta-Feira Santa"),
+    ]
+
+
 def seed_national_holidays(institution: Institution, *, origin_node_id, year: int) -> int:
-    """Pre-loads the fixed-date national holidays (issue #20's "Feriados
-    nacionais pré-carregados" acceptance criterion) for a given calendar
-    year. Idempotent -- safe to call again for a year already seeded, e.g.
-    from the dedicated screen to cover a future year, since it only adds
-    rows for (date, description) pairs that don't already exist.
+    """Pre-loads every national holiday, fixed-date and movable alike (issue
+    #20's "Feriados nacionais pré-carregados" acceptance criterion), for a
+    given calendar year -- nothing here is ever left for an Administrador da
+    Instituição to type in by hand. Idempotent -- safe to call again for a
+    year already seeded, e.g. from the dedicated screen to (re)cover a given
+    year on demand, since it only adds rows for (date, description) pairs
+    that don't already exist.
 
     Returns how many rows were actually created (0 if this year was already
     fully seeded).
     """
+    all_holidays = [
+        (date(year, month, day), description) for month, day, description in NATIONAL_HOLIDAYS
+    ]
+    all_holidays += _movable_holidays(year)
+
     created = 0
-    for month, day, description in NATIONAL_HOLIDAYS:
+    for holiday_date, description in all_holidays:
         _, was_created = NonTeachingDay.objects.get_or_create(
             institution=institution,
-            date=date(year, month, day),
+            date=holiday_date,
             description=description,
             defaults={
                 "origin_node_id": origin_node_id,
