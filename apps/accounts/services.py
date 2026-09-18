@@ -144,3 +144,58 @@ def create_user(*, created_by: User, institution=None, **fields) -> User:
         created_by=created_by,
         **fields,
     )
+
+
+# -- Gestão de utilizadores/perfis (issue #113, RF-ADM-01) --------------------
+
+# Every profile Django Group a `User` can hold maps to exactly one -- see
+# `accounts.migrations.0003_profile_groups`'s `GROUP_NAMES`. "Público" has no
+# corresponding `Profile` (it's for anonymous visitors, never an actual
+# `User` row), so it's deliberately absent here.
+PROFILE_GROUP_NAMES = {
+    Profile.SUPER_ADMIN: "Super Administrador",
+    Profile.INSTITUTION_ADMIN: "Administrador da Instituição",
+    Profile.PEDAGOGICAL_DIRECTION: "Direção Pedagógica",
+    Profile.SECRETARY: "Secretaria Escolar",
+    Profile.TEACHER: "Docente",
+    Profile.HOMEROOM_TEACHER: "Diretor de Turma",
+    Profile.FINANCE: "Financeiro/Tesouraria",
+    Profile.HR: "Recursos Humanos",
+    Profile.LIBRARY: "Biblioteca",
+    Profile.GUARDIAN: "Encarregado de Educação",
+    Profile.STUDENT: "Aluno",
+}
+
+# An Institution Administrator manages their own institution's staff/portal
+# accounts, but must never be able to grant the network-wide Super
+# Administrador profile to anyone -- that's provisioned only via
+# `createsuperuser`/direct database access, never through this app's own
+# user-management screens (issue #113's acceptance criterion: permissions
+# must reflect §7.2's matrix, and no row there lets Admin Instituição create
+# a Super Admin).
+ASSIGNABLE_PROFILES_FOR_INSTITUTION_ADMIN = [
+    choice for choice in Profile.choices if choice[0] != Profile.SUPER_ADMIN
+]
+
+
+def sync_profile_group_membership(user: User) -> None:
+    """Keeps `user.groups` in sync with `user.profile` (issue #113) --
+    `profile` is the single source of truth for "which role does this
+    account have", `groups` (and therefore Django's own permission checks)
+    are always derived from it, never edited independently. Connected to
+    `User`'s `post_save` signal (see `apps/accounts/signals.py`), so this
+    holds regardless of which code path created/edited the user.
+    """
+    from django.contrib.auth.models import Group
+
+    group_name = PROFILE_GROUP_NAMES.get(user.profile)
+    if group_name is None:
+        return
+    try:
+        group = Group.objects.get(name=group_name)
+    except Group.DoesNotExist:
+        # The profile-groups migration (0003) hasn't run yet -- true only
+        # during that migration's own execution, never in normal operation.
+        return
+    if list(user.groups.values_list("pk", flat=True)) != [group.pk]:
+        user.groups.set([group])

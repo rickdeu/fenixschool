@@ -10,6 +10,10 @@ from . import views
 app_name = "admin_panel"
 
 urlpatterns = [
+    # -- Utilizadores/perfis (RF-ADM-01, issue #113) ----------------------------
+    path("utilizadores/", views.user_list_view, name="user_list"),
+    path("utilizadores/novo/", views.user_create_view, name="user_create"),
+    path("utilizadores/<uuid:user_id>/editar/", views.user_edit_view, name="user_edit"),
     # -- Configuração da instituição (RF-ADM-02, issue #114) --------------------
     path("configuracao/", views.institution_config_view, name="institution_config"),
     # -- Configuração da fórmula de média (RF-INST-06, issue #18) --------------

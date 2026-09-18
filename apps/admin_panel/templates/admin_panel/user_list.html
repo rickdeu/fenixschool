@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Utilizadores" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>{% translate "Utilizadores" %}</h1>
+
+<p><a href="{% url 'admin_panel:user_create' %}">{% translate "Novo utilizador" %}</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>{% translate "Nome" %}</th>
+            <th>{% translate "Utilizador" %}</th>
+            <th>{% translate "Perfil" %}</th>
+            <th>{% translate "Activo" %}</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.first_name }} {{ user.last_name }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.get_profile_display }}</td>
+            <td>{% if user.is_active %}{% translate "Sim" %}{% else %}{% translate "Não" %}{% endif %}</td>
+            <td><a href="{% url 'admin_panel:user_edit' user.id %}">{% translate "Editar" %}</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">{% translate "Nenhum utilizador encontrado." %}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

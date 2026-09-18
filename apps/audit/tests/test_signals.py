@@ -31,12 +31,14 @@ def test_creating_a_user_records_a_create_entry():
     with audit_actor_context(admin, "10.0.0.1"):
         user = User.objects.create_user(username="joao", profile=Profile.TEACHER)
 
-    entries = list(_entries_for(user))
-    assert len(entries) == 1
-    assert entries[0].action == AuditLogEntry.Action.CREATE
-    assert entries[0].user == admin
-    assert entries[0].ip_address == "10.0.0.1"
-    assert entries[0].values_after["username"] == "joao"
+    # 2 entries, not 1: creation itself, plus the automatic profile->group
+    # sync (issue #113) it triggers -- a brand new user starts in no
+    # groups at all, so it's a real, distinct "Permissão" change worth its
+    # own entry, not a side effect to suppress.
+    entry = _entries_for(user).get(action=AuditLogEntry.Action.CREATE)
+    assert entry.user == admin
+    assert entry.ip_address == "10.0.0.1"
+    assert entry.values_after["username"] == "joao"
 
 
 def test_password_is_never_captured_in_a_users_audit_trail():
@@ -56,7 +58,15 @@ def test_updating_a_user_records_an_update_entry_with_before_and_after():
     user.first_name = "João"
     user.save()
 
-    entry = _entries_for(user).get(action=AuditLogEntry.Action.UPDATE)
+    # `.exclude(...)`: creation itself also triggers an UPDATE entry for its
+    # own automatic profile->group sync (issue #113) -- this test is about
+    # the *field* change, not that one.
+    entry = (
+        _entries_for(user)
+        .filter(action=AuditLogEntry.Action.UPDATE)
+        .exclude(values_after__has_key="groups_changed")
+        .get()
+    )
     assert entry.values_before["first_name"] == "Joao"
     assert entry.values_after["first_name"] == "João"
 
@@ -81,13 +91,16 @@ def test_deleting_a_user_records_a_delete_entry():
 
 
 def test_changing_a_users_groups_records_an_update_entry():
+    # A profile of "Docente" already auto-syncs the "Docente" group on
+    # creation (issue #113) -- adding a *different* group here (Diretor de
+    # Turma, on top of it) is what actually exercises "a new group being
+    # added", rather than a no-op re-add of one already there.
     user = User.objects.create_user(username="joao6", profile=Profile.TEACHER)
-    group = Group.objects.get(name="Docente")
+    group = Group.objects.get(name="Diretor de Turma")
 
     user.groups.add(group)
 
-    entry = _entries_for(user).filter(values_after__groups_changed="post_add").first()
-    assert entry is not None
+    entry = _entries_for(user).filter(values_after__groups_changed="post_add").latest("timestamp")
     assert entry.action == AuditLogEntry.Action.UPDATE
     assert str(group.pk) in entry.values_after["group_ids"]
 
