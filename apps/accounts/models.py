@@ -80,15 +80,20 @@ class User(AbstractUser):
             "a different interface language at the same time."
         ),
     )
-    is_2fa_active = models.BooleanField(
-        default=False,
-        help_text=(
-            "Whether TOTP two-factor authentication is enabled for this account. "
-            "Mandatory for Institution Administrator, Super Administrator and "
-            "Finance profiles -- see issue #25."
-        ),
-    )
-
     @property
     def is_super_admin(self) -> bool:
         return self.profile == Profile.SUPER_ADMIN
+
+    @property
+    def is_2fa_active(self) -> bool:
+        """Whether TOTP two-factor authentication is set up for this
+        account -- always computed from the real `TOTPDevice` state (issue
+        #25), never a separately stored flag that could drift out of sync
+        with it (e.g. if a device were deleted directly via the Django
+        Admin). Mandatory for Institution Administrator, Super
+        Administrator and Finance profiles -- see
+        `apps.accounts.services.requires_two_factor`.
+        """
+        from django_otp.plugins.otp_totp.models import TOTPDevice
+
+        return TOTPDevice.objects.filter(user=self, confirmed=True).exists()
