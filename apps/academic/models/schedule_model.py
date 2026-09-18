@@ -106,7 +106,17 @@ class Schedule(SyncedModel):
         if self.teacher_id:
             from apps.accounts.models import Profile
 
-            if self.teacher.profile not in (Profile.TEACHER, Profile.HOMEROOM_TEACHER):
+            # Super Administrador bypasses this too ("acesso a tudo, sem
+            # restrição alguma") -- same reasoning as `grading.Grade`'s own
+            # equivalent check.
+            if (
+                self.teacher.profile
+                not in (
+                    Profile.TEACHER,
+                    Profile.HOMEROOM_TEACHER,
+                )
+                and not self.teacher.is_superuser
+            ):
                 errors["teacher"] = "O utilizador escolhido não tem o perfil de Docente."
 
         if (
