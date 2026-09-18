@@ -10,10 +10,31 @@ academic year.
 from django.db import models, transaction
 
 from apps.core.models import SyncedModel
+from apps.core.models.managers import TenantManager, TenantQuerySet
+
+
+class StudentQuerySet(TenantQuerySet):
+    def for_guardian(self, user):
+        """RF-MAT-11/docs/07-perfis-permissoes-e-fluxos.md §7.2 (Encarregado
+        de Educação -- "só vê os seus educandos", issue #29): restricts to
+        students actually linked, by a non-revoked `StudentGuardian`, to
+        this user's own `Guardian` record -- an empty queryset for a user
+        with no such link (e.g. not a Guardian at all), never every student
+        at the institution.
+        """
+        return self.filter(guardian_links__guardian__user=user, guardian_links__is_deleted=False)
+
+
+class StudentManager(TenantManager.from_queryset(StudentQuerySet)):
+    """`TenantManager`'s own tenant-scoping `get_queryset()`, plus
+    `StudentQuerySet`'s `for_guardian()` -- see `TenantManager` for why
+    `all_objects` (unaffected by this) exists separately."""
 
 
 class Student(SyncedModel):
     """ "Aluno"."""
+
+    objects = StudentManager()
 
     class Gender(models.TextChoices):
         MALE = "male", "Masculino"

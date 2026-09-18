@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 
 from apps.core.models import SyncedModel
+from apps.core.models.managers import TenantManager, TenantQuerySet
 
 # Only FKs pointing at other per-institution SyncedModel rows belong here --
 # `presented_document_type` (core.IdentificationDocumentType) is shared
@@ -27,6 +28,23 @@ _INSTITUTION_SCOPED_FIELDS = (
 )
 
 
+class EnrollmentQuerySet(TenantQuerySet):
+    def for_guardian(self, user):
+        """§7.2 (Encarregado de Educação -- "só vê os seus educandos",
+        issue #29): restricts to Matrículas of students actually linked, by
+        a non-revoked `StudentGuardian`, to this user's own `Guardian`
+        record."""
+        return self.filter(
+            student__guardian_links__guardian__user=user,
+            student__guardian_links__is_deleted=False,
+        )
+
+
+class EnrollmentManager(TenantManager.from_queryset(EnrollmentQuerySet)):
+    """`TenantManager`'s own tenant-scoping `get_queryset()`, plus
+    `EnrollmentQuerySet`'s `for_guardian()`."""
+
+
 class Enrollment(SyncedModel):
     """ "Matrícula".
 
@@ -34,6 +52,8 @@ class Enrollment(SyncedModel):
     processou"), left out here: `hr.Funcionario` isn't implemented yet (M3)
     -- see docs/implementation-decisions.md.
     """
+
+    objects = EnrollmentManager()
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pendente"
