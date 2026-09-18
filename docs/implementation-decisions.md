@@ -127,3 +127,31 @@ própria razão dada pela RNF (risco de sessão aberta esquecida num posto parti
 **Impacto**: se a instituição quiser afinar estes valores no futuro (ex.: através de
 uma UI de configuração), estes tornam-se o ponto de partida por omissão a expor, não
 um valor definitivo e imutável.
+
+## 2026-09-18 — Issue #29 (RBAC âmbito por objecto): apenas Encarregado→educandos, por agora
+
+**Contexto**: #29 pede a "matriz completa de §7.2" com verificação de âmbito por
+objecto, citando dois exemplos no próprio título: "docente→turmas, encarregado→
+educandos".
+
+**Problema**: dos dois, só "encarregado→educandos" tem uma relação real para
+restringir por (`enrollment.StudentGuardian`, ligando `Guardian.user` a `Student`).
+"Docente→turmas" não tem nenhum dado real para restringir por: `academic.Horario`
+(issue #36) e a associação Docente-Disciplina-Turma (issue #85, módulo `hr`) ainda não
+existem, e nem sequer `hr.Funcionario` (que ligaria um `User` docente a um registo de
+funcionário) foi implementado. Construir esse âmbito agora exigiria fabricar um modelo
+de atribuição docente-turma fora do âmbito desta issue, o que as instruções do
+projecto proíbem.
+
+**Decisão**: implementar apenas "encarregado→educandos" nesta issue --
+`Student`/`Enrollment.objects.for_guardian(user)` (via `StudentQuerySet`/
+`EnrollmentQuerySet`, `apps.enrollment.services.get_students_for_guardian`/
+`get_enrollments_for_guardian`), mais a permissão `view_student`/`view_enrollment`
+para o grupo "Encarregado de Educação" (0004 tinha-o deixado vazio exactamente por
+esta razão). "Docente→turmas" fica registado como bloqueado, com um comentário na
+própria issue #29 a explicar o porquê e a apontar para #36/#85.
+
+**Impacto**: #29 permanece aberta (não marcada como concluída) até #36/#85
+existirem; a issue deve ser revisitada nessa altura para adicionar
+`SchoolClass`/`Nota`/`Presenca.objects.for_docente(user)` seguindo exactamente o
+mesmo padrão (`TenantQuerySet` subclass + `for_<perfil>()`).

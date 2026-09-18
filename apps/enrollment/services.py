@@ -7,6 +7,19 @@ views normais e endpoints de API) e testes unitários isolados.
 from .models import Enrollment, Student
 
 
+def get_students_for_guardian(user):
+    """§7.2/issue #29: the only Students a Guardian-profile user may ever
+    see -- their own linked educandos, never every student at the
+    institution. Fails closed (empty queryset) for a user with no linked
+    `Guardian` record at all."""
+    return Student.objects.for_guardian(user)
+
+
+def get_enrollments_for_guardian(user):
+    """Same restriction as `get_students_for_guardian`, for Matrículas."""
+    return Enrollment.objects.for_guardian(user)
+
+
 class DuplicateStudentDocumentError(Exception):
     """RF-MAT-03: a Student with this identification document is already
     inscribed at this institution -- Inscrição is unique and perpetual."""

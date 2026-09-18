@@ -97,7 +97,6 @@ def test_pedagogical_direction_has_no_sync_access():
         "Docente",
         "Diretor de Turma",
         "Biblioteca",
-        "Encarregado de Educação",
         "Aluno",
         "Público",
     ],
@@ -105,11 +104,30 @@ def test_pedagogical_direction_has_no_sync_access():
 def test_groups_without_a_matching_module_yet_start_with_no_permissions(group_name):
     """These profiles' §7.2 rows are either in modules that don't exist yet
     (RH/finance/grading, ...) or are object-scoped ("próprias turmas"/
-    "próprio") in a way issue #29's object-level scoping has to resolve --
-    granting the blanket Django permission now would be broader than the
-    matrix actually intends. Their own follow-up issues are expected to
-    extend these groups later."""
+    "próprio") in a way that still needs a real relationship to scope by
+    (e.g. Docente -- issues #36/#85, Turma/Horário/atribuição docente ainda
+    não existem) -- granting the blanket Django permission now would be
+    broader than the matrix actually intends. Their own follow-up issues
+    are expected to extend these groups later. "Encarregado de Educação" is
+    NOT included here any more: issue #29 built the real Guardian->Student
+    relationship its object-level scoping needed (`StudentGuardian`), so its
+    view-only grant already exists -- see
+    `test_guardian_has_view_only_on_their_own_students_and_enrollments`.
+    """
     assert _codenames(group_name) == set()
+
+
+def test_guardian_has_view_only_on_their_own_students_and_enrollments():
+    """issue #29: unlike Docente (still blocked on #36/#85), the Guardian
+    scoping relationship (`enrollment.StudentGuardian`) already exists, so
+    this group's blanket *view* permission is granted -- *which* rows a
+    Guardian actually sees is enforced by
+    `enrollment.services.get_students_for_guardian`/`get_enrollments_for_guardian`
+    (`Student`/`Enrollment.objects.for_guardian(user)`), not by this
+    permission, which only gates "can this profile ever view these"."""
+    codenames = _codenames("Encarregado de Educação")
+
+    assert codenames == {"view_student", "view_enrollment"}
 
 
 def test_secretary_has_full_crud_on_enrollment_and_view_only_on_curriculum():
