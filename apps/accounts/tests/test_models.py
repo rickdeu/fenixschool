@@ -18,6 +18,22 @@ def test_new_user_gets_the_documented_field_defaults():
     assert user.is_2fa_active is False
 
 
+def test_is_2fa_active_reflects_a_confirmed_totp_device_not_a_stored_flag():
+    """issue #25: `is_2fa_active` is a computed property, not a separately
+    stored flag that could drift out of sync with the real `TOTPDevice`."""
+    from django_otp.plugins.otp_totp.models import TOTPDevice
+
+    user = User.objects.create_user(username="ines")
+    assert user.is_2fa_active is False
+
+    device = TOTPDevice.objects.create(user=user, name="default", confirmed=False)
+    assert user.is_2fa_active is False
+
+    device.confirmed = True
+    device.save(update_fields=["confirmed"])
+    assert user.is_2fa_active is True
+
+
 def test_preferred_language_accepts_every_configured_language():
     for code, _label in User._meta.get_field("preferred_language").choices:
         user = User(username=f"user-{code}", preferred_language=code)
