@@ -50,4 +50,6 @@
         {% if institution.website %}<li>{% translate "Sítio" %}: <a href="{{ institution.website }}">{{ institution.website }}</a></li>{% endif %}
     </ul>
 </section>
+
+<p><a href="{% url 'public_site:calendar' %}">{% translate "Calendário escolar" %}</a></p>
 {% endblock %}

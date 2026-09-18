@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Calendário escolar" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>{% translate "Calendário escolar" %}</h1>
+
+{% if not academic_year %}
+<p>{% translate "Ainda não há nenhum ano lectivo corrente definido." %}</p>
+{% else %}
+
+<section>
+    <h2>{% translate "Ano lectivo" %}: {{ academic_year.designation }}</h2>
+    <p>{{ academic_year.start_date }} &ndash; {{ academic_year.end_date }}</p>
+</section>
+
+<section>
+    <h2>{% translate "Períodos lectivos" %}</h2>
+    {% if terms %}
+    <ul>
+        {% for term in terms %}
+        <li>{{ term.number }}.º {% translate "Período" %}: {{ term.start_date }} &ndash; {{ term.end_date }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>{% translate "Ainda não há períodos lectivos configurados." %}</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>{% translate "Feriados e dias não lectivos" %}</h2>
+    {% if non_teaching_days %}
+    <ul>
+        {% for day in non_teaching_days %}
+        <li>{{ day.date }} &mdash; {{ day.description }} ({{ day.get_scope_display }})</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>{% translate "Ainda não há feriados configurados para este ano lectivo." %}</p>
+    {% endif %}
+</section>
+
+{% endif %}
+{% endblock %}

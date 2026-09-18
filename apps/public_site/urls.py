@@ -8,4 +8,5 @@ app_name = "public_site"
 
 urlpatterns = [
     path("", views.home_view, name="home"),
+    path("calendario/", views.calendar_view, name="calendar"),
 ]
