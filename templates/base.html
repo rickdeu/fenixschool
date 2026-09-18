@@ -16,6 +16,28 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">FenixSchool</a>
+            {% if user.is_authenticated %}
+            {% get_current_language as CURRENT_LANGUAGE %}
+            <form method="post" action="{% url 'accounts:set_preferred_language' %}" class="d-flex ms-auto">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <label for="preferred-language-select" class="visually-hidden">
+                    {% translate "Idioma" %}
+                </label>
+                <select
+                    id="preferred-language-select"
+                    name="language"
+                    class="form-select form-select-sm"
+                    onchange="this.form.submit()"
+                >
+                    {% for code, label in LANGUAGES %}
+                    <option value="{{ code }}" {% if code == CURRENT_LANGUAGE %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
         </div>
     </nav>
     {% endblock %}

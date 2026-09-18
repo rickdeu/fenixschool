@@ -135,6 +135,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # Exposes LANGUAGES/LANGUAGE_CODE to every template -- used by
+                # the language selector in templates/base.html (issue #28).
+                "django.template.context_processors.i18n",
             ],
         },
     },
