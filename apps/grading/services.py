@@ -12,9 +12,14 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.utils import timezone
 
-from apps.academic.models import Schedule
+from apps.academic.models import Schedule, Subject
 
-from .models import EvaluationType, FinalGrade, Grade, GradingFormulaOverride
+from .models import EvaluationType, FinalGrade, FinalSituation, Grade, GradingFormulaOverride
+
+# RF-AVAL-07/docs/legislacao/escala-avaliacao-secundario.md: "Nota mínima de
+# aprovação: 10 valores" -- this one *is* officially confirmed (unlike
+# `Institution.max_recoverable_subjects`).
+PASSING_GRADE = Decimal("10")
 
 # Tolerância na soma dos pesos: evita rejeitar `Decimal("0.333") * 3 ==
 # Decimal("0.999")` só por causa de arredondamento na representação decimal.
@@ -492,3 +497,71 @@ def reabrir_pauta(grades, *, user, reason) -> int:
         grade.save(authorize_closed_edit=True)
         count += 1
     return count
+
+
+def calcular_situacao_final(enrollment) -> FinalSituation:
+    """ "Calcular situação final" (issue #62, RF-AVAL-07): percorre todas as
+    disciplinas do ano curricular da matrícula, calcula a média anual de
+    cada uma (a média simples dos `FinalGrade.final_value` já registados
+    para essa disciplina -- um por período lectivo com pauta processada;
+    uma disciplina sem nenhum ainda não entra na avaliação, não conta como
+    reprovada por omissão) e compara com a nota mínima de aprovação (10
+    valores, oficialmente confirmada -- ver `PASSING_GRADE`).
+
+    Recalculável a qualquer momento (idempotente via `update_or_create`):
+    uma nota de recurso lançada mais tarde (issue #61) só precisa de chamar
+    isto de novo para reflectir-se na situação final, sem duplicar a linha.
+
+    `institution.max_recoverable_subjects` -- **não** um valor normativo
+    confirmado, ver o próprio campo -- é o que separa "com disciplinas em
+    atraso" de "reprovado".
+    """
+    # `all_objects` (not the tenant-filtered `objects`) throughout: this
+    # must work correctly regardless of the ambient tenant context a caller
+    # happens to run under -- same reasoning as `_validate_teacher_is_scheduled`.
+    subjects = Subject.all_objects.filter(
+        institution_id=enrollment.institution_id, curricular_year=enrollment.curricular_year
+    )
+    failed_subjects = []
+    for subject in subjects:
+        final_grades = list(
+            FinalGrade.all_objects.filter(
+                institution_id=enrollment.institution_id, enrollment=enrollment, subject=subject
+            ).values_list("manual_override_value", "calculated_value")
+        )
+        if not final_grades:
+            continue
+        values = [
+            override if override is not None else calculated
+            for override, calculated in final_grades
+        ]
+        annual_average = sum(values) / len(values)
+        if annual_average < PASSING_GRADE:
+            failed_subjects.append(subject)
+
+    if not failed_subjects:
+        status = FinalSituation.Status.APPROVED
+    elif len(failed_subjects) <= enrollment.institution.max_recoverable_subjects:
+        status = FinalSituation.Status.PENDING_RECOVERY
+    else:
+        status = FinalSituation.Status.FAILED
+
+    # `all_objects` (not the tenant-filtered `objects`): mirrors
+    # `registar_media_final`'s own reasoning -- this must find an existing
+    # row regardless of the ambient tenant context a caller happens to run
+    # under.
+    situation = FinalSituation.all_objects.filter(
+        institution_id=enrollment.institution_id, enrollment=enrollment
+    ).first()
+    if situation is None:
+        situation = FinalSituation.objects.create(
+            institution=enrollment.institution,
+            origin_node_id=enrollment.origin_node_id,
+            enrollment=enrollment,
+            status=status,
+        )
+    else:
+        situation.status = status
+        situation.save()
+    situation.failed_subjects.set(failed_subjects)
+    return situation

@@ -78,6 +78,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "is_repeating",
         "institution",
     )
+    actions = ["calcular_situacao_final_action"]
     list_filter = ("institution", "academic_year", "status", "is_repeating")
     search_fields = ("student__first_name", "student__last_name", "enrollment_number")
     autocomplete_fields = (
@@ -92,3 +93,18 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "previous_enrollment",
     )
     readonly_fields = ("enrollment_number", "date")
+
+    @admin.action(description="Calcular situação final")
+    def calcular_situacao_final_action(self, request, queryset):
+        # Local import: `enrollment` is a foundational app `grading` already
+        # depends on -- reaching the other way, only inside this one action,
+        # avoids `enrollment` importing `grading` at module load time (same
+        # reasoning as `core.services.setup_institution`'s own local import
+        # of `grading.services`).
+        from apps.grading.services import calcular_situacao_final
+
+        for enrollment in queryset:
+            calcular_situacao_final(enrollment)
+        self.message_user(
+            request, f"Situação final calculada para {queryset.count()} matrícula(s)."
+        )

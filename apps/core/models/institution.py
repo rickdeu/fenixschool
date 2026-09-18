@@ -88,6 +88,21 @@ class Institution(models.Model):
         default=False,
         help_text="Parametrização financeira (RF-FIN-06).",
     )
+    max_recoverable_subjects = models.PositiveSmallIntegerField(
+        "máximo de disciplinas em atraso recuperáveis",
+        default=2,
+        help_text=(
+            "RF-AVAL-07/issue #62: acima deste número de disciplinas com média "
+            'inferior a 10 valores, a situação final passa de "com disciplinas em '
+            'atraso" (RF-AVAL-06\'s avaliação de recurso) a "reprovado". O Anexo '
+            "III do RAA (Decreto Executivo 106/26), que fixaria este valor "
+            "oficialmente, ainda não foi obtido -- ver "
+            'docs/legislacao/escala-avaliacao-secundario.md. "2" é o valor mais '
+            "comummente citado em escolas angolanas, não um valor normativo "
+            "confirmado -- fica como ponto de partida editável pelo Administrador "
+            "da Instituição."
+        ),
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
