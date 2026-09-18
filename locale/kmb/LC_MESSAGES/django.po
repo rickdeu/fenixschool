@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FenixSchool\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 03:02+0000\n"
+"POT-Creation-Date: 2026-09-18 04:15+0100\n"
 "PO-Revision-Date: 2026-09-18 03:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Kimbundu\n"
@@ -14,3 +14,200 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: apps/accounts/forms.py:21
+msgid "Email ou telefone"
+msgstr ""
+
+#: apps/accounts/forms.py:27
+msgid ""
+"Credenciais inválidas. Verifique o email/telefone e a palavra-passe "
+"introduzidos."
+msgstr ""
+
+#: apps/accounts/forms.py:29
+msgid "Esta conta está inactiva. Contacte o Administrador da Instituição."
+msgstr ""
+
+#: apps/accounts/templates/accounts/landing_placeholder.html:8
+#, python-format
+msgid "Sessão iniciada, %(name)s."
+msgstr ""
+
+#: apps/accounts/templates/accounts/landing_placeholder.html:11
+msgid ""
+"A área própria do seu perfil ainda está por construir. Volte mais tarde."
+msgstr ""
+
+#: apps/accounts/templates/accounts/landing_placeholder.html:15
+msgid "Sair"
+msgstr ""
+
+#: apps/accounts/templates/accounts/login.html:4
+#: apps/accounts/templates/accounts/login.html:7
+#: apps/accounts/templates/accounts/login.html:21
+msgid "Entrar"
+msgstr ""
+
+#: apps/core/templates/core/setup_wizard.html:4
+#: apps/core/templates/core/setup_wizard.html:7
+msgid "Configuração inicial"
+msgstr ""
+
+#: apps/core/templates/core/setup_wizard.html:9
+msgid ""
+"Este assistente cria a instituição e a conta do respectivo Gestor\n"
+"    (Administrador da Instituição). Só está disponível enquanto não existir\n"
+"    nenhuma instituição configurada neste Nó."
+msgstr ""
+
+#: apps/core/templates/core/setup_wizard.html:18
+msgid "Instituição"
+msgstr ""
+
+#: apps/core/templates/core/setup_wizard.html:23
+msgid "Gestor (Administrador da Instituição)"
+msgstr ""
+
+#: apps/core/templates/core/setup_wizard.html:27
+msgid "Concluir configuração"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_form.html:4
+#, python-format
+msgid "Matricular %(name)s"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_form.html:7
+msgid "Matrícula"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_form.html:10
+msgid "Aluno"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_form.html:13
+#: apps/enrollment/templates/enrollment/student_search.html:18
+msgid "Nº"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_form.html:20
+msgid "Guardar e Imprimir"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_success.html:4
+#: apps/enrollment/templates/enrollment/enrollment_success.html:7
+msgid "Matrícula concluída"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_success.html:9
+#, python-format
+msgid ""
+"Matrícula <strong>#%(number)s</strong> de <strong>%(first_name)s "
+"%(last_name)s</strong> na turma <strong>%(class_name)s</strong> (%(year)s)."
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_success.html:12
+msgid ""
+"O comprovativo de matrícula em PDF (RF-MAT-06) ainda não está disponível -- "
+"é gerado por uma funcionalidade dedicada, por implementar."
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/enrollment_success.html:14
+msgid "Nova matrícula"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/index.html:4
+#: apps/enrollment/templates/enrollment/index.html:7
+msgid "Inscrições"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/index.html:9
+msgid "Alunos → Novo Aluno"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/index.html:10
+msgid "Matrículas → Nova Matrícula"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:4
+msgid "Nova Inscrição"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:7
+msgid "Inscrições → Alunos → Novo Aluno"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:10
+msgid "Encarregado de Educação — procurar existente"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:13
+#: apps/enrollment/templates/enrollment/student_search.html:11
+msgid "Procurar"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:16
+msgid ""
+"Nenhum encarregado encontrado com esse documento. Registe um novo abaixo."
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:24
+msgid "Dados Pessoais / Documento / Endereço / Contactos"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:29
+msgid "Encarregado de Educação"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:35
+msgid "Encarregado seleccionado:"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:46
+msgid "Consentimento"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_form.html:50
+msgid "Guardar Inscrição"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_success.html:4
+#: apps/enrollment/templates/enrollment/student_inscription_success.html:7
+msgid "Inscrição concluída"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_success.html:9
+#, python-format
+msgid ""
+"Aluno <strong>%(first_name)s %(last_name)s</strong> inscrito com o número de "
+"aluno <strong>#%(number)s</strong>."
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_inscription_success.html:11
+msgid "Nova inscrição"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_search.html:4
+msgid "Nova Matrícula"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_search.html:7
+msgid "Inscrições → Matrículas → Nova Matrícula"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_search.html:19
+msgid "Nome"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_search.html:20
+msgid "Documento"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_search.html:31
+msgid "Matricular"
+msgstr ""
+
+#: apps/enrollment/templates/enrollment/student_search.html:38
+msgid "Nenhum aluno encontrado."
+msgstr ""
