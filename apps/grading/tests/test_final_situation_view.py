@@ -52,8 +52,17 @@ def test_non_privileged_profile_is_forbidden(institution, user_factory):
     assert response.status_code == 403
 
 
-def test_lists_enrollments_with_no_situation_yet(admin_client, enrollment):
+def test_lists_school_classes_as_occurrences(admin_client, enrollment, school_class):
     response = admin_client.get(URL)
+
+    assert response.status_code == 200
+    assert "rows" not in response.context or response.context["rows"] is None
+    content = response.content.decode()
+    assert school_class.designation in content
+
+
+def test_lists_enrollments_for_the_selected_school_class(admin_client, enrollment, school_class):
+    response = admin_client.get(URL, {"turma": str(school_class.id)})
 
     assert response.status_code == 200
     content = response.content.decode()
@@ -63,7 +72,14 @@ def test_lists_enrollments_with_no_situation_yet(admin_client, enrollment):
 
 
 def test_calculating_shows_the_resulting_situation(
-    admin_client, institution, enrollment, subject, evaluation_type, academic_term, teacher
+    admin_client,
+    institution,
+    enrollment,
+    school_class,
+    subject,
+    evaluation_type,
+    academic_term,
+    teacher,
 ):
     with tenant_context(institution.id):
         set_institution_default_formula(institution, {evaluation_type.name: Decimal("1")})
@@ -85,7 +101,11 @@ def test_calculating_shows_the_resulting_situation(
             origin_node_id=_origin(),
         )
 
-    response = admin_client.post(URL, {"enrollment_ids": [str(enrollment.pk)]}, follow=True)
+    response = admin_client.post(
+        f"{URL}?turma={school_class.id}",
+        {"enrollment_ids": [str(enrollment.pk)]},
+        follow=True,
+    )
 
     assert response.status_code == 200
     with tenant_context(institution.id):

@@ -386,6 +386,20 @@ def lancar_ou_atualizar_nota(
     )
 
 
+def atualizar_nota_pauta(*, grade: Grade, value) -> Grade:
+    """Correcção de uma nota já lançada, a partir do ecrã de Pautas (issue
+    #60) -- ao contrário de `lancar_ou_atualizar_nota`, não exige que quem
+    edita seja o docente agendado (é quem gere a homologação -- ex.
+    Administrador da Instituição -- a corrigir um valor antes de fechar a
+    pauta, não um lançamento pedagógico). O bloqueio de edição depois de
+    homologada continua a ser aplicado por `Grade.save()`
+    (`GradeReportClosedError`), não é contornado aqui.
+    """
+    grade.value = _validate_grade_scale(value)
+    grade.save()
+    return grade
+
+
 def calculate_average(grades: dict[str, Decimal], formula: dict[str, Decimal]) -> Decimal:
     """`calcular_media` (RF-INST-06's exemplo de implementação): weighted sum
     of `grades` (evaluation type name -> classificação) by `formula`
