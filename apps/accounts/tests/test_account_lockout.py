@@ -37,7 +37,9 @@ def test_lockout_duration_is_progressive_and_capped():
     assert durations[1] == 2
     assert durations[2] == 4
     # Strictly increasing until the cap.
-    assert all(b >= a for a, b in zip(durations, durations[1:], strict=True))
+    # `durations[1:]` is deliberately one element shorter (consecutive-pairs
+    # iteration) -- `strict=False`, not a mismatch to guard against.
+    assert all(b >= a for a, b in zip(durations, durations[1:], strict=False))
     assert durations[-1] <= 60
 
 
