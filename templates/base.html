@@ -57,6 +57,11 @@
                             <i class="bi bi-calculator"></i> <span>{% translate "Fórmula de média" %}</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_panel:non_teaching_day_list' %}">
+                            <i class="bi bi-calendar-x"></i> <span>{% translate "Feriados" %}</span>
+                        </a>
+                    </li>
                     {% endif %}
                     {% if perms.accounts.view_user %}
                     <li class="nav-item">

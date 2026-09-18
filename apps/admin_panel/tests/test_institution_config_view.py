@@ -63,6 +63,12 @@ def test_links_to_the_real_grading_formula_screen(admin_client):
     assert reverse("admin_panel:grading_formula_config") in response.content.decode()
 
 
+def test_links_to_the_dedicated_non_teaching_day_screen_not_django_admin(admin_client):
+    response = admin_client.get(reverse("admin_panel:institution_config"))
+
+    assert reverse("admin_panel:non_teaching_day_list") in response.content.decode()
+
+
 def test_price_tables_is_shown_as_unavailable_not_a_dead_link(admin_client):
     response = admin_client.get(reverse("admin_panel:institution_config"))
 

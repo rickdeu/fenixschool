@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Feriados e dias não lectivos" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{% translate "Feriados e dias não lectivos" %}</h1>
+    <a href="{% url 'admin_panel:non_teaching_day_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>{% translate "Novo dia não lectivo" %}
+    </a>
+</div>
+
+{% if perms.core.add_nonteachingday %}
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h6 text-muted text-uppercase mb-3">{% translate "Pré-carregar feriados nacionais" %}</h2>
+        <form method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            {% for year in seed_year_choices %}
+            <button type="submit" name="seed_year" value="{{ year }}" class="btn btn-outline-primary">
+                {{ year }}
+            </button>
+            {% endfor %}
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Data" %}</th>
+                    <th>{% translate "Descrição" %}</th>
+                    <th>{% translate "Abrangência" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for day in non_teaching_days %}
+                <tr>
+                    <td>{{ day.date }}</td>
+                    <td>{{ day.description }}</td>
+                    <td>{{ day.get_scope_display }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'admin_panel:non_teaching_day_edit' day.id %}" class="btn btn-sm btn-outline-secondary">
+                            {% translate "Editar" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">{% translate "Nenhum dia não lectivo configurado." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

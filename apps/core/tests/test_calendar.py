@@ -311,3 +311,31 @@ def test_non_teaching_day_str_includes_date_and_description(institution_factory)
         )
 
     assert str(day) == "Ano Novo (01/01/2026)"
+
+
+def test_seed_national_holidays_creates_the_fixed_date_holidays(institution_factory):
+    from apps.core.services import NATIONAL_HOLIDAYS, seed_national_holidays
+
+    institution = institution_factory()
+    with tenant_context(institution.id):
+        created = seed_national_holidays(institution, origin_node_id=_origin(), year=2027)
+
+        holidays = NonTeachingDay.objects.filter(institution=institution)
+        assert created == len(NATIONAL_HOLIDAYS)
+        assert holidays.count() == len(NATIONAL_HOLIDAYS)
+        assert all(day.scope == NonTeachingDay.Scope.NATIONAL for day in holidays)
+        assert holidays.get(date=date(2027, 12, 25)).description == "Dia de Natal e da Família"
+
+
+def test_seed_national_holidays_is_idempotent(institution_factory):
+    from apps.core.services import NATIONAL_HOLIDAYS, seed_national_holidays
+
+    institution = institution_factory()
+    with tenant_context(institution.id):
+        seed_national_holidays(institution, origin_node_id=_origin(), year=2027)
+        created_again = seed_national_holidays(institution, origin_node_id=_origin(), year=2027)
+
+        assert created_again == 0
+        assert NonTeachingDay.objects.filter(institution=institution).count() == len(
+            NATIONAL_HOLIDAYS
+        )

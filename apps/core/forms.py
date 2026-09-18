@@ -18,6 +18,7 @@ from .models import (
     Institution,
     MobileOperator,
     Municipality,
+    NonTeachingDay,
     Profession,
     Province,
 )
@@ -135,3 +136,12 @@ class ManagerSetupForm(forms.ModelForm):
         if password and confirmation and password != confirmation:
             self.add_error("password_confirmation", "As palavras-passe não coincidem.")
         return cleaned_data
+
+
+class NonTeachingDayForm(forms.ModelForm):
+    """Dia não lectivo -- feriado ou outro dia sem aulas (issue #20, RF-INST-07)."""
+
+    class Meta:
+        model = NonTeachingDay
+        fields = ["date", "description", "scope"]
+        widgets = {"date": forms.DateInput(attrs={"type": "date"})}
