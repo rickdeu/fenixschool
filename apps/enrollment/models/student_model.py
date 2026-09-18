@@ -133,6 +133,19 @@ class Student(SyncedModel):
         "estado", max_length=20, choices=Status.choices, default=Status.ACTIVE
     )
 
+    # Set only when this Student came from admitting a Candidate (issue #42)
+    # instead of a walk-in Inscrição -- lets a bulk Matrícula screen find
+    # "admitted, not yet enrolled in any turma" students for a given course
+    # without guessing from name/document alone.
+    admitted_from_candidate = models.ForeignKey(
+        "enrollment.Candidate",
+        verbose_name="candidato de origem",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="admitted_students",
+    )
+
     class Meta(SyncedModel.Meta):
         verbose_name = "aluno"
         verbose_name_plural = "alunos"

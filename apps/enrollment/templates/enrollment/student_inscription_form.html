@@ -6,10 +6,17 @@
 {% block content %}
 <h1 class="h3 mb-4">{% translate "Inscrições → Alunos → Novo Aluno" %}</h1>
 
+{% if candidate %}
+<div class="alert alert-info">
+    {% blocktranslate with name=candidate.full_name %}A pré-encher dados a partir da candidatura de <strong>{{ name }}</strong>.{% endblocktranslate %}
+</div>
+{% endif %}
+
 <div class="card mb-4">
     <div class="card-body">
         <h2 class="h5 card-title">{% translate "Encarregado de Educação — procurar existente" %}</h2>
         <form method="get" class="row g-3 align-items-end">
+            {% if candidate %}<input type="hidden" name="candidate" value="{{ candidate.id }}">{% endif %}
             <div class="col-auto flex-grow-1">
                 {% include "components/bootstrap_form.html" with form=search_form %}
             </div>
@@ -25,6 +32,7 @@
 
 <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
+    {% if candidate %}<input type="hidden" name="candidate_id" value="{{ candidate.id }}">{% endif %}
 
     <fieldset class="card mb-4">
         <div class="card-body">

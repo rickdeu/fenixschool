@@ -14,8 +14,19 @@ class PreApplicationForm(forms.ModelForm):
 
     class Meta:
         model = Candidate
-        fields = ["full_name", "birth_date", "desired_course", "contact"]
-        widgets = {"birth_date": forms.DateInput(attrs={"type": "date"})}
+        fields = [
+            "full_name",
+            "birth_date",
+            "document_type",
+            "document_number",
+            "document_expiry_date",
+            "desired_course",
+            "contact",
+        ]
+        widgets = {
+            "birth_date": forms.DateInput(attrs={"type": "date"}),
+            "document_expiry_date": forms.DateInput(attrs={"type": "date"}),
+        }
 
     def __init__(self, *args, institution, **kwargs):
         super().__init__(*args, **kwargs)

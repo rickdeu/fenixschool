@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from apps.academic.models import Course, Department
 from apps.core.context import tenant_context
-from apps.core.models import AcademicCycle
+from apps.core.models import AcademicCycle, IdentificationDocumentType
 from apps.enrollment.models import Candidate
 
 pytestmark = pytest.mark.django_db
@@ -17,6 +17,11 @@ pytestmark = pytest.mark.django_db
 
 def _origin():
     return uuid.uuid4()
+
+
+@pytest.fixture
+def document_type(db):
+    return IdentificationDocumentType.objects.get(code="bilhete-de-identidade")
 
 
 @pytest.fixture
@@ -53,12 +58,15 @@ def test_is_accessible_without_login(institution, course):
     assert response.status_code == 200
 
 
-def test_valid_submission_creates_a_pending_candidate(institution, course):
+def test_valid_submission_creates_a_pending_candidate(institution, course, document_type):
     response = Client().post(
         reverse("public_site:pre_application"),
         data={
             "full_name": "Ana Kavungo",
             "birth_date": "2010-05-20",
+            "document_type": document_type.code,
+            "document_number": "004928474HA038",
+            "document_expiry_date": "2030-01-01",
             "desired_course": str(course.pk),
             "contact": "923000000",
         },
@@ -71,6 +79,8 @@ def test_valid_submission_creates_a_pending_candidate(institution, course):
     assert candidate.institution_id == institution.id
     assert candidate.desired_course_id == course.id
     assert candidate.contact == "923000000"
+    assert candidate.document_type_id == document_type.code
+    assert candidate.document_number == "004928474HA038"
 
 
 def test_missing_required_fields_shows_validation_errors_and_creates_nothing(

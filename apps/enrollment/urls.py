@@ -11,6 +11,8 @@ app_name = "enrollment"
 
 urlpatterns = [
     path("", views.index_view, name="index"),
+    # -- Candidatos (issue #42/#102) -- admissão para a Inscrição -------------
+    path("candidatos/", views.candidate_list_view, name="candidate_list"),
     # -- Inscrição (issue #45) -- "Inscrições → Alunos → Novo Aluno" ----------
     path("alunos/novo/", views.student_inscription_view, name="student_inscription"),
     # -- Matrícula (issue #47) -- "Inscrições → Matrículas → Nova Matrícula" --
@@ -20,4 +22,6 @@ urlpatterns = [
         views.enrollment_create_view,
         name="enrollment_create",
     ),
+    # -- Matrícula em lote (issue #241) -- admitidos por candidatura -----------
+    path("matriculas/lote/", views.bulk_enrollment_view, name="bulk_enrollment"),
 ]

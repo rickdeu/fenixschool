@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Matricular admitidos" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Matricular admitidos" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-auto flex-grow-1">
+                <label for="course" class="form-label">{% translate "Curso" %}</label>
+                <select name="course" id="course" class="form-select">
+                    <option value="">{% translate "Escolha um curso" %}</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}" {% if course and course.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary mb-1">{% translate "Ver" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if course %}
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="course" value="{{ course.id }}">
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <label for="school_class" class="form-label">{% translate "Turma" %}</label>
+            <select name="school_class" id="school_class" class="form-select" style="max-width: 400px;">
+                {% for sc in school_classes %}
+                <option value="{{ sc.id }}">{{ sc }}</option>
+                {% empty %}
+                <option value="">{% translate "Nenhuma turma configurada para este curso." %}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" onclick="document.querySelectorAll('.student-checkbox').forEach(c => c.checked = this.checked)"></th>
+                        <th>{% translate "Nome" %}</th>
+                        <th>{% translate "Nº de aluno" %}</th>
+                        <th>{% translate "Documento" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in eligible_students %}
+                    <tr>
+                        <td><input type="checkbox" name="student_ids" value="{{ student.id }}" class="student-checkbox" checked></td>
+                        <td>{{ student.first_name }} {{ student.last_name }}</td>
+                        <td>{{ student.student_number }}</td>
+                        <td>{{ student.document_number }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">{% translate "Nenhum aluno admitido por candidatura, deste curso, à espera de matrícula." %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if eligible_students %}
+    <button type="submit" class="btn btn-primary mt-3">{% translate "Matricular seleccionados" %}</button>
+    {% endif %}
+</form>
+{% endif %}
+{% endblock %}
