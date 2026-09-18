@@ -16,6 +16,22 @@ urlpatterns = [
     path("utilizadores/<uuid:user_id>/editar/", views.user_edit_view, name="user_edit"),
     # -- Configuração da instituição (RF-ADM-02, issue #114) --------------------
     path("configuracao/", views.institution_config_view, name="institution_config"),
+    # -- Feriados e dias não lectivos (RF-INST-07, issue #20) -------------------
+    path(
+        "configuracao/feriados/",
+        views.non_teaching_day_list_view,
+        name="non_teaching_day_list",
+    ),
+    path(
+        "configuracao/feriados/novo/",
+        views.non_teaching_day_create_view,
+        name="non_teaching_day_create",
+    ),
+    path(
+        "configuracao/feriados/<uuid:non_teaching_day_id>/editar/",
+        views.non_teaching_day_edit_view,
+        name="non_teaching_day_edit",
+    ),
     # -- Configuração da fórmula de média (RF-INST-06, issue #18) --------------
     path(
         "avaliacao/formula/",

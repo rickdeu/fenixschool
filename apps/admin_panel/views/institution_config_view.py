@@ -1,13 +1,14 @@
 """Painel único de configuração da instituição (issue #114, RF-ADM-02,
 docs/02-requisitos-funcionais.md §2.1).
 
-Agrega os ecrãs de configuração já existentes -- por agora, na sua maioria,
-o próprio Django Admin, já registado para todos estes modelos, em vez de um
+Agrega os ecrãs de configuração já existentes -- alguns ainda o próprio
+Django Admin, já registado para os respectivos modelos, em vez de um
 formulário dedicado duplicado só por duplicar (ver
-`apps/core/admin.py`/`apps/grading/admin.py`). "Fórmula de média" é a
-única com um ecrã dedicado próprio (issue #18); "tabelas de preços"
-(RF-INST-08) fica assinalada como indisponível -- `finance.TabelaPrecos`
-(issue #70) ainda não existe, nada real para ligar.
+`apps/core/admin.py`/`apps/grading/admin.py`). "Fórmula de média" (issue
+#18) e "Feriados e dias não lectivos" (issue #20) têm ecrã dedicado
+próprio; "tabelas de preços" (RF-INST-08) fica assinalada como
+indisponível -- `finance.TabelaPrecos` (issue #70) ainda não existe, nada
+real para ligar.
 """
 
 from django.contrib.auth.decorators import login_required, permission_required
@@ -54,7 +55,7 @@ def institution_config_view(request):
         {
             "title": "Feriados e dias não lectivos",
             "description": "Calendário de feriados nacionais/provinciais (RF-INST-07).",
-            "url": reverse("admin:core_nonteachingday_changelist"),
+            "url": reverse("admin_panel:non_teaching_day_list"),
             "available": True,
         },
         {

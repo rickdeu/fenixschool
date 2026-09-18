@@ -4,12 +4,59 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
+from datetime import date
+
 from django.db import transaction
 
 from apps.accounts.models import Profile, User
 
 from .context import get_current_node_id, tenant_context
-from .models import Institution
+from .models import Institution, NonTeachingDay
+
+# Fixed-date national holidays only (Lei n.º 16/20, de 22 de Maio -- "Lei dos
+# Feriados"), as (month, day, description) -- month/day never change year to
+# year, unlike the movable ones below. Deliberately NOT included: Carnaval and
+# Sexta-Feira Santa, both tied to the date of Easter -- computing/verifying
+# those correctly is real, separate work (issue #20's acceptance criterion
+# only asks for the initial fixture to pre-load, not a full liturgical
+# calendar), so an Administrador da Instituição adds them by hand every year
+# via this same screen instead of trusting a silently wrong guess here.
+NATIONAL_HOLIDAYS = [
+    (1, 1, "Ano Novo"),
+    (2, 4, "Dia do Início da Luta Armada de Libertação Nacional"),
+    (3, 8, "Dia Internacional da Mulher"),
+    (4, 4, "Dia da Paz e Reconciliação Nacional"),
+    (5, 1, "Dia Internacional do Trabalhador"),
+    (9, 17, "Dia do Herói Nacional"),
+    (11, 2, "Dia dos Finados"),
+    (11, 11, "Dia da Independência Nacional"),
+    (12, 25, "Dia de Natal e da Família"),
+]
+
+
+def seed_national_holidays(institution: Institution, *, origin_node_id, year: int) -> int:
+    """Pre-loads the fixed-date national holidays (issue #20's "Feriados
+    nacionais pré-carregados" acceptance criterion) for a given calendar
+    year. Idempotent -- safe to call again for a year already seeded, e.g.
+    from the dedicated screen to cover a future year, since it only adds
+    rows for (date, description) pairs that don't already exist.
+
+    Returns how many rows were actually created (0 if this year was already
+    fully seeded).
+    """
+    created = 0
+    for month, day, description in NATIONAL_HOLIDAYS:
+        _, was_created = NonTeachingDay.objects.get_or_create(
+            institution=institution,
+            date=date(year, month, day),
+            description=description,
+            defaults={
+                "origin_node_id": origin_node_id,
+                "scope": NonTeachingDay.Scope.NATIONAL,
+            },
+        )
+        created += int(was_created)
+    return created
 
 
 def setup_institution(*, institution_data: dict, manager_data: dict) -> tuple[Institution, User]:
@@ -37,5 +84,14 @@ def setup_institution(*, institution_data: dict, manager_data: dict) -> tuple[In
             **manager_data,
         )
         with tenant_context(institution.id):
-            seed_default_grading_formula(institution, origin_node_id=get_current_node_id())
+            origin_node_id = get_current_node_id()
+            seed_default_grading_formula(institution, origin_node_id=origin_node_id)
+            # Seeds this year and the next: a school year straddles two
+            # calendar years (e.g. Feb-Nov), so whichever one the first
+            # AcademicYear ends up covering already has its holidays.
+            today = date.today()
+            seed_national_holidays(institution, origin_node_id=origin_node_id, year=today.year)
+            seed_national_holidays(
+                institution, origin_node_id=origin_node_id, year=today.year + 1
+            )
     return institution, manager

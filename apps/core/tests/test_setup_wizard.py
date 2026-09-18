@@ -1,5 +1,6 @@
 """Tests for the setup wizard (issue #17, docs/04-arquitetura-tecnica.md §4.4.2)."""
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -8,7 +9,7 @@ from django.urls import reverse
 
 from apps.accounts.models import Profile, User
 from apps.core.context import tenant_context
-from apps.core.models import Institution
+from apps.core.models import Institution, NonTeachingDay
 from apps.core.services import setup_institution
 from apps.grading.models import EvaluationType
 
@@ -65,6 +66,23 @@ def test_wizard_seeds_a_working_default_grading_formula(client):
             "Prova Trimestral",
             "Exame",
         }
+
+
+def test_wizard_preloads_this_and_next_years_national_holidays(client):
+    """Issue #20: national holidays must be pre-loaded at installation, not
+    left for an Administrator to type in by hand before the calendar means
+    anything."""
+    client.post(reverse("core:setup_wizard"), VALID_POST_DATA)
+
+    institution = Institution.objects.get()
+    today = date.today()
+    with tenant_context(institution.id):
+        holidays = NonTeachingDay.objects.filter(
+            institution=institution, scope=NonTeachingDay.Scope.NATIONAL
+        )
+        assert holidays.filter(date__year=today.year).exists()
+        assert holidays.filter(date__year=today.year + 1).exists()
+        assert holidays.get(date=date(today.year, 1, 1)).description == "Ano Novo"
 
 
 def test_wizard_rejects_mismatched_passwords_without_creating_anything(client):
