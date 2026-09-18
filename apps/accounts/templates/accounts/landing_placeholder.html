@@ -1,14 +1,17 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block title %}FenixSchool{% endblock %}
 
 {% block content %}
-<h1>Sessão iniciada, {{ user.first_name|default:user.username }}.</h1>
+<h1>
+    {% blocktranslate with name=user.first_name|default:user.username %}Sessão iniciada, {{ name }}.{% endblocktranslate %}
+</h1>
 <p>
-    A área própria do seu perfil ainda está por construir. Volte mais tarde.
+    {% translate "A área própria do seu perfil ainda está por construir. Volte mais tarde." %}
 </p>
 <form method="post" action="{% url 'accounts:logout' %}">
     {% csrf_token %}
-    <button type="submit">Sair</button>
+    <button type="submit">{% translate "Sair" %}</button>
 </form>
 {% endblock %}

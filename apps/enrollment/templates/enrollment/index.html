@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Inscrições — FenixSchool{% endblock %}
+{% block title %}{% translate "Inscrições" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>Inscrições</h1>
+<h1>{% translate "Inscrições" %}</h1>
 <ul>
-    <li><a href="{% url 'enrollment:student_inscription' %}">Alunos → Novo Aluno</a></li>
-    <li><a href="{% url 'enrollment:student_search' %}">Matrículas → Nova Matrícula</a></li>
+    <li><a href="{% url 'enrollment:student_inscription' %}">{% translate "Alunos → Novo Aluno" %}</a></li>
+    <li><a href="{% url 'enrollment:student_search' %}">{% translate "Matrículas → Nova Matrícula" %}</a></li>
 </ul>
 {% endblock %}
