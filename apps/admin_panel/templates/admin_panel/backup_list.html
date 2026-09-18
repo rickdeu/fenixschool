@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Cópias de segurança" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{% translate "Cópias de segurança" %}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="run_now" value="1" class="btn btn-primary">
+            <i class="bi bi-cloud-arrow-down me-1"></i>{% translate "Fazer cópia agora" %}
+        </button>
+    </form>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        {% if automatic_backup_configured %}
+            {% if next_scheduled_run %}
+            <p class="mb-0">
+                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                {% blocktranslate with when=next_scheduled_run %}Cópia de segurança automática diária activa -- a próxima está agendada para {{ when }}.{% endblocktranslate %}
+            </p>
+            {% else %}
+            <p class="mb-0 text-muted">
+                {% translate "A cópia de segurança automática diária ainda não foi registada -- deve ficar activa após o próximo reinício do serviço." %}
+            </p>
+            {% endif %}
+        {% else %}
+        <p class="mb-0 text-muted">
+            {% translate "Este nó não tem cópia de segurança automática configurada. Use o botão acima para criar uma manualmente." %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Ficheiro" %}</th>
+                    <th>{% translate "Data" %}</th>
+                    <th>{% translate "Tamanho" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for backup in backups %}
+                <tr>
+                    <td>{{ backup.name }}</td>
+                    <td>{{ backup.created_at }}</td>
+                    <td>{{ backup.size_mb }} MB</td>
+                    <td class="text-end">
+                        <a href="{% url 'admin_panel:backup_download' backup.name %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-download me-1"></i>{% translate "Transferir" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">{% translate "Ainda não existe nenhuma cópia de segurança." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

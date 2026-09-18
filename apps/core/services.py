@@ -4,9 +4,14 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
+import os
+import subprocess
 from datetime import date, timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 from apps.accounts.models import Profile, User
 
@@ -135,3 +140,47 @@ def setup_institution(*, institution_data: dict, manager_data: dict) -> tuple[In
                 institution, origin_node_id=origin_node_id, year=today.year + 1
             )
     return institution, manager
+
+
+def backup_database() -> Path:
+    """A logical (`pg_dump`) backup of the local node's own database (issue
+    #166's "backup automático" acceptance criterion, docs/11-implantacao-e-
+    operacoes.md §11.4), gzipped to `BACKUP_DIR` (defaults to `/app/backups`,
+    the volume every service in docker-compose.local-node.yml already shares).
+
+    Runs automatically once a day via Django-Q2
+    (`apps.core.signals.schedule_automatic_backup`), and can also be invoked
+    by hand: `python manage.py backup_database`.
+
+    Same approach as `scripts/backup.sh` (a plain dump before gzip, never a
+    piped `pg_dump | gzip`, so a failing `pg_dump` can't produce a corrupt-
+    but-"successful"-looking `.sql.gz`) -- but connects over the network
+    (`--host`) rather than running inside the `db` container itself, since
+    this runs from `web`/`qcluster`, a separate container that only has the
+    `pg_dump` client installed, not the server.
+    """
+    db = settings.DATABASES["default"]
+    backup_dir = Path(os.environ.get("BACKUP_DIR", "/app/backups"))
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = timezone.now().strftime("%Y%m%d-%H%M%S")
+    dump_path = backup_dir / f"fenixschool-{timestamp}.sql"
+
+    subprocess.run(
+        [
+            "pg_dump",
+            "--host",
+            db["HOST"],
+            "--port",
+            str(db["PORT"] or 5432),
+            "--username",
+            db["USER"],
+            "--dbname",
+            db["NAME"],
+            "--file",
+            str(dump_path),
+        ],
+        env={**os.environ, "PGPASSWORD": db["PASSWORD"]},
+        check=True,
+    )
+    subprocess.run(["gzip", "--force", str(dump_path)], check=True)
+    return dump_path.with_name(dump_path.name + ".gz")

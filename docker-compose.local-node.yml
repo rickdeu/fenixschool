@@ -114,6 +114,9 @@ services:
       SKIP_COLLECTSTATIC: "true"
     volumes:
       - media_data:/app/media
+      # Where apps.core.services.backup_database()'s daily Django-Q2 schedule
+      # (issue #166) writes to -- this is the service that actually runs it.
+      - backups:/app/backups
     depends_on:
       db:
         condition: service_healthy

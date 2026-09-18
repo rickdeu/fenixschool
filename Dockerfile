@@ -42,8 +42,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DJANGO_SETTINGS_MODULE=config.settings.local_node
 
 # libpq5 is the runtime (non-dev) Postgres client library psycopg needs.
+# postgresql-client provides pg_dump/gzip's own dependency-free `pg_dump`
+# binary -- apps.core.services.backup_database() (issue #166) runs it from
+# here, over the network, since this image (unlike the `db` service's own
+# postgres:16-alpine) never has the Postgres *server* itself.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 \
+    && apt-get install -y --no-install-recommends libpq5 postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 1000 --shell /usr/sbin/nologin fenixschool
 

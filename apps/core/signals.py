@@ -7,8 +7,36 @@ request, so a school's own logs can be filtered by institution -- see the
 """
 
 import structlog
+from django.apps import apps as django_apps
+from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from django_structlog import signals as structlog_signals
+
+
+@receiver(post_migrate)
+def schedule_automatic_backup(sender, **kwargs):
+    """Registers the daily database backup (issue #166's "backup automático"
+    acceptance criterion, `apps.core.services.backup_database`) as a
+    Django-Q2 schedule -- only on the local node, the one settings module
+    Django-Q2 is even installed under (`local_node.py`'s `INSTALLED_APPS`);
+    the central node uses Celery/Celery Beat instead and never reaches the
+    import below. `get_or_create` keeps this idempotent across every
+    `migrate` run, not just the first, and across every app's own
+    `post_migrate` firing (Django sends this signal once per installed app,
+    all after every app's migrations are already applied).
+    """
+    if not django_apps.is_installed("django_q"):
+        return
+
+    from django_q.models import Schedule
+
+    Schedule.objects.get_or_create(
+        func="apps.core.services.backup_database",
+        defaults={
+            "name": "Cópia de segurança diária da base de dados",
+            "schedule_type": Schedule.DAILY,
+        },
+    )
 
 
 @receiver(structlog_signals.bind_extra_request_metadata)

@@ -75,6 +75,13 @@ urlpatterns = [
         views.non_teaching_day_edit_view,
         name="non_teaching_day_edit",
     ),
+    # -- Cópias de segurança (RF-INST-*, issue #166) ----------------------------
+    path("configuracao/backups/", views.backup_list_view, name="backup_list"),
+    path(
+        "configuracao/backups/<str:filename>/",
+        views.backup_download_view,
+        name="backup_download",
+    ),
     # -- Configuração da fórmula de média (RF-INST-06, issue #18) --------------
     path(
         "avaliacao/formula/",
