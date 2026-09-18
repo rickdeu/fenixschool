@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Inscrição concluída — FenixSchool{% endblock %}
+
+{% block content %}
+<h1>Inscrição concluída</h1>
+<p>
+    Aluno <strong>{{ student.first_name }} {{ student.last_name }}</strong> inscrito com o
+    número de aluno <strong>#{{ student.student_number }}</strong>.
+</p>
+<a href="{% url 'enrollment:student_inscription' %}">Nova inscrição</a>
+{% endblock %}
