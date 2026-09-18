@@ -8,3 +8,16 @@
 [x-cloak] {
     display: none !important;
 }
+
+/* htmx.min.js only toggles the `htmx-request` class while a request is in
+   flight -- it ships no CSS of its own, so the actual show/hide of an
+   `hx-indicator` element (issue #59's grelha de lançamento de notas) needs
+   this pair of rules, straight from htmx's own docs. */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
