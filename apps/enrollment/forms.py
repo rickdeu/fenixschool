@@ -1,8 +1,11 @@
-"""Formulários Django da app `enrollment` -- fluxo de Inscrição (issue #45)."""
+"""Formulários Django da app `enrollment` -- fluxos de Inscrição (issue #45) e
+Matrícula (issue #47)."""
 
 from django import forms
 
-from .models import Guardian, Student
+from apps.academic.models import SchoolClass
+
+from .models import Enrollment, Guardian, Student
 
 
 class StudentInscriptionForm(forms.ModelForm):
@@ -87,3 +90,45 @@ class GuardianConsentForm(forms.Form):
             )
         },
     )
+
+
+class StudentSearchForm(forms.Form):
+    """Localizar um aluno já inscrito, para efeitos de matrícula (RF-MAT-04)."""
+
+    q = forms.CharField(label="Nº de aluno, documento ou nome", required=False)
+
+
+class EnrollmentForm(forms.ModelForm):
+    """Dados da Matrícula (RF-MAT-05).
+
+    `course`/`academic_year`/`cycle`/`curricular_year` are deliberately not
+    fields here: they are derived from the chosen `school_class` (a Turma
+    already fixes its own course/year/cycle -- see
+    `apps/academic/models/school_class_model.py`), so the Secretaria only
+    ever has to pick one thing that can't disagree with itself, instead of
+    four separate dropdowns that could be set to an inconsistent combination.
+    """
+
+    class Meta:
+        model = Enrollment
+        fields = [
+            "school_class",
+            "presented_document_type",
+            "presented_document_number",
+            "document_issue_date",
+            "document_issue_place",
+            "notes",
+            "is_repeating",
+            "previous_enrollment",
+        ]
+        widgets = {"document_issue_date": forms.DateInput(attrs={"type": "date"})}
+
+    def __init__(self, *args, institution=None, student=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if institution is not None:
+            self.fields["school_class"].queryset = SchoolClass.objects.filter(
+                institution=institution
+            )
+        self.fields["previous_enrollment"].required = False
+        if student is not None:
+            self.fields["previous_enrollment"].queryset = Enrollment.objects.filter(student=student)
