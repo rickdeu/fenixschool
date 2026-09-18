@@ -1,0 +1,47 @@
+[
+    {
+        "model": "grading.gradingscale",
+        "pk": 1,
+        "fields": {
+            "qualitative_level": "Excelente",
+            "min_value": 17,
+            "max_value": 20
+        }
+    },
+    {
+        "model": "grading.gradingscale",
+        "pk": 2,
+        "fields": {
+            "qualitative_level": "Bom",
+            "min_value": 14,
+            "max_value": 16
+        }
+    },
+    {
+        "model": "grading.gradingscale",
+        "pk": 3,
+        "fields": {
+            "qualitative_level": "Suficiente",
+            "min_value": 10,
+            "max_value": 13
+        }
+    },
+    {
+        "model": "grading.gradingscale",
+        "pk": 4,
+        "fields": {
+            "qualitative_level": "Insuficiente",
+            "min_value": 6,
+            "max_value": 9
+        }
+    },
+    {
+        "model": "grading.gradingscale",
+        "pk": 5,
+        "fields": {
+            "qualitative_level": "Mau",
+            "min_value": 0,
+            "max_value": 5
+        }
+    }
+]
