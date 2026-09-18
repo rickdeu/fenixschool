@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Ciclos lectivos" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{% translate "Ciclos lectivos" %}</h1>
+    <a href="{% url 'admin_panel:academic_cycle_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>{% translate "Novo ciclo lectivo" %}
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Ordem" %}</th>
+                    <th>{% translate "Designação" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cycle in cycles %}
+                <tr>
+                    <td>{{ cycle.order }}</td>
+                    <td>{{ cycle.designation }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'admin_panel:academic_cycle_edit' cycle.id %}" class="btn btn-sm btn-outline-secondary">
+                            {% translate "Editar" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-4">{% translate "Nenhum ciclo lectivo configurado." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

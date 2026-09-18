@@ -69,6 +69,16 @@ def test_links_to_the_dedicated_non_teaching_day_screen_not_django_admin(admin_c
     assert reverse("admin_panel:non_teaching_day_list") in response.content.decode()
 
 
+def test_links_to_dedicated_screens_not_django_admin(admin_client):
+    response = admin_client.get(reverse("admin_panel:institution_config"))
+
+    content = response.content.decode()
+    assert reverse("admin_panel:institution_edit") in content
+    assert reverse("admin_panel:academic_year_list") in content
+    assert reverse("admin_panel:academic_cycle_list") in content
+    assert "/admin/core/" not in content
+
+
 def test_price_tables_is_shown_as_unavailable_not_a_dead_link(admin_client):
     response = admin_client.get(reverse("admin_panel:institution_config"))
 

@@ -22,3 +22,19 @@ def require_institution_context(request):
         )
         return redirect("accounts:landing_placeholder")
     return None
+
+
+def first_section_with_errors(form, sections) -> int:
+    """For a stepped form (`templates/components/stepped_form.html`) redisplayed
+    after a failed submission: which step (1-indexed) the browser should open
+    on, so a validation error on e.g. "Contactos" doesn't get silently hidden
+    behind whichever step happened to be showing when the page reloads.
+    Defaults to the first step when nothing points anywhere more specific
+    (a first render with no errors yet, or a non-field error not tied to any
+    particular section's fields).
+    """
+    erroring_fields = set(form.errors)
+    for index, section in enumerate(sections, start=1):
+        if erroring_fields & set(section["fields"]):
+            return index
+    return 1

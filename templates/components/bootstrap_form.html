@@ -1,8 +1,11 @@
 {% load form_tags %}
+{% if not hide_non_field_errors %}
 {% for error in form.non_field_errors %}
 <div class="alert alert-danger" role="alert">{{ error }}</div>
 {% endfor %}
+{% endif %}
 {% for field in form %}
+{% if not fields or field.name in fields %}
 <div class="mb-3">
     {% with type=field|widget_type %}
     {% if "checkbox" in type %}
@@ -22,4 +25,5 @@
     {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
     {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
 </div>
+{% endif %}
 {% endfor %}

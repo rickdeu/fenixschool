@@ -14,6 +14,9 @@ from django.utils.text import slugify
 from apps.accounts.models import User
 
 from .models import (
+    AcademicCycle,
+    AcademicTerm,
+    AcademicYear,
     IdentificationDocumentType,
     Institution,
     MobileOperator,
@@ -145,3 +148,64 @@ class NonTeachingDayForm(forms.ModelForm):
         model = NonTeachingDay
         fields = ["date", "description", "scope"]
         widgets = {"date": forms.DateInput(attrs={"type": "date"})}
+
+
+class InstitutionEditForm(forms.ModelForm):
+    """Dados editáveis da instituição a partir do ecrã dedicado (issue #114,
+    RF-INST-01) -- exclui `default_grading_formula` (tem o seu próprio ecrã,
+    issue #18) e `blocks_documents_with_outstanding_debt` (RF-FIN-06, sem
+    nenhuma funcionalidade financeira real ainda por parametrizar)."""
+
+    class Meta:
+        model = Institution
+        fields = [
+            "name",
+            "tax_id",
+            "ministry_of_education_code",
+            "description",
+            "province",
+            "municipality",
+            "district_or_commune",
+            "neighborhood",
+            "street",
+            "house_number",
+            "landline_phone",
+            "unitel_phone",
+            "movicel_phone",
+            "africell_phone",
+            "email",
+            "website",
+            "logo",
+        ]
+
+
+class AcademicYearForm(forms.ModelForm):
+    """Ano lectivo (issue #16, RF-INST-03)."""
+
+    class Meta:
+        model = AcademicYear
+        fields = ["designation", "start_date", "end_date"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+
+class AcademicTermForm(forms.ModelForm):
+    """Período lectivo dentro de um ano lectivo (issue #16, RF-INST-04)."""
+
+    class Meta:
+        model = AcademicTerm
+        fields = ["number", "start_date", "end_date"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+
+class AcademicCycleForm(forms.ModelForm):
+    """Ciclo lectivo (issue #16, RF-INST-05)."""
+
+    class Meta:
+        model = AcademicCycle
+        fields = ["designation", "order"]
