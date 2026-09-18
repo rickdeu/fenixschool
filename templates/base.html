@@ -86,6 +86,19 @@
                 </ul>
             </div>
             {% endif %}
+
+            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" %}
+            <div class="menu-section">
+                <div class="menu-section-title">{% translate "Avaliação" %}</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'grading:grade_grid_selection' %}">
+                            <i class="bi bi-journal-check"></i> <span>{% translate "Lançar notas" %}</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
         </nav>
     </aside>
     {% endblock %}

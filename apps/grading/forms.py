@@ -3,7 +3,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from .models import FinalGrade, Grade
+from apps.core.models import AcademicTerm
+
+from .models import EvaluationType, FinalGrade, Grade
+from .services import get_docente_assignments
 
 
 class GradeAdminForm(forms.ModelForm):
@@ -88,3 +91,41 @@ class FinalGradeAdminForm(forms.ModelForm):
                 }
             )
         return cleaned_data
+
+
+class GradeGridSelectionForm(forms.Form):
+    """Issue #59's first step: pick which turma/disciplina/tipo de
+    avaliação/período lectivo to open the grelha de lançamento for.
+
+    `assignment` only ever offers the turma/disciplina pairs `teacher`
+    actually teaches (`get_docente_assignments`, via `academic.Schedule`) --
+    never every turma/disciplina at the institution, mirroring the same
+    object-level scoping enforced again, at the actual point of saving a
+    Nota, by `apps.grading.services.lancar_ou_atualizar_nota`.
+    """
+
+    assignment = forms.ChoiceField(label="Turma / Disciplina")
+    evaluation_type = forms.ModelChoiceField(
+        queryset=EvaluationType.objects.none(), label="Tipo de avaliação"
+    )
+    academic_term = forms.ModelChoiceField(
+        queryset=AcademicTerm.objects.none(), label="Período lectivo"
+    )
+
+    def __init__(self, *args, teacher, institution, **kwargs):
+        super().__init__(*args, **kwargs)
+        assignments = get_docente_assignments(teacher)
+        self.assignments_by_key = {f"{a.school_class_id}:{a.subject_id}": a for a in assignments}
+        self.fields["assignment"].choices = [
+            (key, f"{a.school_class} — {a.subject}") for key, a in self.assignments_by_key.items()
+        ]
+        self.fields["evaluation_type"].queryset = EvaluationType.objects.filter(
+            institution=institution
+        )
+        self.fields["academic_term"].queryset = AcademicTerm.objects.filter(institution=institution)
+
+    def clean_assignment(self):
+        key = self.cleaned_data["assignment"]
+        if key not in self.assignments_by_key:
+            raise ValidationError("Turma/disciplina inválida.")
+        return key
