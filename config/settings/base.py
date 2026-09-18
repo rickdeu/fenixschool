@@ -124,6 +124,10 @@ MIDDLEWARE = [
     # must run after AuthenticationMiddleware, which sets request.user. See
     # docs/04-arquitetura-tecnica.md §4.4.4 and apps/core/middleware.py.
     "apps.core.middleware.TenantMiddleware",
+    # Makes request.user/IP available to audit-log signal handlers (issue
+    # #140) -- must run after AuthenticationMiddleware, which sets
+    # request.user. See apps/audit/middleware.py.
+    "apps.audit.middleware.AuditActorMiddleware",
     # Binds request/user metadata (request_id, user_id...) to every log line
     # emitted while handling this request -- must run after
     # AuthenticationMiddleware and TenantMiddleware, which set request.user /
