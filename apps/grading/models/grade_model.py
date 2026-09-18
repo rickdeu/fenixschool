@@ -10,6 +10,7 @@ from django.db import models
 from apps.core.models import SyncedModel
 
 from .evaluation_type_model import EvaluationType
+from .grading_scale_model import GradingScale
 
 
 class GradeReportClosedError(Exception):
@@ -142,6 +143,14 @@ class Grade(SyncedModel):
 
     def __str__(self) -> str:
         return f"{self.student} - {self.subject} ({self.evaluation_type}): {self.value}"
+
+    @property
+    def qualitative_level(self) -> GradingScale | None:
+        """RF-AVAL-03/issue #57: the "nível qualitativo" (e.g. "Bom") that
+        corresponds to `value` on the institution's official 0-20 scale
+        (issue #56), shown alongside the numeric value wherever a Nota is
+        displayed."""
+        return GradingScale.for_value(self.value)
 
     def clean(self):
         errors = {}

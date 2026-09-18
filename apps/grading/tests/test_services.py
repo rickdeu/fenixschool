@@ -1,16 +1,20 @@
-"""Tests for the `grading` services (issue #18, RF-INST-06)."""
+"""Tests for the `grading` services (issue #18, RF-INST-06; issue #57, RF-AVAL-01/03)."""
 
 import uuid
 from decimal import Decimal
 
 import pytest
 
+from apps.academic.models import Schedule, SchoolClass
 from apps.core.context import tenant_context
-from apps.grading.models import EvaluationType, GradingFormulaOverride
+from apps.grading.models import EvaluationType, Grade, GradingFormulaOverride
 from apps.grading.services import (
+    DocenteNaoAssociadoError,
     InvalidGradingFormulaError,
+    NotaForaDaEscalaError,
     calculate_average,
     ensure_default_evaluation_types,
+    lancar_nota,
     resolve_grading_formula,
     seed_default_grading_formula,
     set_course_formula_override,
@@ -234,3 +238,115 @@ def test_calculate_average_raises_when_a_grade_is_missing():
             grades={"MAC": Decimal("14")},
             formula={"MAC": Decimal("0.6"), "Exame": Decimal("0.4")},
         )
+
+
+def test_lancar_nota_creates_a_grade_for_the_scheduled_teacher(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher, schedule
+):
+    with tenant_context(institution.id):
+        grade = lancar_nota(
+            teacher=teacher,
+            enrollment=enrollment,
+            subject=subject,
+            evaluation_type=evaluation_type,
+            academic_term=academic_term,
+            value=Decimal("15.5"),
+            origin_node_id=uuid.uuid4(),
+        )
+
+        assert Grade.objects.filter(pk=grade.pk).exists()
+
+    assert grade.pk is not None
+    assert grade.student_id == enrollment.student_id
+    assert grade.value == Decimal("15.5")
+
+
+def test_lancar_nota_rejects_a_value_outside_the_0_20_scale(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher, schedule
+):
+    with tenant_context(institution.id):
+        with pytest.raises(NotaForaDaEscalaError):
+            lancar_nota(
+                teacher=teacher,
+                enrollment=enrollment,
+                subject=subject,
+                evaluation_type=evaluation_type,
+                academic_term=academic_term,
+                value=Decimal("20.5"),
+                origin_node_id=uuid.uuid4(),
+            )
+
+    assert not Grade.all_objects.exists()
+
+
+def test_lancar_nota_rejects_a_teacher_not_scheduled_for_that_turma_disciplina(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    """No `schedule` fixture here on purpose: `teacher` has no
+    `academic.Schedule` row associating them with `enrollment.school_class`/
+    `subject` at all, so `lancar_nota` must refuse to launch the Nota."""
+    with tenant_context(institution.id):
+        with pytest.raises(DocenteNaoAssociadoError):
+            lancar_nota(
+                teacher=teacher,
+                enrollment=enrollment,
+                subject=subject,
+                evaluation_type=evaluation_type,
+                academic_term=academic_term,
+                value=Decimal("15"),
+                origin_node_id=uuid.uuid4(),
+            )
+
+    assert not Grade.all_objects.exists()
+
+
+def test_lancar_nota_rejects_a_teacher_scheduled_for_a_different_turma(
+    institution,
+    enrollment,
+    subject,
+    evaluation_type,
+    academic_term,
+    teacher,
+    room,
+    course,
+    academic_year,
+    curricular_year,
+):
+    """The teacher IS scheduled, but for a different turma than the one this
+    matrícula belongs to -- still not associated for this specific Nota."""
+    from datetime import time
+
+    with tenant_context(institution.id):
+        other_school_class = SchoolClass.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            code="10B",
+            designation="10.ª B",
+            academic_year=academic_year,
+            course=course,
+            curricular_year=curricular_year,
+            shift=SchoolClass.Shift.AFTERNOON,
+        )
+        Schedule.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            school_class=other_school_class,
+            subject=subject,
+            weekday=Schedule.Weekday.MONDAY,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+            regime=Schedule.Regime.THEORETICAL,
+            room=room,
+            teacher=teacher,
+        )
+
+        with pytest.raises(DocenteNaoAssociadoError):
+            lancar_nota(
+                teacher=teacher,
+                enrollment=enrollment,
+                subject=subject,
+                evaluation_type=evaluation_type,
+                academic_term=academic_term,
+                value=Decimal("15"),
+                origin_node_id=uuid.uuid4(),
+            )

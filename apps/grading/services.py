@@ -10,7 +10,9 @@ opcional por Curso/Disciplina.
 
 from decimal import Decimal
 
-from .models import EvaluationType, GradingFormulaOverride
+from apps.academic.models import Schedule
+
+from .models import EvaluationType, Grade, GradingFormulaOverride
 
 # Tolerância na soma dos pesos: evita rejeitar `Decimal("0.333") * 3 ==
 # Decimal("0.999")` só por causa de arredondamento na representação decimal.
@@ -82,9 +84,7 @@ def validate_formula(formula: dict[str, Decimal], *, institution) -> None:
 def set_institution_default_formula(institution, formula: dict[str, Decimal]) -> None:
     """Grava a fórmula por omissão da instituição (RF-INST-06)."""
     validate_formula(formula, institution=institution)
-    institution.default_grading_formula = {
-        name: str(weight) for name, weight in formula.items()
-    }
+    institution.default_grading_formula = {name: str(weight) for name, weight in formula.items()}
     institution.save(update_fields=["default_grading_formula"])
 
 
@@ -181,9 +181,77 @@ def resolve_grading_formula(*, institution, course=None, subject=None) -> dict[s
             return {name: Decimal(str(weight)) for name, weight in override.weights.items()}
 
     return {
-        name: Decimal(str(weight))
-        for name, weight in institution.default_grading_formula.items()
+        name: Decimal(str(weight)) for name, weight in institution.default_grading_formula.items()
     }
+
+
+class NotaForaDaEscalaError(Exception):
+    """RF-AVAL-01: a classificação tem de estar entre 0 e 20 (inclusive).
+
+    Checked explicitly here, at the front door of every entry point that
+    launches a Nota, instead of relying only on `Grade.value`'s own
+    `MinValueValidator`/`MaxValueValidator` -- mirrors the same
+    fail-fast-with-a-clear-domain-error pattern already used by
+    `enrollment.services`'s `SchoolClassFullError`/`DuplicateStudentDocumentError`.
+    """
+
+    def __init__(self, value):
+        self.value = value
+        super().__init__(f'A classificação "{value}" está fora da escala 0-20.')
+
+
+class DocenteNaoAssociadoError(Exception):
+    """RF-AVAL-01's RBAC acceptance criterion: only the docente actually
+    scheduled to teach `subject` in that `school_class` -- via
+    `academic.Schedule`, issue #36 -- may launch a Nota for it, not just any
+    user with a Docente/Diretor de Turma profile at the institution."""
+
+    def __init__(self, teacher, school_class, subject):
+        self.teacher = teacher
+        self.school_class = school_class
+        self.subject = subject
+        super().__init__(
+            f'O(a) docente "{teacher}" não lecciona a disciplina "{subject}" '
+            f'na turma "{school_class}".'
+        )
+
+
+def lancar_nota(
+    *, teacher, enrollment, subject, evaluation_type, academic_term, value, origin_node_id
+) -> Grade:
+    """ "Lançar nota" (issue #57, RF-AVAL-01/03): validates the 0-20 scale and
+    that `teacher` is actually scheduled (`academic.Schedule`) to teach
+    `subject` in the enrollment's turma before creating the Nota.
+
+    `student` is deliberately not a parameter: it is always
+    `enrollment.student`, the same single source of truth `Grade.clean()`
+    itself already enforces -- never something a caller could set
+    inconsistently.
+    """
+    decimal_value = Decimal(str(value))
+    if not (Decimal("0") <= decimal_value <= Decimal("20")):
+        raise NotaForaDaEscalaError(decimal_value)
+
+    is_associated = Schedule.all_objects.filter(
+        institution_id=enrollment.institution_id,
+        teacher_id=teacher.id,
+        school_class_id=enrollment.school_class_id,
+        subject_id=subject.id,
+    ).exists()
+    if not is_associated:
+        raise DocenteNaoAssociadoError(teacher, enrollment.school_class, subject)
+
+    return Grade.objects.create(
+        institution=enrollment.institution,
+        origin_node_id=origin_node_id,
+        student=enrollment.student,
+        enrollment=enrollment,
+        subject=subject,
+        academic_term=academic_term,
+        evaluation_type=evaluation_type,
+        value=decimal_value,
+        teacher=teacher,
+    )
 
 
 def calculate_average(grades: dict[str, Decimal], formula: dict[str, Decimal]) -> Decimal:
