@@ -69,11 +69,19 @@ def test_institution_administrator_only_views_sync_state():
 
 
 def test_pedagogical_direction_is_read_only_on_institution_config():
+    """Read-only specifically on "Instituição/Config." -- §7.2's "Currículo"
+    row (extended by accounts.0004) legitimately grants Direção Pedagógica
+    add/change on academic curriculum models, just not on core config."""
     codenames = _codenames("Direção Pedagógica")
 
     assert "view_institution" in codenames
     assert "view_academicyear" in codenames
-    assert not any(c.startswith(("add_", "change_", "delete_")) for c in codenames)
+    core_codenames = set(
+        Group.objects.get(name="Direção Pedagógica")
+        .permissions.filter(content_type__app_label="core")
+        .values_list("codename", flat=True)
+    )
+    assert not any(c.startswith(("add_", "change_", "delete_")) for c in core_codenames)
 
 
 def test_pedagogical_direction_has_no_sync_access():
@@ -85,8 +93,6 @@ def test_pedagogical_direction_has_no_sync_access():
 @pytest.mark.parametrize(
     "group_name",
     [
-        "Secretaria Escolar",
-        "Financeiro/Tesouraria",
         "Recursos Humanos",
         "Docente",
         "Diretor de Turma",
@@ -97,7 +103,29 @@ def test_pedagogical_direction_has_no_sync_access():
     ],
 )
 def test_groups_without_a_matching_module_yet_start_with_no_permissions(group_name):
-    """These profiles' §7.2 rows are all in modules that don't exist yet
-    (enrollment, grading, finance, ...) -- their own model-implementation
-    issues are expected to extend these groups later."""
+    """These profiles' §7.2 rows are either in modules that don't exist yet
+    (RH/finance/grading, ...) or are object-scoped ("próprias turmas"/
+    "próprio") in a way issue #29's object-level scoping has to resolve --
+    granting the blanket Django permission now would be broader than the
+    matrix actually intends. Their own follow-up issues are expected to
+    extend these groups later."""
     assert _codenames(group_name) == set()
+
+
+def test_secretary_has_full_crud_on_enrollment_and_view_only_on_curriculum():
+    codenames = _codenames("Secretaria Escolar")
+
+    for model in ("student", "guardian", "studentguardian", "candidate", "enrollment"):
+        for action in ("add", "change", "delete", "view"):
+            assert f"{action}_{model}" in codenames
+    for model in ("department", "course", "curricularyear", "subject", "room", "schoolclass"):
+        assert f"view_{model}" in codenames
+        assert not any(f"{action}_{model}" in codenames for action in ("add", "change", "delete"))
+
+
+def test_finance_only_views_enrollment_records():
+    codenames = _codenames("Financeiro/Tesouraria")
+
+    for model in ("student", "guardian", "studentguardian", "candidate", "enrollment"):
+        assert f"view_{model}" in codenames
+        assert not any(f"{action}_{model}" in codenames for action in ("add", "change", "delete"))

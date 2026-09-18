@@ -163,6 +163,11 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "accounts:landing_placeholder"
 
+# This node's identity, once actually registered with the Central node
+# (docs/11-implantacao-e-operacoes.md §11.3 -- not built yet). Left unset
+# (the default) until then; see apps/core/context.py's get_current_node_id().
+NODE_ID = env("NODE_ID", default="")
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
