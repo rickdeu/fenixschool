@@ -4,10 +4,11 @@
 creation for every create/update/(soft or hard) delete of `Model` -- call it
 once per critical entity from `AuditConfig.ready()` (see `apps/audit/apps.py`).
 Of RNF-AUD-01's 5 critical entities (Nota, Matrícula, Pagamento, Utilizador,
-Permissão), only `enrollment.Enrollment` (Matrícula) and `accounts.User`
-(Utilizador) exist today -- `grading.Nota`/`finance.Pagamento` don't exist
-yet (see docs/implementation-decisions.md). Wire them the same way once
-they do.
+Permissão), only `finance.Pagamento` doesn't exist yet (see
+docs/implementation-decisions.md) -- `grading.Grade` (Nota),
+`enrollment.Enrollment` (Matrícula) and `accounts.User` (Utilizador) are
+already wired in `AuditConfig.ready()`. Wire `Pagamento` the same way once
+it exists.
 """
 
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save

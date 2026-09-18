@@ -133,7 +133,23 @@ class Grade(SyncedModel):
     class Meta(SyncedModel.Meta):
         verbose_name = "nota"
         verbose_name_plural = "notas"
-        ordering = ["-academic_year", "school_class", "subject", "student"]
+        # Terminal (non-relation) fields only, never a bare `school_class`/
+        # `subject`/`student` -- ordering by a bare FK makes Django expand
+        # it into *that* related model's own `Meta.ordering`, recursively,
+        # through every FK it in turn orders by (Subject -> Course ->
+        # Department/Cycle, CurricularYear -> Course -> ..., etc). With
+        # several such FKs on the same model, this exploded into a single
+        # changelist query joining `core_institution` 31 times over (260+
+        # total joins), hitting SQLite's 64-table join limit outright in
+        # tests -- and would still be a needlessly enormous, ever-slower
+        # query in production Postgres as the schema grows.
+        ordering = [
+            "-academic_year__start_date",
+            "school_class__designation",
+            "subject__name",
+            "student__last_name",
+            "student__first_name",
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["student", "subject", "academic_term", "evaluation_type"],

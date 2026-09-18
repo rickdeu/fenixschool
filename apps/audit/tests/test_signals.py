@@ -219,3 +219,109 @@ def test_soft_deleting_an_enrollment_records_a_delete_entry_not_an_update(
 
     entry = _entries_for(enrollment_setup).latest("timestamp")
     assert entry.action == AuditLogEntry.Action.DELETE
+
+
+# -- grading.Grade / grading.FinalGrade -------------------------------------
+
+
+@pytest.fixture
+def grade_setup(institution, enrollment_setup):
+    from apps.academic.models import Subject
+    from apps.core.models import AcademicTerm
+    from apps.grading.models import EvaluationType
+    from apps.grading.services import set_institution_default_formula
+
+    with tenant_context(institution.id):
+        subject = Subject.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            code="MAT",
+            name="Matemática",
+            created_on=date(2020, 1, 1),
+            course=enrollment_setup.course,
+            curricular_year=enrollment_setup.curricular_year,
+            cycle=enrollment_setup.cycle,
+            subject_type=Subject.SubjectType.MANDATORY,
+            weekly_hours=4,
+        )
+        evaluation_type = EvaluationType.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            name="MAC",
+            default_weight="1",
+        )
+        set_institution_default_formula(institution, {"MAC": 1})
+        academic_term = AcademicTerm.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            academic_year=enrollment_setup.academic_year,
+            number=1,
+            start_date=date(2026, 2, 1),
+            end_date=date(2026, 5, 31),
+        )
+        teacher = User.objects.create_user(
+            username="professor-audit", institution=institution, profile=Profile.TEACHER
+        )
+    return {
+        "subject": subject,
+        "evaluation_type": evaluation_type,
+        "academic_term": academic_term,
+        "teacher": teacher,
+    }
+
+
+def test_creating_a_grade_records_a_create_entry(institution, enrollment_setup, grade_setup):
+    from apps.grading.models import Grade
+
+    with tenant_context(institution.id):
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            student=enrollment_setup.student,
+            enrollment=enrollment_setup,
+            subject=grade_setup["subject"],
+            academic_term=grade_setup["academic_term"],
+            evaluation_type=grade_setup["evaluation_type"],
+            value="15",
+            teacher=grade_setup["teacher"],
+        )
+
+    entry = _entries_for(grade).get(action=AuditLogEntry.Action.CREATE)
+    assert entry.values_after["value"] == "15"
+
+
+def test_manually_overriding_a_final_grade_records_the_reason_in_the_audit_diff(
+    institution, enrollment_setup, grade_setup
+):
+    from apps.grading.models import Grade
+    from apps.grading.services import ajustar_media_manualmente, registar_media_final
+
+    with tenant_context(institution.id):
+        Grade.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            student=enrollment_setup.student,
+            enrollment=enrollment_setup,
+            subject=grade_setup["subject"],
+            academic_term=grade_setup["academic_term"],
+            evaluation_type=grade_setup["evaluation_type"],
+            value="10",
+            teacher=grade_setup["teacher"],
+        )
+        final_grade = registar_media_final(
+            enrollment=enrollment_setup,
+            subject=grade_setup["subject"],
+            academic_term=grade_setup["academic_term"],
+            origin_node_id=_origin(),
+        )
+
+        ajustar_media_manualmente(
+            final_grade=final_grade,
+            user=grade_setup["teacher"],
+            value="16",
+            reason="Trabalho de recuperação avaliado.",
+        )
+
+    entry = _entries_for(final_grade).filter(action=AuditLogEntry.Action.UPDATE).latest("timestamp")
+    assert entry.values_after["override_reason"] == "Trabalho de recuperação avaliado."
+    assert entry.values_after["manual_override_value"] == "16"
