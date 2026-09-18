@@ -1,6 +1,7 @@
-"""Tests for the "Pautas" screen (issue #60, RF-AVAL-04) -- the real
+"""Tests for the "Pautas" list screen (issue #60, RF-AVAL-04) -- the real
 admin_panel-style replacement for the old Django Admin homologar/reabrir
-actions (Django Admin is never used by real users)."""
+actions (Django Admin is never used by real users). Viewing/editing/
+homologating a specific pauta is `test_pauta_detail_view.py`."""
 
 import uuid
 from decimal import Decimal
@@ -56,15 +57,6 @@ def grade(institution, enrollment, subject, evaluation_type, academic_term, teac
         )
 
 
-def _query(school_class, subject, evaluation_type, academic_term):
-    return {
-        "turma": str(school_class.id),
-        "disciplina": str(subject.id),
-        "tipo": str(evaluation_type.id),
-        "periodo": str(academic_term.id),
-    }
-
-
 def test_non_privileged_profile_is_forbidden(institution, user_factory):
     teacher_only = user_factory(profile=Profile.TEACHER, institution=institution)
     client = Client()
@@ -79,21 +71,10 @@ def test_selection_form_renders_without_a_query(admin_client):
     response = admin_client.get(URL)
 
     assert response.status_code == 200
-    assert "rows" not in response.context or response.context["rows"] is None
+    assert "rows" not in response.context
 
 
-def test_lists_the_pautas_grades(
-    admin_client, grade, school_class, subject, evaluation_type, academic_term
-):
-    response = admin_client.get(URL, _query(school_class, subject, evaluation_type, academic_term))
-
-    assert response.status_code == 200
-    assert "Yolene Hangalo" in response.content.decode()
-
-
-def test_lists_existing_occurrences_without_a_query(
-    admin_client, grade, school_class, subject, evaluation_type
-):
+def test_lists_existing_occurrences(admin_client, grade, school_class, subject, evaluation_type):
     response = admin_client.get(URL)
 
     assert response.status_code == 200
@@ -106,70 +87,3 @@ def test_lists_existing_occurrences_without_a_query(
     content = response.content.decode()
     assert school_class.designation in content
     assert subject.name in content
-
-
-def test_homologar_closes_the_grades(
-    admin_client, institution, grade, school_class, subject, evaluation_type, academic_term
-):
-    response = admin_client.post(
-        URL,
-        {
-            **_query(school_class, subject, evaluation_type, academic_term),
-            "grade_ids": [str(grade.pk)],
-            "action": "homologar",
-        },
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    grade.refresh_from_db()
-    assert grade.is_grade_report_closed is True
-
-
-def test_reabrir_without_a_reason_is_rejected(
-    admin_client, institution, grade, school_class, subject, evaluation_type, academic_term
-):
-    with tenant_context(institution.id):
-        from apps.grading.services import homologar_pauta
-
-        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=grade.teacher)
-
-    response = admin_client.post(
-        URL,
-        {
-            **_query(school_class, subject, evaluation_type, academic_term),
-            "grade_ids": [str(grade.pk)],
-            "action": "reabrir",
-            "reason": "   ",
-        },
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    grade.refresh_from_db()
-    assert grade.is_grade_report_closed is True
-
-
-def test_reabrir_with_a_reason_reopens(
-    admin_client, institution, grade, school_class, subject, evaluation_type, academic_term
-):
-    with tenant_context(institution.id):
-        from apps.grading.services import homologar_pauta
-
-        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=grade.teacher)
-
-    response = admin_client.post(
-        URL,
-        {
-            **_query(school_class, subject, evaluation_type, academic_term),
-            "grade_ids": [str(grade.pk)],
-            "action": "reabrir",
-            "reason": "Erro identificado após homologação.",
-        },
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    grade.refresh_from_db()
-    assert grade.is_grade_report_closed is False
-    assert grade.reopening_reason == "Erro identificado após homologação."

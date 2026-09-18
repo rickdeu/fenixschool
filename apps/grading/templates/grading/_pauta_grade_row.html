@@ -1,0 +1,29 @@
+{% load i18n %}
+<div class="d-flex align-items-center gap-2 pauta-grade-cell" id="pauta-grade-cell-{{ grade.id }}">
+    {% csrf_token %}
+    <input type="hidden" name="grade_id" value="{{ grade.id }}">
+    <input type="number" step="0.1" min="0" max="20" name="value"
+           class="form-control form-control-sm {% if error %}is-invalid{% elif success %}is-valid{% endif %}"
+           style="max-width: 6rem;"
+           value="{{ value|default_if_none:'' }}"
+           aria-label="{% translate 'Classificação' %}"
+           {% if closed %}disabled{% endif %}
+           hx-post="{% url 'grading:pauta_grade_cell_save' %}"
+           hx-trigger="change, keyup changed delay:600ms"
+           hx-include="closest .pauta-grade-cell"
+           hx-target="closest .pauta-grade-cell"
+           hx-swap="outerHTML"
+           hx-indicator="#pauta-grade-cell-spinner-{{ grade.id }}">
+    <span id="pauta-grade-cell-spinner-{{ grade.id }}"
+          class="htmx-indicator spinner-border spinner-border-sm text-secondary" role="status"
+          aria-label="{% translate 'A gravar' %}"></span>
+    {% if success %}
+    <span class="text-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+        <span class="visually-hidden">{% translate "Gravado" %}</span>
+    </span>
+    {% elif error %}
+    <span class="text-danger small"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ error }}</span>
+    {% elif closed %}
+    <span class="text-muted small"><i class="bi bi-lock-fill"></i> {% translate "Fechada" %}</span>
+    {% endif %}
+</div>

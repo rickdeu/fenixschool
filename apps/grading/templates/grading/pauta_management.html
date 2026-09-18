@@ -4,7 +4,56 @@
 {% block title %}{% translate "Pautas" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1 class="h3 mb-4">{% translate "Homologação de pautas" %}</h1>
+<h1 class="h3 mb-4">{% translate "Pautas" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-header">{% translate "Seleccionar manualmente" %}</div>
+    <div class="card-body">
+        <form method="get" action="{% url 'grading:pauta_detail' %}" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="turma" class="form-label">{% translate "Turma" %}</label>
+                <select name="turma" id="turma" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for sc in school_classes %}
+                    <option value="{{ sc.id }}">{{ sc.designation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="disciplina" class="form-label">{% translate "Disciplina" %}</label>
+                <select name="disciplina" id="disciplina" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for s in subjects %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="tipo" class="form-label">{% translate "Tipo de avaliação" %}</label>
+                <select name="tipo" id="tipo" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for et in evaluation_types %}
+                    <option value="{{ et.id }}">{{ et.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="periodo" class="form-label">{% translate "Trimestre" %}</label>
+                <select name="periodo" id="periodo" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for at in academic_terms %}
+                    <option value="{{ at.id }}">{{ at }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>{% translate "Ver pauta" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <div class="card mb-4">
     <div class="card-header">{% translate "Pautas existentes" %}</div>
@@ -38,7 +87,7 @@
                     </td>
                     <td>
                         <a class="btn btn-sm btn-outline-primary"
-                           href="{% url 'grading:pauta_management' %}?turma={{ o.school_class_id }}&disciplina={{ o.subject_id }}&tipo={{ o.evaluation_type_id }}&periodo={{ o.academic_term_id }}">
+                           href="{% url 'grading:pauta_detail' %}?turma={{ o.school_class_id }}&disciplina={{ o.subject_id }}&tipo={{ o.evaluation_type_id }}&periodo={{ o.academic_term_id }}">
                             {% translate "Ver pauta" %}
                         </a>
                     </td>
@@ -50,137 +99,4 @@
         </table>
     </div>
 </div>
-
-<div class="card mb-4">
-    <div class="card-header">{% translate "Ou seleccione manualmente" %}</div>
-    <div class="card-body">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label for="turma" class="form-label">{% translate "Turma" %}</label>
-                <select name="turma" id="turma" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for sc in school_classes %}
-                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="disciplina" class="form-label">{% translate "Disciplina" %}</label>
-                <select name="disciplina" id="disciplina" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for s in subjects %}
-                    <option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="tipo" class="form-label">{% translate "Tipo de avaliação" %}</label>
-                <select name="tipo" id="tipo" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for et in evaluation_types %}
-                    <option value="{{ et.id }}" {% if selected_evaluation_type == et.id|stringformat:"s" %}selected{% endif %}>{{ et.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="periodo" class="form-label">{% translate "Trimestre" %}</label>
-                <select name="periodo" id="periodo" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for at in academic_terms %}
-                    <option value="{{ at.id }}" {% if selected_academic_term == at.id|stringformat:"s" %}selected{% endif %}>{{ at }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search me-1"></i>{% translate "Ver pauta" %}
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-{% if rows is not None %}
-<div class="card mb-4">
-    <div class="card-body">
-        {% if all_closed %}
-        <span class="badge text-bg-secondary"><i class="bi bi-lock-fill"></i> {% translate "Pauta fechada" %}</span>
-        {% else %}
-        <span class="badge text-bg-success"><i class="bi bi-unlock-fill"></i> {% translate "Pauta aberta" %}</span>
-        {% endif %}
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>{% translate "Aluno" %}</th>
-                    <th>{% translate "Classificação" %}</th>
-                    <th>{% translate "Estado" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for grade in rows %}
-                <tr>
-                    <td>{{ grade.student }}</td>
-                    <td>{{ grade.value }}</td>
-                    <td>
-                        {% if grade.is_grade_report_closed %}
-                        <span class="text-muted small"><i class="bi bi-lock-fill"></i> {% translate "Fechada" %}</span>
-                        {% else %}
-                        <span class="text-success small"><i class="bi bi-unlock-fill"></i> {% translate "Aberta" %}</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="3" class="text-muted">{% translate "Nenhuma nota lançada para esta combinação." %}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{% if rows %}
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h6">{% translate "Homologar pauta" %}</h2>
-                <p class="text-muted small">{% translate "Fecha todas as notas acima, impedindo alterações posteriores sem autorização." %}</p>
-                <form method="post">
-                    {% csrf_token %}
-                    {% for grade in rows %}
-                    <input type="hidden" name="grade_ids" value="{{ grade.id }}">
-                    {% endfor %}
-                    <input type="hidden" name="action" value="homologar">
-                    <button type="submit" class="btn btn-secondary" {% if all_closed %}disabled{% endif %}>
-                        <i class="bi bi-lock-fill me-1"></i>{% translate "Homologar" %}
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h6">{% translate "Reabrir pauta" %}</h2>
-                <form method="post">
-                    {% csrf_token %}
-                    {% for grade in rows %}
-                    <input type="hidden" name="grade_ids" value="{{ grade.id }}">
-                    {% endfor %}
-                    <input type="hidden" name="action" value="reabrir">
-                    <div class="mb-2">
-                        <label for="reason" class="form-label">{% translate "Justificação (obrigatória)" %}</label>
-                        <textarea name="reason" id="reason" class="form-control" rows="2"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-outline-danger" {% if not any_closed %}disabled{% endif %}>
-                        <i class="bi bi-unlock-fill me-1"></i>{% translate "Reabrir" %}
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-{% endif %}
 {% endblock %}

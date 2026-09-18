@@ -7,24 +7,66 @@
 <h1 class="h3 mb-4">{% translate "Situação final dos alunos" %}</h1>
 
 <div class="card mb-4">
+    <div class="card-header">{% translate "Seleccionar turma" %}</div>
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label for="turma" class="form-label">{% translate "Turma" %}</label>
-                <select name="turma" id="turma" class="form-select">
-                    <option value="">{% translate "Todas" %}</option>
+                <select name="turma" id="turma" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
                     {% for sc in school_classes %}
                     <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-outline-primary">{% translate "Filtrar" %}</button>
+                <button type="submit" class="btn btn-primary">{% translate "Ver matrículas" %}</button>
             </div>
         </form>
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-header">{% translate "Turmas" %}</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Turma" %}</th>
+                    <th>{% translate "Matrículas" %}</th>
+                    <th>{% translate "Situação calculada" %}</th>
+                    <th>{% translate "Pendentes" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in occurrences %}
+                <tr>
+                    <td>{{ o.school_class.designation }}</td>
+                    <td>{{ o.total }}</td>
+                    <td>{{ o.calculated }}</td>
+                    <td>
+                        {% if o.pending %}
+                        <span class="badge text-bg-warning">{{ o.pending }}</span>
+                        {% else %}
+                        <span class="badge text-bg-success">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary" href="?turma={{ o.school_class.id }}">
+                            {% translate "Ver matrículas" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-muted">{% translate "Nenhuma turma com matrículas activas." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if rows is not None %}
 <form method="post">
     {% csrf_token %}
     <div class="card">
@@ -38,7 +80,7 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th></th>
+                        <th><input type="checkbox" id="select-all-enrollments" aria-label="{% translate 'Seleccionar tudo' %}"></th>
                         <th>{% translate "Aluno" %}</th>
                         <th>{% translate "Turma" %}</th>
                         <th>{% translate "Situação" %}</th>
@@ -49,7 +91,7 @@
                 <tbody>
                     {% for row in rows %}
                     <tr>
-                        <td><input type="checkbox" name="enrollment_ids" value="{{ row.enrollment.id }}"></td>
+                        <td><input type="checkbox" class="enrollment-checkbox" name="enrollment_ids" value="{{ row.enrollment.id }}"></td>
                         <td>{{ row.enrollment.student }}</td>
                         <td>{{ row.enrollment.school_class.designation }}</td>
                         <td>
@@ -80,4 +122,18 @@
         </div>
     </div>
 </form>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var selectAll = document.getElementById("select-all-enrollments");
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            document.querySelectorAll(".enrollment-checkbox").forEach(function (checkbox) {
+                checkbox.checked = this.checked;
+            }, this);
+        });
+    }
+</script>
 {% endblock %}
