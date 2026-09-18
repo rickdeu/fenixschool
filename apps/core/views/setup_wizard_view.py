@@ -1,12 +1,12 @@
-"""Views da app `core`."""
+"""View do assistente de instalação inicial (issue #17)."""
 
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 
-from .forms import InstitutionSetupForm, ManagerSetupForm
-from .models import Institution
-from .services import setup_institution
+from ..forms import InstitutionSetupForm, ManagerSetupForm
+from ..models import Institution
+from ..services import setup_institution
 
 
 class SetupWizardView(View):

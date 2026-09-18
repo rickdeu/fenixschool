@@ -1,12 +1,10 @@
-"""Views da app `accounts`."""
+"""View de login (issue #24)."""
 
 from django.contrib.auth import views as auth_views
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 
-from .forms import LoginForm
-from .models import Profile
+from ..forms import LoginForm
+from ..models import Profile
 
 # Where each profile lands right after login (issue #24's "redireciona ao
 # dashboard correcto consoante o perfil"). Profiles whose own portal/dashboard
@@ -35,17 +33,3 @@ class LoginView(auth_views.LoginView):
             self.request.user.profile, "accounts:landing_placeholder"
         )
         return reverse(url_name)
-
-
-class LogoutView(auth_views.LogoutView):
-    next_page = reverse_lazy("accounts:login")
-
-
-@login_required
-def landing_placeholder(request):
-    """Post-login landing page for profiles without their own dashboard yet
-    (Docente, Diretor de Turma, Biblioteca, Encarregado de Educação, Aluno --
-    see issues #105, #109, #119). Deliberately not a fabricated dashboard:
-    just an honest "you're signed in, this area isn't built yet" page.
-    """
-    return render(request, "accounts/landing_placeholder.html")
