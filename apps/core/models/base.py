@@ -84,8 +84,10 @@ class SyncedModel(models.Model):
         # unfiltered `all_objects` keeps those internal checks correct.
         base_manager_name = "all_objects"
         indexes = [
-            models.Index(
-                fields=["institution", "is_deleted"],
-                name="%(app_label)s_%(class)s_tenant_idx",
-            ),
+            # No explicit `name=`: Django auto-generates one (a truncated,
+            # hash-suffixed name guaranteed to fit its own 30-character
+            # index-name limit) instead. A manual "%(app_label)s_%(class)s_..."
+            # template can't make that guarantee -- it already overflowed for
+            # `academic.CurricularYear`/`SchoolClass` (issues #33/#34).
+            models.Index(fields=["institution", "is_deleted"]),
         ]
