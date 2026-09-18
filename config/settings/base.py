@@ -102,6 +102,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Expires a session after a period of inactivity, shorter for
+    # higher-risk profiles (issue #27) -- must run after
+    # AuthenticationMiddleware, which sets request.user.
+    "apps.accounts.middleware.SessionIdleTimeoutMiddleware",
     # Sets request.user.is_verified() -- must run right after
     # AuthenticationMiddleware, which sets request.user (issue #25).
     "django_otp.middleware.OTPMiddleware",
@@ -185,6 +189,36 @@ AUTHENTICATION_BACKENDS = [
 
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "accounts:landing_placeholder"
+
+# Session idle-timeout, configurable by profile -- issue #27,
+# docs/09-seguranca-e-privacidade.md §9.2: "mais curta para perfis
+# administrativos/financeiros". `SESSION_SAVE_EVERY_REQUEST` makes this a
+# true *inactivity* timeout (the cookie's expiry is refreshed on every
+# request, via `apps.accounts.middleware.SessionIdleTimeoutMiddleware`),
+# not a fixed time-since-login window.
+SESSION_SAVE_EVERY_REQUEST = True
+
+# In minutes. Shortest for the profiles most likely to be logged in on a
+# shared workstation the context explicitly calls out (Secretaria's front
+# desk) or with the highest-impact access (Admin/Financeiro); longest for
+# the external portals (Encarregado de Educação/Aluno), typically a
+# personal device rather than a shared one. A judgment call in the absence
+# of a specific figure in the requirements -- see
+# docs/implementation-decisions.md.
+SESSION_TIMEOUT_MINUTES_BY_PROFILE = {
+    "super_admin": 15,
+    "institution_admin": 15,
+    "finance": 15,
+    "secretary": 15,
+    "pedagogical_direction": 30,
+    "hr": 30,
+    "homeroom_teacher": 30,
+    "library": 30,
+    "teacher": 60,
+    "guardian": 60,
+    "student": 60,
+}
+DEFAULT_SESSION_TIMEOUT_MINUTES = 30
 
 # This node's identity, once actually registered with the Central node
 # (docs/11-implantacao-e-operacoes.md §11.3 -- not built yet). Left unset

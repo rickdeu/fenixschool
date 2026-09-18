@@ -106,3 +106,24 @@ activando este valor genérico como fórmula por omissão (não deixando o formu
 vazio) — mas nunca sobrepõe uma fórmula que um Administrador já tenha personalizado.
 Se o texto oficial do 106/26 for confirmado no futuro, actualizar
 `DEFAULT_EVALUATION_TYPES` e esta nota.
+
+## 2026-09-18 — Issue #27 (expiração de sessão por inactividade): valores concretos
+
+**Contexto**: RNF-SEC-02/§9.2 pede expiração de sessão por inactividade, "mais curta
+para perfis administrativos/financeiros", sem indicar valores concretos em minutos.
+
+**Decisão**: `SESSION_TIMEOUT_MINUTES_BY_PROFILE` (`config/settings/base.py`) usa 15
+minutos para Super Administrador/Administrador da Instituição/Financeiro/Secretaria
+(o contexto da própria issue chama a atenção especificamente para "postos partilhados
+da secretaria" — daí incluir Secretaria no grupo mais curto, não só Admin/Financeiro),
+30 minutos para Direcção Pedagógica/RH/Director de Turma/Biblioteca, e 60 minutos para
+Docente/Encarregado de Educação/Aluno (tipicamente um dispositivo pessoal, não
+partilhado). Omissão (perfil não listado): 30 minutos.
+
+**Justificação**: são os únicos números concretos que a documentação não fornece —
+qualquer valor exigiria uma escolha; os intervalos escolhidos reflectem directamente a
+própria razão dada pela RNF (risco de sessão aberta esquecida num posto partilhado).
+
+**Impacto**: se a instituição quiser afinar estes valores no futuro (ex.: através de
+uma UI de configuração), estes tornam-se o ponto de partida por omissão a expor, não
+um valor definitivo e imutável.
