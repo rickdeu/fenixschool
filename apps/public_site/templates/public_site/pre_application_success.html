@@ -1,0 +1,16 @@
+{% extends "public_base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Candidatura recebida" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 560px;">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+        <h1 class="h3 mt-3">{% translate "Candidatura recebida" %}</h1>
+        <p class="mb-0">
+            {% blocktranslate with name=candidate.full_name course=candidate.desired_course.name %}Obrigado, {{ name }}. Recebemos a sua pré-candidatura para {{ course }} e entraremos em contacto brevemente.{% endblocktranslate %}
+        </p>
+    </div>
+</div>
+{% endblock %}

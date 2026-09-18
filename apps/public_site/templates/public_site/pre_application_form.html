@@ -1,0 +1,21 @@
+{% extends "public_base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Pré-candidatura" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-1">{% translate "Pré-candidatura" %}</h1>
+<p class="text-muted mb-4">
+    {% translate "Manifeste o seu interesse numa vaga. Entraremos em contacto para os passos seguintes da inscrição." %}
+</p>
+
+<div class="card" style="max-width: 560px;">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "components/bootstrap_form.html" %}
+            <button type="submit" class="btn btn-primary">{% translate "Submeter candidatura" %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

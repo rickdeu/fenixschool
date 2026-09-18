@@ -1,0 +1,124 @@
+"""Tests for the public pre-application form (issue #102, RF-PUB-03)."""
+
+import uuid
+from datetime import date
+
+import pytest
+from django.test import Client
+from django.urls import reverse
+
+from apps.academic.models import Course, Department
+from apps.core.context import tenant_context
+from apps.core.models import AcademicCycle
+from apps.enrollment.models import Candidate
+
+pytestmark = pytest.mark.django_db
+
+
+def _origin():
+    return uuid.uuid4()
+
+
+@pytest.fixture
+def course(institution):
+    with tenant_context(institution.id):
+        department = Department.objects.create(
+            institution=institution, origin_node_id=_origin(), name="Ciências"
+        )
+        cycle = AcademicCycle.objects.create(
+            institution=institution, origin_node_id=_origin(), designation="1.º Ciclo", order=1
+        )
+        return Course.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            code="INF",
+            name="Informática",
+            created_on=date(2020, 1, 1),
+            department=department,
+            cycle=cycle,
+            duration_years=4,
+        )
+
+
+def test_redirects_to_the_setup_wizard_when_no_institution_exists():
+    response = Client().get(reverse("public_site:pre_application"))
+
+    assert response.status_code == 302
+    assert response.url == reverse("core:setup_wizard")
+
+
+def test_is_accessible_without_login(institution, course):
+    response = Client().get(reverse("public_site:pre_application"))
+
+    assert response.status_code == 200
+
+
+def test_valid_submission_creates_a_pending_candidate(institution, course):
+    response = Client().post(
+        reverse("public_site:pre_application"),
+        data={
+            "full_name": "Ana Kavungo",
+            "birth_date": "2010-05-20",
+            "desired_course": str(course.pk),
+            "contact": "923000000",
+        },
+    )
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        candidate = Candidate.objects.get(full_name="Ana Kavungo")
+    assert candidate.status == Candidate.Status.PENDING
+    assert candidate.institution_id == institution.id
+    assert candidate.desired_course_id == course.id
+    assert candidate.contact == "923000000"
+
+
+def test_missing_required_fields_shows_validation_errors_and_creates_nothing(
+    institution, course
+):
+    response = Client().post(reverse("public_site:pre_application"), data={})
+
+    assert response.status_code == 200
+    assert "obrigatório" in response.content.decode() or "campo" in response.content.decode()
+    with tenant_context(institution.id):
+        assert not Candidate.objects.exists()
+
+
+def test_desired_course_choices_never_leak_another_institutions_courses(institution, course):
+    from apps.core.models import Institution
+
+    other_institution = Institution.objects.create(name="Outra Escola")
+    with tenant_context(other_institution.id):
+        other_department = Department.objects.create(
+            institution=other_institution, origin_node_id=_origin(), name="Letras"
+        )
+        other_cycle = AcademicCycle.objects.create(
+            institution=other_institution,
+            origin_node_id=_origin(),
+            designation="1.º Ciclo",
+            order=1,
+        )
+        other_course = Course.objects.create(
+            institution=other_institution,
+            origin_node_id=_origin(),
+            code="LET",
+            name="Letras Modernas",
+            created_on=date(2020, 1, 1),
+            department=other_department,
+            cycle=other_cycle,
+            duration_years=4,
+        )
+
+    response = Client().post(
+        reverse("public_site:pre_application"),
+        data={
+            "full_name": "João Bumba",
+            "birth_date": "2009-01-01",
+            "desired_course": str(other_course.pk),
+            "contact": "923111111",
+        },
+    )
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        assert not Candidate.objects.filter(full_name="João Bumba").exists()
