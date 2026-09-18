@@ -163,3 +163,100 @@ def test_manual_override_without_a_reason_is_rejected(admin_client, institution,
 
     final_grade.refresh_from_db()
     assert final_grade.manual_override_value is None
+
+
+@pytest.fixture
+def grade(institution, enrollment, subject, evaluation_type, academic_term, teacher):
+    with tenant_context(institution.id):
+        return Grade.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+
+
+CHANGELIST_URL = reverse("admin:grading_grade_changelist")
+
+
+def test_homologar_pauta_action_closes_the_selected_grades(admin_client, grade):
+    response = admin_client.post(
+        CHANGELIST_URL,
+        {
+            "action": "homologar_pauta_action",
+            "_selected_action": [str(grade.pk)],
+            "index": "0",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    grade.refresh_from_db()
+    assert grade.is_grade_report_closed is True
+
+
+def test_reabrir_pauta_action_shows_a_confirmation_page_first(admin_client, grade):
+    response = admin_client.post(
+        CHANGELIST_URL,
+        {
+            "action": "reabrir_pauta_action",
+            "_selected_action": [str(grade.pk)],
+            "index": "0",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "justifica" in response.content.decode().lower()
+    grade.refresh_from_db()
+    assert grade.is_grade_report_closed is False  # nothing applied yet
+
+
+def test_reabrir_pauta_action_reopens_with_a_reason(admin_client, institution, grade):
+    with tenant_context(institution.id):
+        from apps.grading.services import homologar_pauta
+
+        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=grade.teacher)
+
+    response = admin_client.post(
+        CHANGELIST_URL,
+        {
+            "action": "reabrir_pauta_action",
+            "_selected_action": [str(grade.pk)],
+            "reason": "Erro identificado após homologação.",
+            "apply": "Confirmar reabertura",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    grade.refresh_from_db()
+    assert grade.is_grade_report_closed is False
+    assert grade.reopening_reason == "Erro identificado após homologação."
+
+
+def test_reabrir_pauta_action_without_a_reason_is_rejected(admin_client, institution, grade):
+    with tenant_context(institution.id):
+        from apps.grading.services import homologar_pauta
+
+        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=grade.teacher)
+
+    response = admin_client.post(
+        CHANGELIST_URL,
+        {
+            "action": "reabrir_pauta_action",
+            "_selected_action": [str(grade.pk)],
+            "reason": "   ",
+            "apply": "Confirmar reabertura",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert "justificação" in response.content.decode().lower()
+    grade.refresh_from_db()
+    assert grade.is_grade_report_closed is True

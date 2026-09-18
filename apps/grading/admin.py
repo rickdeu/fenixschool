@@ -1,10 +1,17 @@
 """Registo dos modelos de `grading` no Django Admin."""
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.template.response import TemplateResponse
 
 from .forms import FinalGradeAdminForm, GradeAdminForm
 from .models import EvaluationType, FinalGrade, Grade, GradingFormulaOverride, GradingScale
-from .services import ajustar_media_manualmente
+from .services import (
+    ReaberturaSemJustificacaoError,
+    ajustar_media_manualmente,
+    homologar_pauta,
+    reabrir_pauta,
+)
 
 
 @admin.register(EvaluationType)
@@ -31,6 +38,7 @@ class GradingScaleAdmin(admin.ModelAdmin):
 @admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
     form = GradeAdminForm
+    actions = ["homologar_pauta_action", "reabrir_pauta_action"]
     list_display = (
         "student",
         "subject",
@@ -71,7 +79,36 @@ class GradeAdmin(admin.ModelAdmin):
         "school_class",
         "department",
         "qualitative_level",
+        "reopening_reason",
     )
+
+    @admin.action(description="Homologar pauta (fechar as notas seleccionadas)")
+    def homologar_pauta_action(self, request, queryset):
+        count = homologar_pauta(queryset, user=request.user)
+        self.message_user(request, f"{count} nota(s) homologada(s) e fechada(s).")
+
+    @admin.action(description="Reabrir pauta (com justificação obrigatória)")
+    def reabrir_pauta_action(self, request, queryset):
+        if "apply" in request.POST:
+            reason = request.POST.get("reason", "")
+            try:
+                count = reabrir_pauta(queryset, user=request.user, reason=reason)
+            except ReaberturaSemJustificacaoError as error:
+                self.message_user(request, str(error), level=messages.ERROR)
+                return None
+            self.message_user(request, f"{count} nota(s) reaberta(s).")
+            return None
+
+        return TemplateResponse(
+            request,
+            "grading/admin_reabrir_pauta_confirm.html",
+            {
+                "grades": queryset,
+                "opts": self.model._meta,
+                "action_checkbox_name": ACTION_CHECKBOX_NAME,
+                "action_name": "reabrir_pauta_action",
+            },
+        )
 
 
 @admin.register(FinalGrade)

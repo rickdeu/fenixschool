@@ -13,13 +13,16 @@ from apps.grading.services import (
     InvalidGradingFormulaError,
     JustificacaoObrigatoriaError,
     NotaForaDaEscalaError,
+    ReaberturaSemJustificacaoError,
     ajustar_media_manualmente,
     calcular_media_disciplina,
     calculate_average,
     ensure_default_evaluation_types,
     get_docente_assignments,
+    homologar_pauta,
     lancar_nota,
     lancar_ou_atualizar_nota,
+    reabrir_pauta,
     registar_media_final,
     resolve_grading_formula,
     seed_default_grading_formula,
@@ -709,3 +712,172 @@ def test_lancar_ou_atualizar_nota_rejects_a_teacher_not_scheduled(
                 value=Decimal("12"),
                 origin_node_id=uuid.uuid4(),
             )
+
+
+def _direcao_pedagogica(institution):
+    from apps.accounts.models import Profile, User
+
+    return User.objects.create_user(
+        username="direcao1", institution=institution, profile=Profile.PEDAGOGICAL_DIRECTION
+    )
+
+
+def test_homologar_pauta_closes_every_open_grade_in_the_set(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+        direcao = _direcao_pedagogica(institution)
+
+        count = homologar_pauta(Grade.objects.filter(pk=grade.pk), user=direcao)
+
+        grade.refresh_from_db()
+
+    assert count == 1
+    assert grade.is_grade_report_closed is True
+    assert grade.updated_by_id == direcao.id
+
+
+def test_homologar_pauta_is_idempotent_for_already_closed_grades(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+        direcao = _direcao_pedagogica(institution)
+        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=direcao)
+
+        count = homologar_pauta(Grade.all_objects.filter(pk=grade.pk), user=direcao)
+
+    assert count == 0
+
+
+def test_reabrir_pauta_requires_a_reason(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+        direcao = _direcao_pedagogica(institution)
+        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=direcao)
+
+        with pytest.raises(ReaberturaSemJustificacaoError):
+            reabrir_pauta(Grade.all_objects.filter(pk=grade.pk), user=direcao, reason="   ")
+
+        grade.refresh_from_db()
+
+    assert grade.is_grade_report_closed is True
+
+
+def test_reabrir_pauta_reopens_and_records_the_reason(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+        direcao = _direcao_pedagogica(institution)
+        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=direcao)
+
+        count = reabrir_pauta(
+            Grade.all_objects.filter(pk=grade.pk),
+            user=direcao,
+            reason="Erro de digitação detectado após homologação.",
+        )
+
+        grade.refresh_from_db()
+
+    assert count == 1
+    assert grade.is_grade_report_closed is False
+    assert grade.reopening_reason == "Erro de digitação detectado após homologação."
+    assert grade.updated_by_id == direcao.id
+
+
+def test_reabrir_pauta_is_idempotent_for_already_open_grades(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+        direcao = _direcao_pedagogica(institution)
+
+        count = reabrir_pauta(
+            Grade.objects.filter(pk=grade.pk), user=direcao, reason="Já estava aberta."
+        )
+
+    assert count == 0
+
+
+def test_reabrir_pauta_after_edits_allows_the_grade_to_be_changed_again(
+    institution, enrollment, subject, evaluation_type, academic_term, teacher
+):
+    with tenant_context(institution.id):
+        grade = Grade.objects.create(
+            institution=institution,
+            origin_node_id=uuid.uuid4(),
+            student=enrollment.student,
+            enrollment=enrollment,
+            subject=subject,
+            academic_term=academic_term,
+            evaluation_type=evaluation_type,
+            value=Decimal("15"),
+            teacher=teacher,
+        )
+        direcao = _direcao_pedagogica(institution)
+        homologar_pauta(Grade.objects.filter(pk=grade.pk), user=direcao)
+        reabrir_pauta(
+            Grade.all_objects.filter(pk=grade.pk), user=direcao, reason="Correcção pedida."
+        )
+
+        grade.refresh_from_db()
+        grade.value = Decimal("18")
+        grade.save()
+
+        grade.refresh_from_db()
+
+    assert grade.value == Decimal("18.0")

@@ -426,3 +426,62 @@ def ajustar_media_manualmente(*, final_grade, user, value, reason) -> FinalGrade
     final_grade.overridden_at = timezone.now()
     final_grade.save()
     return final_grade
+
+
+class ReaberturaSemJustificacaoError(Exception):
+    """RF-AVAL-04/§7.4: reabrir uma pauta já homologada exige sempre uma
+    justificação registada -- sem uma, a auditoria (issue #140) saberia
+    *que* alguém reabriu, mas nunca *porquê*."""
+
+    def __init__(self):
+        super().__init__("A reabertura de uma pauta fechada exige uma justificação.")
+
+
+def homologar_pauta(grades, *, user) -> int:
+    """ "Homologar pauta" (§7.4, RF-AVAL-04): a Direção Pedagógica fecha um
+    conjunto de Notas de uma só vez -- a partir daí, cada uma delas só pode
+    voltar a ser editada via `reabrir_pauta`.
+
+    `grades` é tipicamente todas as Notas de uma turma/disciplina/tipo de
+    avaliação/período (uma "pauta"), mas esta função em si só precisa de um
+    iterável de `Grade` -- quem a chama (ex.: uma acção do Django Admin) é
+    responsável por escolher o âmbito certo. Notas já fechadas são
+    ignoradas (idempotente, não gera um novo "fecho" nem entra outra vez na
+    auditoria). Devolve o número de Notas efectivamente fechadas.
+
+    `user.has_perm("grading.change_grade")` -- que só a Direção Pedagógica e
+    o Administrador da Instituição têm (`accounts.migrations.
+    0013_grade_permissions`) -- é responsabilidade de quem chama verificar
+    (ex.: `@permission_required` na view/acção do Admin), não desta função:
+    mantém a lógica de RBAC no mesmo sítio onde já vive para todo o resto do
+    projecto.
+    """
+    count = 0
+    for grade in grades:
+        if grade.is_grade_report_closed:
+            continue
+        grade.is_grade_report_closed = True
+        grade.updated_by = user
+        grade.save(authorize_closed_edit=True)
+        count += 1
+    return count
+
+
+def reabrir_pauta(grades, *, user, reason) -> int:
+    """ "Reabrir pauta" (§7.4, RF-AVAL-04): o inverso de `homologar_pauta`,
+    exigindo sempre uma `reason` não vazia. Notas já abertas são ignoradas
+    (idempotente). Devolve o número de Notas efectivamente reabertas.
+    """
+    if not reason or not reason.strip():
+        raise ReaberturaSemJustificacaoError()
+
+    count = 0
+    for grade in grades:
+        if not grade.is_grade_report_closed:
+            continue
+        grade.is_grade_report_closed = False
+        grade.reopening_reason = reason
+        grade.updated_by = user
+        grade.save(authorize_closed_edit=True)
+        count += 1
+    return count
