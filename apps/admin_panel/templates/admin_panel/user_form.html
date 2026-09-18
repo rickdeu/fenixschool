@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<h1>
+<h1 class="h3 mb-4">
     {% if is_create %}
         {% translate "Novo utilizador" %}
     {% else %}
@@ -14,15 +14,13 @@
     {% endif %}
 </h1>
 
-{% if form.errors %}
-<div class="alert alert-danger" role="alert">
-    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "components/bootstrap_form.html" %}
+            <button type="submit" class="btn btn-primary">{% translate "Guardar" %}</button>
+        </form>
+    </div>
 </div>
-{% endif %}
-
-<form method="post" novalidate>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% translate "Guardar" %}</button>
-</form>
 {% endblock %}

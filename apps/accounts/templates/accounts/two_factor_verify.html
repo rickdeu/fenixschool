@@ -1,23 +1,16 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 {% load i18n %}
 
 {% block title %}{% translate "Verificação em dois passos" %} — FenixSchool{% endblock %}
+{% block auth_title %}{% translate "Verificação em dois passos" %}{% endblock %}
+{% block auth_subtitle %}{% translate "Introduza o código gerado pela sua aplicação autenticadora." %}{% endblock %}
 
 {% block content %}
-<h1>{% translate "Verificação em dois passos" %}</h1>
-
-<p>{% translate "Introduza o código gerado pela sua aplicação autenticadora." %}</p>
-
-{% if form.errors %}
-<div class="alert alert-danger" role="alert">
-    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-    {% for error in form.token.errors %}<p>{{ error }}</p>{% endfor %}
-</div>
-{% endif %}
-
 <form method="post" novalidate>
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% translate "Verificar" %}</button>
+    {% include "components/bootstrap_form.html" %}
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary btn-lg">{% translate "Verificar" %}</button>
+    </div>
 </form>
 {% endblock %}

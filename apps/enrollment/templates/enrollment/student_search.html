@@ -4,37 +4,49 @@
 {% block title %}{% translate "Nova Matrícula" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>{% translate "Inscrições → Matrículas → Nova Matrícula" %}</h1>
+<h1 class="h3 mb-4">{% translate "Inscrições → Matrículas → Nova Matrícula" %}</h1>
 
-<form method="get">
-    {{ search_form.as_p }}
-    <button type="submit">{% translate "Procurar" %}</button>
-</form>
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-auto flex-grow-1">
+                {% include "components/bootstrap_form.html" with form=search_form %}
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary mb-3">{% translate "Procurar" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% if students %}
-<table>
-    <thead>
-        <tr>
-            <th>{% translate "Nº" %}</th>
-            <th>{% translate "Nome" %}</th>
-            <th>{% translate "Documento" %}</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for student in students %}
-        <tr>
-            <td>{{ student.student_number }}</td>
-            <td>{{ student.first_name }} {{ student.last_name }}</td>
-            <td>{{ student.document_number }}</td>
-            <td>
-                <a href="{% url 'enrollment:enrollment_create' student.id %}">{% translate "Matricular" %}</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Nº" %}</th>
+                    <th>{% translate "Nome" %}</th>
+                    <th>{% translate "Documento" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.student_number }}</td>
+                    <td>{{ student.first_name }} {{ student.last_name }}</td>
+                    <td>{{ student.document_number }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'enrollment:enrollment_create' student.id %}" class="btn btn-sm btn-primary">{% translate "Matricular" %}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% elif search_form.is_bound %}
-<p>{% translate "Nenhum aluno encontrado." %}</p>
+<p class="text-muted">{% translate "Nenhum aluno encontrado." %}</p>
 {% endif %}
 {% endblock %}

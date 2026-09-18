@@ -4,19 +4,25 @@
 {% block title %}{% blocktranslate with name=student.first_name %}Matricular {{ name }}{% endblocktranslate %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>{% translate "Matrícula" %}</h1>
+<h1 class="h3 mb-4">{% translate "Matrícula" %}</h1>
 
-<section>
-    <h2>{% translate "Aluno" %}</h2>
-    <p>
-        <strong>{{ student.first_name }} {{ student.last_name }}</strong>
-        ({% translate "Nº" %} {{ student.student_number }}, {{ student.document_number }})
-    </p>
-</section>
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h6 text-muted text-uppercase mb-2">{% translate "Aluno" %}</h2>
+        <p class="mb-0">
+            <strong>{{ student.first_name }} {{ student.last_name }}</strong>
+            ({% translate "Nº" %} {{ student.student_number }}, {{ student.document_number }})
+        </p>
+    </div>
+</div>
 
-<form method="post" novalidate>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% translate "Guardar e Imprimir" %}</button>
-</form>
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "components/bootstrap_form.html" %}
+            <button type="submit" class="btn btn-primary">{% translate "Guardar e Imprimir" %}</button>
+        </form>
+    </div>
+</div>
 {% endblock %}

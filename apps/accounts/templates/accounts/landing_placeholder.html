@@ -4,14 +4,12 @@
 {% block title %}FenixSchool{% endblock %}
 
 {% block content %}
-<h1>
-    {% blocktranslate with name=user.first_name|default:user.username %}Sessão iniciada, {{ name }}.{% endblocktranslate %}
-</h1>
-<p>
-    {% translate "A área própria do seu perfil ainda está por construir. Volte mais tarde." %}
-</p>
-<form method="post" action="{% url 'accounts:logout' %}">
-    {% csrf_token %}
-    <button type="submit">{% translate "Sair" %}</button>
-</form>
+<div class="mb-3">
+    <h1 class="h3 font-bold">
+        {% blocktranslate with name=user.first_name|default:user.username %}Sessão iniciada, {{ name }}.{% endblocktranslate %}
+    </h1>
+    <p class="text-muted">
+        {% translate "A área própria do seu perfil ainda está por construir. Volte mais tarde." %}
+    </p>
+</div>
 {% endblock %}

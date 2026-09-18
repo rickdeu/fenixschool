@@ -1,29 +1,29 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 {% load i18n %}
 
 {% block title %}{% translate "Configuração inicial" %} — FenixSchool{% endblock %}
+{% block auth_max_width %}720px{% endblock %}
+{% block auth_title %}{% translate "Configuração inicial" %}{% endblock %}
+{% block auth_subtitle %}
+{% blocktranslate %}Cria a instituição e a conta do respectivo Gestor.{% endblocktranslate %}
+{% endblock %}
 
 {% block content %}
-<h1>{% translate "Configuração inicial" %}</h1>
-<p>
-    {% blocktranslate %}Este assistente cria a instituição e a conta do respectivo Gestor
-    (Administrador da Instituição). Só está disponível enquanto não existir
-    nenhuma instituição configurada neste Nó.{% endblocktranslate %}
-</p>
-
 <form method="post" novalidate>
     {% csrf_token %}
 
-    <fieldset>
-        <legend>{% translate "Instituição" %}</legend>
-        {{ institution_form.as_p }}
+    <fieldset class="mb-4">
+        <legend class="h5">{% translate "Instituição" %}</legend>
+        {% include "components/bootstrap_form.html" with form=institution_form %}
     </fieldset>
 
-    <fieldset>
-        <legend>{% translate "Gestor (Administrador da Instituição)" %}</legend>
-        {{ manager_form.as_p }}
+    <fieldset class="mb-4">
+        <legend class="h5">{% translate "Gestor (Administrador da Instituição)" %}</legend>
+        {% include "components/bootstrap_form.html" with form=manager_form %}
     </fieldset>
 
-    <button type="submit">{% translate "Concluir configuração" %}</button>
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary btn-lg">{% translate "Concluir configuração" %}</button>
+    </div>
 </form>
 {% endblock %}

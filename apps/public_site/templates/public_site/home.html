@@ -1,55 +1,64 @@
-{% extends "base.html" %}
+{% extends "public_base.html" %}
 {% load i18n %}
 
 {% block title %}{{ institution.name }}{% endblock %}
 
 {% block content %}
-{% if institution.logo %}
-<img src="{{ institution.logo.url }}" alt="{{ institution.name }}" style="max-height: 120px;">
-{% endif %}
-
-<h1>{{ institution.name }}</h1>
+<div class="text-center mb-4">
+    {% if institution.logo %}
+    <img src="{{ institution.logo.url }}" alt="{{ institution.name }}" class="mb-3" style="max-height: 120px;">
+    {% endif %}
+    <h1 class="h2">{{ institution.name }}</h1>
+</div>
 
 {% if institution.description %}
-<section>
+<section class="mb-4">
     <p>{{ institution.description|linebreaks }}</p>
 </section>
 {% endif %}
 
-<section>
-    <h2>{% translate "Cursos" %}</h2>
-    {% if courses %}
-    <ul>
-        {% for course in courses %}
-        <li>
-            {{ course.name }}
-            {% if course.abbreviation %}({{ course.abbreviation }}){% endif %}
-            {% if course.department %} -- {{ course.department.name }}{% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>{% translate "Ainda não há cursos publicados." %}</p>
-    {% endif %}
-</section>
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title"><i class="bi bi-book me-2"></i>{% translate "Cursos" %}</h2>
+                {% if courses %}
+                <ul class="list-unstyled mb-0">
+                    {% for course in courses %}
+                    <li class="mb-2">
+                        {{ course.name }}
+                        {% if course.abbreviation %}<span class="text-muted">({{ course.abbreviation }})</span>{% endif %}
+                        {% if course.department %}<br><small class="text-muted">{{ course.department.name }}</small>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">{% translate "Ainda não há cursos publicados." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-<section>
-    <h2>{% translate "Contactos e localização" %}</h2>
-    <address>
-        {% if institution.street %}{{ institution.street }} {{ institution.house_number }}<br>{% endif %}
-        {% if institution.neighborhood %}{{ institution.neighborhood }}<br>{% endif %}
-        {% if institution.district_or_commune %}{{ institution.district_or_commune }}<br>{% endif %}
-        {% if institution.municipality %}{{ institution.municipality }}, {% endif %}{% if institution.province %}{{ institution.province }}{% endif %}
-    </address>
-    <ul>
-        {% if institution.landline_phone %}<li>{% translate "Telefone fixo" %}: {{ institution.landline_phone }}</li>{% endif %}
-        {% if institution.unitel_phone %}<li>Unitel: {{ institution.unitel_phone }}</li>{% endif %}
-        {% if institution.movicel_phone %}<li>Movicel: {{ institution.movicel_phone }}</li>{% endif %}
-        {% if institution.africell_phone %}<li>Africell: {{ institution.africell_phone }}</li>{% endif %}
-        {% if institution.email %}<li>{% translate "Email" %}: {{ institution.email }}</li>{% endif %}
-        {% if institution.website %}<li>{% translate "Sítio" %}: <a href="{{ institution.website }}">{{ institution.website }}</a></li>{% endif %}
-    </ul>
-</section>
-
-<p><a href="{% url 'public_site:calendar' %}">{% translate "Calendário escolar" %}</a></p>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title"><i class="bi bi-geo-alt me-2"></i>{% translate "Contactos e localização" %}</h2>
+                <address class="mb-3">
+                    {% if institution.street %}{{ institution.street }} {{ institution.house_number }}<br>{% endif %}
+                    {% if institution.neighborhood %}{{ institution.neighborhood }}<br>{% endif %}
+                    {% if institution.district_or_commune %}{{ institution.district_or_commune }}<br>{% endif %}
+                    {% if institution.municipality %}{{ institution.municipality }}, {% endif %}{% if institution.province %}{{ institution.province }}{% endif %}
+                </address>
+                <ul class="list-unstyled mb-0">
+                    {% if institution.landline_phone %}<li>{% translate "Telefone fixo" %}: {{ institution.landline_phone }}</li>{% endif %}
+                    {% if institution.unitel_phone %}<li>Unitel: {{ institution.unitel_phone }}</li>{% endif %}
+                    {% if institution.movicel_phone %}<li>Movicel: {{ institution.movicel_phone }}</li>{% endif %}
+                    {% if institution.africell_phone %}<li>Africell: {{ institution.africell_phone }}</li>{% endif %}
+                    {% if institution.email %}<li>{% translate "Email" %}: {{ institution.email }}</li>{% endif %}
+                    {% if institution.website %}<li>{% translate "Sítio" %}: <a href="{{ institution.website }}">{{ institution.website }}</a></li>{% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

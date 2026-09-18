@@ -1,29 +1,35 @@
-{% extends "base.html" %}
+{% extends "public_base.html" %}
 {% load i18n %}
 
 {% block title %}{% translate "Portal do Encarregado de Educação" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1>{% translate "Portal do Encarregado de Educação" %}</h1>
+<h1 class="h3 mb-4">{% translate "Portal do Encarregado de Educação" %}</h1>
 
 {% if not students %}
-<p>{% translate "Não há nenhum educando associado a esta conta." %}</p>
+<p class="text-muted">{% translate "Não há nenhum educando associado a esta conta." %}</p>
 {% else %}
 
 {% if selector_form %}
-<form method="post" novalidate>
-    {% csrf_token %}
-    {{ selector_form.as_p }}
-    <button type="submit">{% translate "Ver este educando" %}</button>
-</form>
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "components/bootstrap_form.html" with form=selector_form %}
+            <button type="submit" class="btn btn-primary">{% translate "Ver este educando" %}</button>
+        </form>
+    </div>
+</div>
 {% endif %}
 
 {% if selected_student %}
-<section>
-    <h2>{{ selected_student.first_name }} {{ selected_student.last_name }}</h2>
-    <p>{% translate "Nº de aluno" %}: {{ selected_student.student_number }}</p>
-    <p>{% translate "Estado" %}: {{ selected_student.get_status_display }}</p>
-</section>
+<div class="card">
+    <div class="card-body">
+        <h2 class="h5">{{ selected_student.first_name }} {{ selected_student.last_name }}</h2>
+        <p class="mb-1">{% translate "Nº de aluno" %}: {{ selected_student.student_number }}</p>
+        <p class="mb-0">{% translate "Estado" %}: {{ selected_student.get_status_display }}</p>
+    </div>
+</div>
 {% endif %}
 
 {% endif %}
