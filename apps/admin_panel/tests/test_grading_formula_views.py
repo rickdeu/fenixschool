@@ -96,12 +96,34 @@ def test_config_view_requires_permission(institution):
     assert response.status_code == 403
 
 
-def test_config_view_redirects_gracefully_without_a_selected_institution(
+def test_config_view_defaults_to_the_only_institution_for_a_super_admin(
     institution, verify_two_factor
 ):
     """A Super Administrator has no `institution` of their own until they
-    pick one to view (issue #18's bug found via manual Docker verification:
-    this used to crash with a 500 instead)."""
+    explicitly pick one to view (`TenantMiddleware`) -- but with no explicit
+    pick, and this MVP's Nó Local never hosting more than one Institution,
+    `TenantMiddleware` defaults to that one instead of leaving them stuck
+    with no viewing context at all (issue #18's bug found via manual Docker
+    verification: this used to crash with a 500 before this default
+    existed)."""
+    super_admin = User.objects.create_user(
+        username="superadmin1", profile=Profile.SUPER_ADMIN, password="pw12345", is_superuser=True
+    )
+    client = Client()
+    client.login(username="superadmin1", password="pw12345")
+    verify_two_factor(client, super_admin)
+
+    response = client.get(reverse("admin_panel:grading_formula_config"))
+
+    assert response.status_code == 200
+
+
+def test_config_view_redirects_gracefully_when_no_institution_exists_at_all(verify_two_factor):
+    """Before the setup wizard has ever run (issue #17), there is no
+    Institution for `TenantMiddleware` to default a Super Administrator
+    to -- this is the one case `require_institution_context` still has to
+    catch, since a Super Administrator account can exist before that (e.g.
+    `createsuperuser` run ahead of the wizard)."""
     super_admin = User.objects.create_user(
         username="superadmin1", profile=Profile.SUPER_ADMIN, password="pw12345", is_superuser=True
     )

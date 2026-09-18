@@ -14,11 +14,15 @@ class TenantMiddleware:
     manually (see docs/04-arquitetura-tecnica.md §4.4.1/§4.4.4):
     `request.institution` is simply set to `request.user.institution`.
 
-    A Super Administrator has no institution of their own. Instead of an
-    ambiguous default, they operate in an explicitly selected "viewing" context:
-    the institution they are currently viewing is read from
-    `request.session[SESSION_KEY]`, defaulting to `None` (no institution
-    selected, i.e. a network-wide view) until they pick one.
+    A Super Administrator has no institution of their own. Instead, they operate
+    in an explicitly selected "viewing" context: the institution they are
+    currently viewing is read from `request.session[SESSION_KEY]`. Until an
+    explicit picker exists to change it (see `_resolve_institution`), this
+    defaults to the only Institution this node hosts -- this MVP's Nó Local
+    architecture never has more than one (docs/04-arquitetura-tecnica.md
+    §4.4.1), the same assumption `apps.public_site.services.get_the_institution`
+    already makes for anonymous visitors. A future Nó Central with several
+    institutions would need a real picker here instead of this fallback.
 
     The resolved institution id is also pushed onto the tenant context consumed
     by `TenantManager` (see apps.core.context / apps.core.models.managers) for
@@ -49,8 +53,10 @@ class TenantMiddleware:
 
         if user.is_super_admin:
             institution_id = request.session.get(self.SESSION_KEY)
-            if not institution_id:
-                return None
-            return Institution.objects.filter(pk=institution_id).first()
+            if institution_id:
+                selected = Institution.objects.filter(pk=institution_id).first()
+                if selected is not None:
+                    return selected
+            return Institution.objects.first()
 
         return user.institution
