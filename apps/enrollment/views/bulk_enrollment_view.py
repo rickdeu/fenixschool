@@ -40,7 +40,9 @@ def bulk_enrollment_view(request):
     courses = Course.objects.filter(institution=institution).order_by("name")
 
     course_id = request.POST.get("course") or request.GET.get("course")
-    course = Course.objects.filter(institution=institution, pk=course_id).first()
+    course = (
+        Course.objects.filter(institution=institution, pk=course_id).first() if course_id else None
+    )
 
     school_classes = SchoolClass.objects.none()
     eligible_students = Student.objects.none()
@@ -49,7 +51,10 @@ def bulk_enrollment_view(request):
         eligible_students = _eligible_students(institution, course)
 
     if request.method == "POST" and course is not None:
-        school_class = school_classes.filter(pk=request.POST.get("school_class")).first()
+        school_class_id = request.POST.get("school_class")
+        school_class = (
+            school_classes.filter(pk=school_class_id).first() if school_class_id else None
+        )
         selected_ids = request.POST.getlist("student_ids")
 
         if school_class is None:
