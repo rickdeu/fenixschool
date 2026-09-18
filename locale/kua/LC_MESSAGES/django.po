@@ -1,0 +1,16 @@
+# Oshikwanyama translation catalogue for FenixSchool.
+# Copyright (C) 2026 FenixSchool
+# This file is distributed under the same license as the FenixSchool package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FenixSchool\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-18 03:02+0000\n"
+"PO-Revision-Date: 2026-09-18 03:02+0000\n"
+"Last-Translator: \n"
+"Language-Team: Oshikwanyama\n"
+"Language: kua\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
