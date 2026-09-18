@@ -8,9 +8,10 @@ import pytest
 from apps.academic.models import Course, CurricularYear, Department, SchoolClass
 from apps.core.context import tenant_context
 from apps.core.models import AcademicCycle, AcademicYear, IdentificationDocumentType
-from apps.enrollment.models import Enrollment, Student
+from apps.enrollment.models import Enrollment, Guardian, Student
 from apps.enrollment.services import (
     DuplicateStudentDocumentError,
+    MissingGuardianConsentError,
     SchoolClassFullError,
     enroll_student,
     register_student,
@@ -28,11 +29,23 @@ def document_type(db):
     return IdentificationDocumentType.objects.get(code="bilhete-de-identidade")
 
 
+def _make_guardian(institution, document_type, document_number="CONSENT-000"):
+    return Guardian.objects.create(
+        institution=institution,
+        origin_node_id=_origin(),
+        full_name="Encarregado",
+        kinship=Guardian.Kinship.MOTHER,
+        document_type=document_type,
+        document_number=document_number,
+    )
+
+
 def test_register_student_replicates_the_original_document_example(institution, document_type):
     """Issue #44's acceptance criterion: "Teste replicando o exemplo do
     documento original (aluna Yolene Hangalo)" -- docs/06-modulos-e-
     funcionalidades.md §6.4."""
     with tenant_context(institution.id):
+        guardian = _make_guardian(institution, document_type)
         student = register_student(
             institution=institution,
             origin_node_id=_origin(),
@@ -44,14 +57,38 @@ def test_register_student_replicates_the_original_document_example(institution, 
             document_number="005LA00123",
             document_issue_date=date(2020, 1, 1),
             document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian,
         )
 
     assert student.student_number == 1
     assert str(student) == "Yolene Hangalo (#1)"
 
 
+def test_register_student_blocks_missing_guardian_consent(institution, document_type):
+    """Issue #143's acceptance criterion: "Inscrição bloqueada sem
+    consentimento registado"."""
+    with tenant_context(institution.id):
+        with pytest.raises(MissingGuardianConsentError):
+            register_student(
+                institution=institution,
+                origin_node_id=_origin(),
+                first_name="Yolene",
+                last_name="Hangalo",
+                birth_date=date(2012, 4, 10),
+                gender=Student.Gender.FEMALE,
+                document_type=document_type,
+                document_number="005LA00123",
+                document_issue_date=date(2020, 1, 1),
+                document_issue_place="Nacional - Luanda",
+                guardian_consent_given_by=None,
+            )
+
+        assert not Student.objects.filter(document_number="005LA00123").exists()
+
+
 def test_register_student_blocks_duplicate_document(institution, document_type):
     with tenant_context(institution.id):
+        guardian = _make_guardian(institution, document_type)
         register_student(
             institution=institution,
             origin_node_id=_origin(),
@@ -63,6 +100,7 @@ def test_register_student_blocks_duplicate_document(institution, document_type):
             document_number="005LA00123",
             document_issue_date=date(2020, 1, 1),
             document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian,
         )
 
         with pytest.raises(DuplicateStudentDocumentError):
@@ -77,6 +115,7 @@ def test_register_student_blocks_duplicate_document(institution, document_type):
                 document_number="005LA00123",
                 document_issue_date=date(2020, 1, 1),
                 document_issue_place="Nacional - Luanda",
+                guardian_consent_given_by=guardian,
             )
 
         assert Student.objects.filter(document_number="005LA00123").count() == 1
@@ -86,6 +125,7 @@ def test_register_student_blocks_duplicate_even_against_a_soft_deleted_record(
     institution, document_type
 ):
     with tenant_context(institution.id):
+        guardian = _make_guardian(institution, document_type)
         existing = register_student(
             institution=institution,
             origin_node_id=_origin(),
@@ -97,6 +137,7 @@ def test_register_student_blocks_duplicate_even_against_a_soft_deleted_record(
             document_number="005LA00123",
             document_issue_date=date(2020, 1, 1),
             document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian,
         )
         existing.is_deleted = True
         existing.save()
@@ -113,6 +154,7 @@ def test_register_student_blocks_duplicate_even_against_a_soft_deleted_record(
                 document_number="005LA00123",
                 document_issue_date=date(2020, 1, 1),
                 document_issue_place="Nacional - Luanda",
+                guardian_consent_given_by=guardian,
             )
 
 
@@ -170,6 +212,7 @@ def class_setup(institution, document_type):
 
 
 def _make_student(institution, document_type, document_number):
+    guardian = _make_guardian(institution, document_type, "CONSENT-" + document_number)
     return Student.objects.create(
         institution=institution,
         origin_node_id=_origin(),
@@ -181,6 +224,7 @@ def _make_student(institution, document_type, document_number):
         document_number=document_number,
         document_issue_date=date(2020, 1, 1),
         document_issue_place="Nacional - Luanda",
+        guardian_consent_given_by=guardian,
     )
 
 

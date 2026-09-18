@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from apps.academic.models import Course, CurricularYear, Department, SchoolClass
 from apps.core.context import tenant_context
 from apps.core.models import AcademicCycle, AcademicYear, IdentificationDocumentType
-from apps.enrollment.models import Enrollment, Student
+from apps.enrollment.models import Enrollment, Guardian, Student
 
 pytestmark = pytest.mark.django_db
 
@@ -66,6 +66,14 @@ def setup(institution, document_type):
             curricular_year=curricular_year,
             shift=SchoolClass.Shift.MORNING,
         )
+        guardian = Guardian.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            full_name="Encarregado da Ana",
+            kinship=Guardian.Kinship.MOTHER,
+            document_type=document_type,
+            document_number="CONSENT-123",
+        )
         student = Student.objects.create(
             institution=institution,
             origin_node_id=_origin(),
@@ -77,6 +85,7 @@ def setup(institution, document_type):
             document_number="123456789LA000",
             document_issue_date=date(2020, 1, 1),
             document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian,
         )
     return {
         "course": course,

@@ -26,7 +26,19 @@ def document_type(db):
     return IdentificationDocumentType.objects.get(code="bilhete-de-identidade")
 
 
+def _make_consenting_guardian(institution, document_type, document_number):
+    return Guardian.objects.create(
+        institution=institution,
+        origin_node_id=_origin(),
+        full_name="Encarregado de " + document_number,
+        kinship=Guardian.Kinship.MOTHER,
+        document_type=document_type,
+        document_number="CONSENT-" + document_number,
+    )
+
+
 def _make_student(institution, document_type, document_number="123456789LA000"):
+    guardian = _make_consenting_guardian(institution, document_type, document_number)
     return Student.objects.create(
         institution=institution,
         origin_node_id=_origin(),
@@ -38,6 +50,7 @@ def _make_student(institution, document_type, document_number="123456789LA000"):
         document_number=document_number,
         document_issue_date=date(2020, 1, 1),
         document_issue_place="Nacional - Luanda",
+        guardian_consent_given_by=guardian,
     )
 
 
@@ -75,6 +88,7 @@ def test_student_document_number_uniqueness_is_enforced_at_the_database_level(
 ):
     with tenant_context(institution.id):
         _make_student(institution, document_type, "SAME-DOC")
+        guardian = _make_consenting_guardian(institution, document_type, "OTHER")
 
         duplicate = Student(
             institution=institution,
@@ -88,6 +102,7 @@ def test_student_document_number_uniqueness_is_enforced_at_the_database_level(
             document_number="SAME-DOC",
             document_issue_date=date(2020, 1, 1),
             document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian,
         )
         with transaction.atomic(), pytest.raises(IntegrityError):
             Student.objects.bulk_create([duplicate])
@@ -101,6 +116,7 @@ def test_student_can_use_any_province_since_it_is_shared_national_reference_data
     any_province = Province.objects.get(code="luanda")
 
     with tenant_context(institution.id):
+        guardian = _make_consenting_guardian(institution, document_type, "XYZ")
         student = Student.objects.create(
             institution=institution,
             origin_node_id=_origin(),
@@ -113,6 +129,7 @@ def test_student_can_use_any_province_since_it_is_shared_national_reference_data
             document_issue_date=date(2020, 1, 1),
             document_issue_place="Nacional - Luanda",
             province=any_province,
+            guardian_consent_given_by=guardian,
         )
 
     assert student.province == any_province
@@ -279,3 +296,42 @@ def test_student_guardian_student_and_guardian_must_share_institution(institutio
             student=student,
             guardian=foreign_guardian,
         )
+
+
+def test_student_cannot_be_created_without_guardian_consent(institution, document_type):
+    """Issue #143, RNF-AUD-02 (Lei 22/11): enforced structurally at the model
+    level -- `guardian_consent_given_by` has no default and is not nullable."""
+    with tenant_context(institution.id), pytest.raises(ValidationError):
+        Student.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            first_name="Ana",
+            last_name="Silva",
+            birth_date=date(2010, 5, 20),
+            gender=Student.Gender.FEMALE,
+            document_type=document_type,
+            document_number="NO-CONSENT",
+            document_issue_date=date(2020, 1, 1),
+            document_issue_place="Nacional - Luanda",
+        )
+
+
+def test_student_records_who_consented_and_when(institution, document_type):
+    with tenant_context(institution.id):
+        guardian = _make_consenting_guardian(institution, document_type, "CONSENT-CHECK")
+        student = Student.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            first_name="Ana",
+            last_name="Silva",
+            birth_date=date(2010, 5, 20),
+            gender=Student.Gender.FEMALE,
+            document_type=document_type,
+            document_number="CONSENT-CHECK",
+            document_issue_date=date(2020, 1, 1),
+            document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian,
+        )
+
+    assert student.guardian_consent_given_by == guardian
+    assert student.guardian_consent_given_at is not None

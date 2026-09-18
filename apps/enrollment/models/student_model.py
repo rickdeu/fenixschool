@@ -89,6 +89,24 @@ class Student(SyncedModel):
     landline_phone = models.CharField("telefone fixo", max_length=20, blank=True, default="")
     email = models.EmailField("email", blank=True, default="")
 
+    # Lei 22/11 (RNF-AUD-02, docs/09-seguranca-e-privacidade.md §9.1):
+    # consent for processing a minor's personal data, required at the
+    # moment of Inscrição. Both fields are mandatory (no null=True) --
+    # issue #143's "Inscrição bloqueada sem consentimento registado" is
+    # enforced structurally: a Student row simply cannot exist without them.
+    guardian_consent_given_by = models.ForeignKey(
+        "enrollment.Guardian",
+        verbose_name="consentimento dado por",
+        on_delete=models.PROTECT,
+        related_name="consented_students",
+        help_text="Encarregado de Educação que deu o consentimento no acto de Inscrição.",
+    )
+    guardian_consent_given_at = models.DateTimeField(
+        "consentimento dado em",
+        auto_now_add=True,
+        help_text="Registado automaticamente no momento da Inscrição.",
+    )
+
     registration_date = models.DateField("data de inscrição", auto_now_add=True)
     status = models.CharField(
         "estado", max_length=20, choices=Status.choices, default=Status.ACTIVE
