@@ -4,6 +4,7 @@ em `admin_panel`/`grading`, substituindo as antigas acções do Django Admin
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.academic.models import SchoolClass, Subject
@@ -11,6 +12,47 @@ from apps.core.models import AcademicTerm
 
 from ..models import EvaluationType, Grade
 from ..services import ReaberturaSemJustificacaoError, homologar_pauta, reabrir_pauta
+
+
+def _list_occurrences(institution):
+    """Every distinct turma/disciplina/tipo/trimestre combination that
+    already has notas lançadas -- lets the user pick a pauta to view
+    instead of having to guess a valid combination via the filter form."""
+
+    occurrences = list(
+        Grade.objects.filter(institution=institution)
+        .values(
+            "school_class_id",
+            "school_class__designation",
+            "subject_id",
+            "subject__name",
+            "evaluation_type_id",
+            "evaluation_type__name",
+            "academic_term_id",
+        )
+        .annotate(
+            total=Count("id"),
+            closed=Count("id", filter=Q(is_grade_report_closed=True)),
+        )
+        .order_by(
+            "school_class__designation",
+            "subject__name",
+            "academic_term_id",
+            "evaluation_type__name",
+        )
+    )
+
+    term_labels = {
+        term.id: str(term)
+        for term in AcademicTerm.objects.filter(
+            institution=institution,
+            id__in={row["academic_term_id"] for row in occurrences},
+        )
+    }
+    for row in occurrences:
+        row["academic_term_label"] = term_labels.get(row["academic_term_id"], "")
+        row["is_closed"] = row["total"] > 0 and row["closed"] == row["total"]
+    return occurrences
 
 
 @login_required
@@ -86,5 +128,6 @@ def pauta_management_view(request):
             "rows": rows,
             "all_closed": all_closed,
             "any_closed": any_closed,
+            "occurrences": _list_occurrences(institution),
         },
     )
