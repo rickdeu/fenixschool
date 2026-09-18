@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Mapa de ocupação" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Mapa de ocupação de salas e docentes" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="school_class" class="form-label">{% translate "Turma" %}</label>
+                <select name="school_class" id="school_class" class="form-select">
+                    <option value="">{% translate "Todas" %}</option>
+                    {% for sc in school_classes %}
+                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="room" class="form-label">{% translate "Sala" %}</label>
+                <select name="room" id="room" class="form-select">
+                    <option value="">{% translate "Todas" %}</option>
+                    {% for r in rooms %}
+                    <option value="{{ r.id }}" {% if selected_room == r.id|stringformat:"s" %}selected{% endif %}>{{ r.designation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="teacher" class="form-label">{% translate "Docente" %}</label>
+                <select name="teacher" id="teacher" class="form-select">
+                    <option value="">{% translate "Todos" %}</option>
+                    {% for t in teachers %}
+                    <option value="{{ t.id }}" {% if selected_teacher == t.id|stringformat:"s" %}selected{% endif %}>{{ t.get_full_name|default:t.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">{% translate "Filtrar" %}</button>
+                <a href="{% url 'admin_panel:schedule_occupancy' %}" class="btn btn-outline-secondary">{% translate "Limpar" %}</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for weekday_label, slots in grid %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header fw-bold">{{ weekday_label }}</div>
+            <div class="card-body">
+                {% if slots %}
+                <ul class="list-unstyled mb-0">
+                    {% for slot in slots %}
+                    <li class="mb-2 pb-2 border-bottom">
+                        <strong>{{ slot.start_time|time:"H:i" }}-{{ slot.end_time|time:"H:i" }}</strong>
+                        &middot; {{ slot.subject.name }}<br>
+                        <span class="text-muted small">
+                            {{ slot.school_class.designation }} &middot; {{ slot.room.designation }}
+                            &middot; {{ slot.teacher.get_full_name|default:slot.teacher.username }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted small mb-0">{% translate "Sem aulas." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

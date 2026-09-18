@@ -73,6 +73,19 @@
                 </ul>
             </div>
             {% endif %}
+
+            {% if perms.academic.view_schedule %}
+            <div class="menu-section">
+                <div class="menu-section-title">{% translate "Académico" %}</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_panel:schedule_occupancy' %}">
+                            <i class="bi bi-calendar3-week"></i> <span>{% translate "Mapa de ocupação" %}</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
         </nav>
     </aside>
     {% endblock %}
