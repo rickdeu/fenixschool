@@ -58,6 +58,7 @@ def test_shows_the_form_grouped_into_sections(admin_client):
         "Contactos",
         "Identidade visual",
         "Documentos oficiais",
+        "Admissões",
     }
 
 
@@ -72,6 +73,7 @@ def test_updating_the_institutions_data(admin_client, institution):
             "landline_phone": "222111222",
             "email": "geral@escola.ao",
             "website": "",
+            "admission_exam_passing_score": institution.admission_exam_passing_score,
         },
         follow=True,
     )

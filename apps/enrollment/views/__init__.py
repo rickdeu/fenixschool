@@ -1,5 +1,6 @@
 from .bulk_enrollment_view import bulk_enrollment_view
 from .candidate_list_view import candidate_list_view
+from .candidate_score_save_view import candidate_score_save_view
 from .declaracao_pdf_view import declaracao_pdf_view
 from .declaracao_selection_view import declaracao_selection_view
 from .enrollment_create_view import enrollment_create_view
@@ -11,6 +12,7 @@ from .student_search_view import student_search_view
 __all__ = [
     "bulk_enrollment_view",
     "candidate_list_view",
+    "candidate_score_save_view",
     "declaracao_pdf_view",
     "declaracao_selection_view",
     "enrollment_create_view",

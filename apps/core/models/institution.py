@@ -106,6 +106,19 @@ class Institution(models.Model):
         ),
     )
 
+    admission_exam_passing_score = models.DecimalField(
+        "nota mínima de aptidão na admissão",
+        max_digits=4,
+        decimal_places=1,
+        default=Decimal("10"),
+        help_text=(
+            "Nota mínima (escala 0-20) na prova de aptidão para um Candidato "
+            "poder ser admitido à Inscrição, quando essa prova é exigida. "
+            "'10' por omissão -- a mesma nota mínima de aprovação já usada na "
+            "avaliação escolar (docs/legislacao/escala-avaliacao-secundario.md)."
+        ),
+    )
+
     # -- Documentos oficiais (RF-REL-01, issue #99) ------------------------
     document_header_text = models.CharField(
         "texto do cabeçalho dos documentos",
