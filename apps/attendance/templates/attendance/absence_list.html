@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Faltas" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Faltas" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="turma" class="form-label">{% translate "Turma" %}</label>
+                <select name="turma" id="turma" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for sc in school_classes %}
+                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">{% translate "Ver faltas" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if absences is not None %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Aluno" %}</th>
+                    <th>{% translate "Disciplina" %}</th>
+                    <th>{% translate "Data" %}</th>
+                    <th>{% translate "Estado" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attendance in absences %}
+                <tr>
+                    <td>{{ attendance.student }}</td>
+                    <td>{{ attendance.schedule.subject.name }}</td>
+                    <td>{{ attendance.date }}</td>
+                    <td>
+                        {% if attendance.status == "justified_absent" %}
+                        <span class="badge text-bg-success">{{ attendance.get_status_display }}</span>
+                        {% else %}
+                        <span class="badge text-bg-warning">{{ attendance.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'attendance:justify_absence' attendance.id %}">
+                            {% translate "Justificar" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-muted">{% translate "Sem faltas para esta turma." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -95,3 +95,33 @@ def registar_presencas(*, teacher, schedule, date, statuses: dict, origin_node_i
                 )
             )
     return results
+
+
+class EstadoInvalidoParaJustificacaoError(Exception):
+    """RF-FREQ-02: só uma Falta (ou uma Falta Justificada, para corrigir/
+    substituir uma justificação já registada) pode ser justificada -- não
+    faz sentido "justificar" uma Presença."""
+
+    def __init__(self, attendance):
+        self.attendance = attendance
+        super().__init__(
+            f'"{attendance}" não é uma falta -- só uma falta pode ser justificada.'
+        )
+
+
+def justificar_falta(*, attendance: Attendance, text: str, justified_by, attachment=None):
+    """ "Justificação de faltas com anexo opcional" (issue #67, RF-FREQ-02):
+    muda o estado para Falta Justificada e regista o texto/anexo. `attachment`
+    é opcional (`None` por omissão) -- o critério de aceitação exige que a
+    justificação seja registável com ou sem ele."""
+
+    if attendance.status not in (Attendance.Status.ABSENT, Attendance.Status.JUSTIFIED_ABSENT):
+        raise EstadoInvalidoParaJustificacaoError(attendance)
+
+    attendance.status = Attendance.Status.JUSTIFIED_ABSENT
+    attendance.justification_text = text
+    if attachment is not None:
+        attendance.justification_attachment = attachment
+    attendance.registered_by = justified_by
+    attendance.save()
+    return attendance
