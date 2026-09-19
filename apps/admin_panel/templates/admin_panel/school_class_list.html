@@ -55,9 +55,13 @@
             </thead>
             <tbody>
                 {% for school_class in group.school_classes %}
-                <tr>
+                <tr class="cursor-pointer" onclick="window.location='{% url 'admin_panel:school_class_students' school_class.id %}'">
                     <td>{{ school_class.code }}</td>
-                    <td>{{ school_class.designation }}</td>
+                    <td>
+                        <a href="{% url 'admin_panel:school_class_students' school_class.id %}">
+                            {{ school_class.designation }}
+                        </a>
+                    </td>
                     <td>{{ school_class.course.name }}</td>
                     <td>{{ school_class.curricular_year.equivalent_grade }}</td>
                     <td>{{ school_class.get_shift_display }}</td>
@@ -69,7 +73,7 @@
                         </span>
                         {% endif %}
                     </td>
-                    <td class="text-end">
+                    <td class="text-end" onclick="event.stopPropagation()">
                         {% if perms.academic.change_schoolclass %}
                         <a href="{% url 'admin_panel:school_class_edit' school_class.id %}" class="btn btn-sm btn-outline-secondary">
                             {% translate "Editar" %}

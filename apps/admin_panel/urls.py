@@ -108,6 +108,11 @@ urlpatterns = [
         views.school_class_edit_view,
         name="school_class_edit",
     ),
+    path(
+        "academico/turmas/<uuid:school_class_id>/alunos/",
+        views.school_class_students_view,
+        name="school_class_students",
+    ),
     # -- Mapa de ocupação de salas e docentes (RF-CURR-06, issue #38) -----------
     path(
         "academico/mapa-ocupacao/",
