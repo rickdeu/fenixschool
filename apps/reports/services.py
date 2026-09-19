@@ -16,6 +16,7 @@ import weasyprint
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import override as translation_override
 
 from .models import DocumentSequence, IssuedDocument
 
@@ -82,9 +83,16 @@ def render_document_pdf(template_name: str, context: dict) -> bytes:
     `reports/base_document.html`) para PDF via WeasyPrint -- reaproveita o
     mesmo motor de templates Django usado para ecrã (docs/10-stack-
     tecnologica-e-estrutura-projeto.md §10.1: "Reutiliza os mesmos templates
-    Django para ecrã e para PDF")."""
+    Django para ecrã e para PDF").
 
-    html = render_to_string(template_name, context)
+    Issue #152 (RF-I18N-03): um documento oficial nunca é traduzido, por
+    validade legal/administrativa -- `translation_override("pt")` ignora o
+    `preferred_language` do utilizador autenticado (activado por
+    `LocaleMiddleware`/issue #149 em todo o resto do pedido) só durante esta
+    renderização."""
+
+    with translation_override("pt"):
+        html = render_to_string(template_name, context)
     return weasyprint.HTML(string=html).write_pdf()
 
 
