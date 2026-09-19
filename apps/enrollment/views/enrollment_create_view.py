@@ -10,7 +10,12 @@ from apps.core.view_helpers import require_institution_context
 
 from ..forms import EnrollmentForm
 from ..models import Student
-from ..services import SchoolClassFullError, emitir_comprovativo_matricula, enroll_student
+from ..services import (
+    SchoolClassFullError,
+    StudentAlreadyEnrolledError,
+    emitir_comprovativo_matricula,
+    enroll_student,
+)
 
 
 @login_required
@@ -32,6 +37,7 @@ def enrollment_create_view(request, student_id):
 
     institution = request.institution
     student = get_object_or_404(Student, pk=student_id, institution=institution)
+    capacity_warning = None
 
     if request.method == "POST":
         form = EnrollmentForm(request.POST, institution=institution, student=student)
@@ -45,6 +51,7 @@ def enrollment_create_view(request, student_id):
                     student=student,
                     school_class=school_class,
                     origin_node_id=get_current_node_id(),
+                    force=request.POST.get("force") == "1",
                     course=school_class.course,
                     academic_year=school_class.academic_year,
                     cycle=school_class.course.cycle,
@@ -52,6 +59,12 @@ def enrollment_create_view(request, student_id):
                     **fields,
                 )
             except SchoolClassFullError as error:
+                # Aviso, não bloqueio (issue #174/RF-MAT-07): o formulário
+                # (já bound, com a turma escolhida) volta a aparecer com um
+                # botão "confirmar mesmo assim" que resubmete a mesma
+                # escolha com force=1, em vez de recusar a matrícula.
+                capacity_warning = str(error)
+            except StudentAlreadyEnrolledError as error:
                 form.add_error("school_class", str(error))
             else:
                 _issued, pdf = emitir_comprovativo_matricula(
@@ -63,4 +76,8 @@ def enrollment_create_view(request, student_id):
     else:
         form = EnrollmentForm(institution=institution, student=student)
 
-    return render(request, "enrollment/enrollment_form.html", {"form": form, "student": student})
+    return render(
+        request,
+        "enrollment/enrollment_form.html",
+        {"form": form, "student": student, "capacity_warning": capacity_warning},
+    )

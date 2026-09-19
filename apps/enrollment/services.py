@@ -4,9 +4,13 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
+from django.db import transaction
+
 from apps.reports.services import gerar_comprovativo_matricula_pdf, gerar_declaracao_pdf
 
 from .models import Enrollment, Student
+
+_ACTIVE_ENROLLMENT_STATUSES = {Enrollment.Status.PENDING, Enrollment.Status.ACTIVE}
 
 
 def get_students_for_guardian(user):
@@ -34,13 +38,40 @@ class DuplicateStudentDocumentError(Exception):
 
 
 class SchoolClassFullError(Exception):
-    """RF-MAT-07: a SchoolClass already has `max_enrollment` active enrollments."""
+    """RF-MAT-07: a SchoolClass already has `max_enrollment` active enrollments.
+
+    A soft (overridable) limit, not a hard block: raised whenever the
+    capacity is exceeded and `force=False` (`enroll_student`'s default),
+    so the caller (`enrollment_create_view`) can show a warning and ask
+    the Secretaria to confirm before enrolling anyway -- issue #174's own
+    "aviso, não bloqueio automático" reasoning for `max_enrollment` itself
+    extends here too: a class being full is a fact worth surfacing, not a
+    reason to refuse a real enrolment decision made by a human."""
 
     def __init__(self, school_class):
         self.school_class = school_class
         super().__init__(
             f'A turma "{school_class}" atingiu o número máximo de inscritos '
             f"({school_class.max_enrollment})."
+        )
+
+
+class StudentAlreadyEnrolledError(Exception):
+    """Um aluno não pode ter mais do que uma matrícula activa (pendente ou
+    activa) no mesmo ano lectivo -- ao contrário do tecto de capacidade da
+    turma (`SchoolClassFullError`), esta é sempre um bloqueio, nunca
+    contornável: duas matrículas activas em simultâneo, no mesmo ano, para
+    o mesmo aluno, é sempre um erro de dados, não uma decisão legítima que
+    alguém possa querer confirmar na mesma."""
+
+    def __init__(self, student, academic_year, existing_enrollment):
+        self.student = student
+        self.academic_year = academic_year
+        self.existing_enrollment = existing_enrollment
+        super().__init__(
+            f'"{student}" já tem uma matrícula activa em {academic_year} '
+            f'("{existing_enrollment}") -- anule-a ou transfira-a antes de '
+            "criar uma nova, em vez de matricular outra vez no mesmo ano."
         )
 
 
@@ -91,10 +122,37 @@ def register_student(
     )
 
 
-def enroll_student(*, institution, student, school_class, **fields) -> Enrollment:
-    """ "Matricular aluno" (issue #46, RF-MAT-07): blocks enrollment once a
-    class's `max_enrollment` active enrollments are already taken."""
-    if school_class.active_enrollment_count() >= school_class.max_enrollment:
+def enroll_student(
+    *, institution, student, school_class, force=False, exclude_enrollment_id=None, **fields
+) -> Enrollment:
+    """ "Matricular aluno" (issue #46, RF-MAT-07).
+
+    Two independent checks, with different consequences on purpose:
+    - **Capacidade da turma**: `SchoolClassFullError`, only when `force`
+      is falsy -- a warning the Secretaria can confirm past (issue #174's
+      own "aviso, não bloqueio automático").
+    - **Matrícula duplicada no mesmo ano**: `StudentAlreadyEnrolledError`,
+      always -- a student with an already-active enrollment this
+      `academic_year` is a data error, never a legitimate override.
+      `exclude_enrollment_id` lets `transferir_aluno` create the new
+      enrollment without tripping over the very enrollment it is about to
+      close.
+    """
+    academic_year = fields.get("academic_year")
+    conflicting_enrollment = (
+        Enrollment.objects.filter(
+            institution=institution,
+            student=student,
+            academic_year=academic_year,
+            status__in=_ACTIVE_ENROLLMENT_STATUSES,
+        )
+        .exclude(pk=exclude_enrollment_id)
+        .first()
+    )
+    if conflicting_enrollment is not None:
+        raise StudentAlreadyEnrolledError(student, academic_year, conflicting_enrollment)
+
+    if not force and school_class.active_enrollment_count() >= school_class.max_enrollment:
         raise SchoolClassFullError(school_class)
 
     return Enrollment.objects.create(
@@ -208,8 +266,7 @@ def emitir_comprovativo_matricula(*, enrollment: Enrollment, issued_by, origin_n
         "Ano lectivo": str(enrollment.academic_year),
         "Data da matrícula": enrollment.date,
         "Documento apresentado": (
-            f"{enrollment.presented_document_type.name} n.º "
-            f"{enrollment.presented_document_number}"
+            f"{enrollment.presented_document_type.name} n.º {enrollment.presented_document_number}"
         ),
     }
 
@@ -219,9 +276,6 @@ def emitir_comprovativo_matricula(*, enrollment: Enrollment, issued_by, origin_n
         issued_by=issued_by,
         origin_node_id=origin_node_id,
     )
-
-
-_ACTIVE_ENROLLMENT_STATUSES = {Enrollment.Status.PENDING, Enrollment.Status.ACTIVE}
 
 
 class MotivoAnulacaoObrigatorioError(Exception):
@@ -262,7 +316,7 @@ def anular_matricula(*, enrollment: Enrollment, reason: str, cancelled_by) -> En
 
 
 def transferir_aluno(
-    *, enrollment: Enrollment, school_class, transferred_by, origin_node_id, **fields
+    *, enrollment: Enrollment, school_class, transferred_by, origin_node_id, force=False, **fields
 ) -> Enrollment:
     """ "Transferir aluno" (issue #49, RF-MAT-08): cria uma nova Matrícula
     em `school_class`, referenciando `enrollment` via `previous_enrollment`
@@ -274,29 +328,46 @@ def transferir_aluno(
     motor de sincronização entre instituições distintas -- que ainda não
     existe para este fluxo (ver `apps.sync`, hoje só changelog/auditoria de
     sincronização) -- não fabricado aqui à frente dessa dependência real.
+
+    `force` (RF-MAT-08's "limitações configuráveis" na transferência entre
+    turmas): repassado a `enroll_student` -- uma turma de destino já cheia
+    continua a ser só um aviso, nunca um bloqueio automático (mesmo
+    raciocínio de `SchoolClassFullError`).
+
+    A matrícula antiga é fechada (Transferida) *antes* de criar a nova,
+    não depois, dentro da mesma transacção -- ao contrário de
+    `exclude_enrollment_id` (um simples atalho ao nível do Python),
+    `Enrollment.save()` também valida a constraint da base de dados
+    (`enrollment_enrollment_one_active_per_student_per_year`), que só vê
+    o estado *já gravado* de cada matrícula, não o que `enroll_student`
+    pretende excluir. Se `enroll_student` falhar a seguir (capacidade ou
+    duplicado), a transacção inteira reverte, incluindo este fecho.
     """
     if enrollment.status not in _ACTIVE_ENROLLMENT_STATUSES:
         raise MatriculaJaEncerradaError(enrollment)
 
-    new_enrollment = enroll_student(
-        institution=enrollment.institution,
-        student=enrollment.student,
-        school_class=school_class,
-        origin_node_id=origin_node_id,
-        course=school_class.course,
-        academic_year=school_class.academic_year,
-        cycle=school_class.course.cycle,
-        curricular_year=school_class.curricular_year,
-        presented_document_type=enrollment.presented_document_type,
-        presented_document_number=enrollment.presented_document_number,
-        document_issue_date=enrollment.document_issue_date,
-        document_issue_place=enrollment.document_issue_place,
-        previous_enrollment=enrollment,
-        **fields,
-    )
+    with transaction.atomic():
+        enrollment.status = Enrollment.Status.TRANSFERRED
+        enrollment.updated_by = transferred_by
+        enrollment.save()
 
-    enrollment.status = Enrollment.Status.TRANSFERRED
-    enrollment.updated_by = transferred_by
-    enrollment.save()
+        new_enrollment = enroll_student(
+            institution=enrollment.institution,
+            student=enrollment.student,
+            school_class=school_class,
+            origin_node_id=origin_node_id,
+            force=force,
+            exclude_enrollment_id=enrollment.pk,
+            course=school_class.course,
+            academic_year=school_class.academic_year,
+            cycle=school_class.course.cycle,
+            curricular_year=school_class.curricular_year,
+            presented_document_type=enrollment.presented_document_type,
+            presented_document_number=enrollment.presented_document_number,
+            document_issue_date=enrollment.document_issue_date,
+            document_issue_place=enrollment.document_issue_place,
+            previous_enrollment=enrollment,
+            **fields,
+        )
 
     return new_enrollment

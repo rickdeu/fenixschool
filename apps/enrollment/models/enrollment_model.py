@@ -146,6 +146,20 @@ class Enrollment(SyncedModel):
                 fields=["institution", "academic_year", "enrollment_number"],
                 name="enrollment_enrollment_unique_number_per_institution_year",
             ),
+            # Defesa em profundidade da mesma regra já aplicada em
+            # apps.enrollment.services.enroll_student(): um aluno nunca
+            # pode ter mais do que uma matrícula Pendente/Activa no mesmo
+            # ano lectivo, mesmo que algum código futuro chame
+            # `Enrollment.objects.create()` directamente em vez de passar
+            # pelo serviço.
+            models.UniqueConstraint(
+                fields=["institution", "student", "academic_year"],
+                condition=models.Q(status__in=["pending", "active"]),
+                name="enrollment_enrollment_one_active_per_student_per_year",
+                violation_error_message=(
+                    "Este aluno já tem uma matrícula activa neste ano lectivo."
+                ),
+            ),
         ]
 
     def __str__(self) -> str:

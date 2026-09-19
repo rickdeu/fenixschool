@@ -14,6 +14,7 @@ from ..services import (
     MatriculaJaEncerradaError,
     MotivoAnulacaoObrigatorioError,
     SchoolClassFullError,
+    StudentAlreadyEnrolledError,
     anular_matricula,
     transferir_aluno,
 )
@@ -35,6 +36,7 @@ def student_detail_view(request, student_id):
     current_enrollment = next((e for e in enrollments if e.status in _ACTIVE_STATUSES), None)
 
     transfer_form = None
+    transfer_capacity_warning = None
     if current_enrollment is not None:
         transfer_form = TransferForm(
             institution=institution, current_school_class=current_enrollment.school_class
@@ -70,12 +72,21 @@ def student_detail_view(request, student_id):
                         school_class=transfer_form.cleaned_data["school_class"],
                         transferred_by=request.user,
                         origin_node_id=get_current_node_id(),
+                        force=request.POST.get("force") == "1",
                     )
-                except (SchoolClassFullError, MatriculaJaEncerradaError) as error:
+                except SchoolClassFullError as error:
+                    # Aviso, não bloqueio (issue #174/RF-MAT-08): mantém o
+                    # formulário preenchido (form já está bound, com a
+                    # turma escolhida) em vez de redireccionar, para que o
+                    # botão "confirmar mesmo assim" resubmeta exactamente a
+                    # mesma escolha com force=1.
+                    transfer_capacity_warning = str(error)
+                except (StudentAlreadyEnrolledError, MatriculaJaEncerradaError) as error:
                     messages.error(request, str(error))
+                    return redirect("enrollment:student_detail", student_id=student.id)
                 else:
                     messages.success(request, "Aluno transferido com sucesso.")
-                return redirect("enrollment:student_detail", student_id=student.id)
+                    return redirect("enrollment:student_detail", student_id=student.id)
 
     return render(
         request,
@@ -85,5 +96,6 @@ def student_detail_view(request, student_id):
             "enrollments": enrollments,
             "current_enrollment": current_enrollment,
             "transfer_form": transfer_form,
+            "transfer_capacity_warning": transfer_capacity_warning,
         },
     )

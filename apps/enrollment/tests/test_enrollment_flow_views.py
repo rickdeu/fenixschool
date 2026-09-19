@@ -176,7 +176,7 @@ def test_saving_creates_the_enrollment_with_derived_course_year_and_cycle(
     assert enrollment.status == Enrollment.Status.PENDING
 
 
-def test_enrollment_is_blocked_once_the_class_is_full(
+def test_enrollment_warns_but_does_not_block_once_the_class_is_full(
     secretary_client, class_setup, institution, document_type
 ):
     school_class = class_setup["school_class"]
@@ -214,9 +214,56 @@ def test_enrollment_is_blocked_once_the_class_is_full(
         f"/inscricoes/matriculas/{student.id}/nova/", _enrollment_post_data(school_class)
     )
 
+    # Issue #174's own "aviso, não bloqueio automático" reasoning extends to
+    # the enrolment action itself: a full class is a warning the Secretaria
+    # can confirm past, not a hard block.
     assert response.status_code == 200
-    assert "school_class" in response.context["form"].errors
+    assert "school_class" not in response.context["form"].errors
+    assert response.context["capacity_warning"]
     assert not Enrollment.all_objects.filter(student=student).exists()
+
+
+def test_enrollment_succeeds_over_capacity_once_confirmed_with_force(
+    secretary_client, class_setup, institution, document_type
+):
+    school_class = class_setup["school_class"]
+    student = class_setup["student"]
+
+    with tenant_context(institution.id):
+        guardian2 = Guardian.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            full_name="Encarregado 2",
+            kinship=Guardian.Kinship.FATHER,
+            document_type=document_type,
+            document_number="ENC-2",
+        )
+        other_student = Student.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            first_name="Outro",
+            last_name="Aluno",
+            birth_date=date(2012, 1, 1),
+            gender=Student.Gender.MALE,
+            document_type=document_type,
+            document_number="OTHER-DOC",
+            document_issue_date=date(2020, 1, 1),
+            document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian2,
+        )
+    secretary_client.post(
+        f"/inscricoes/matriculas/{other_student.id}/nova/",
+        _enrollment_post_data(school_class, presented_document_number="OTHER-DOC"),
+    )
+
+    response = secretary_client.post(
+        f"/inscricoes/matriculas/{student.id}/nova/",
+        {**_enrollment_post_data(school_class), "force": "1"},
+    )
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/pdf"
+    assert Enrollment.all_objects.filter(student=student, school_class=school_class).exists()
 
 
 def test_unauthenticated_user_cannot_search_or_enroll(client, class_setup):

@@ -43,9 +43,19 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="transferir">
                     {% include "components/bootstrap_form.html" with form=transfer_form %}
+                    {% if transfer_capacity_warning %}
+                    <div class="alert alert-warning py-2 small">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ transfer_capacity_warning }}
+                    </div>
+                    <input type="hidden" name="force" value="1">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-exclamation-triangle me-1"></i>{% translate "Confirmar mesmo assim" %}
+                    </button>
+                    {% else %}
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="bi bi-arrow-left-right me-1"></i>{% translate "Transferir" %}
                     </button>
+                    {% endif %}
                 </form>
             </div>
         </div>

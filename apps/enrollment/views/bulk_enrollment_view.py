@@ -17,7 +17,7 @@ from apps.core.context import get_current_node_id
 from apps.core.view_helpers import require_institution_context
 
 from ..models import Student
-from ..services import SchoolClassFullError, enroll_student
+from ..services import SchoolClassFullError, StudentAlreadyEnrolledError, enroll_student
 
 
 def _eligible_students(institution, course):
@@ -80,7 +80,13 @@ def bulk_enrollment_view(request):
                         document_issue_date=student.document_issue_date,
                         document_issue_place=student.document_issue_place,
                     )
-                except SchoolClassFullError as error:
+                except (SchoolClassFullError, StudentAlreadyEnrolledError) as error:
+                    # Sem confirmação interactiva por aluno num lote (ao
+                    # contrário de enrollment_create_view/transferir_aluno),
+                    # por isso um lote continua a parar aqui em vez de
+                    # matricular passado a capacidade sem ninguém o
+                    # confirmar -- mais seguro do que "avisar e continuar"
+                    # às cegas para vários alunos de uma vez.
                     messages.error(request, str(error))
                     break
                 else:

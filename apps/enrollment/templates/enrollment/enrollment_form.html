@@ -21,7 +21,17 @@
         <form method="post" novalidate>
             {% csrf_token %}
             {% include "components/bootstrap_form.html" %}
+            {% if capacity_warning %}
+            <div class="alert alert-warning py-2 small">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ capacity_warning }}
+            </div>
+            <input type="hidden" name="force" value="1">
+            <button type="submit" class="btn btn-warning">
+                <i class="bi bi-exclamation-triangle me-1"></i>{% translate "Matricular mesmo assim" %}
+            </button>
+            {% else %}
             <button type="submit" class="btn btn-primary">{% translate "Guardar e Imprimir" %}</button>
+            {% endif %}
         </form>
     </div>
 </div>
