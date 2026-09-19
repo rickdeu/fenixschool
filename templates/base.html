@@ -69,6 +69,11 @@
                             <i class="bi bi-calendar-x"></i> <span>{% translate "Feriados" %}</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_panel:data_subject_export' %}">
+                            <i class="bi bi-file-earmark-lock"></i> <span>{% translate "Exportação de dados (Lei 22/11)" %}</span>
+                        </a>
+                    </li>
                     {% endif %}
                     {% if perms.accounts.view_user %}
                     <li class="nav-item">
