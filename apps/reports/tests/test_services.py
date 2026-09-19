@@ -3,14 +3,17 @@ série nunca reutilizada e registo automático em auditoria de toda
 emissão."""
 
 import uuid
+from unittest import mock
 
 import pytest
+from django.utils import translation
 
 from apps.accounts.models import Profile
 from apps.audit.context import audit_actor_context
 from apps.audit.models import AuditLogEntry
+from apps.reports import services as reports_services
 from apps.reports.models import DocumentSequence, IssuedDocument
-from apps.reports.services import emitir_documento
+from apps.reports.services import emitir_documento, render_document_pdf
 
 pytestmark = pytest.mark.django_db
 
@@ -130,6 +133,28 @@ def test_issued_document_cannot_be_edited(institution, secretaria):
     issued.document_type = "outro"
     with pytest.raises(Exception, match="não pode ser alterado"):
         issued.save()
+
+
+def test_render_document_pdf_forces_portuguese_regardless_of_active_language():
+    """Issue #152 (RF-I18N-03): um documento oficial nunca é traduzido --
+    mesmo que o utilizador que o solicita tenha outro `preferred_language`
+    activo no pedido."""
+    captured = {}
+
+    def fake_render_to_string(template_name, context):
+        captured["language"] = translation.get_language()
+        return "<html><body>documento</body></html>"
+
+    translation.activate("umb")
+    try:
+        with mock.patch.object(
+            reports_services, "render_to_string", side_effect=fake_render_to_string
+        ):
+            render_document_pdf("reports/base_document.html", {})
+    finally:
+        translation.deactivate()
+
+    assert captured["language"] == "pt"
 
 
 def test_issued_document_cannot_be_deleted(institution, secretaria):
