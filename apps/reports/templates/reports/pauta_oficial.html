@@ -1,0 +1,62 @@
+{% extends "reports/base_document.html" %}
+{% load i18n %}
+
+{% block document_title %}{% translate "Pauta Oficial" %} — {{ school_class.designation }}{% endblock %}
+
+{% block extra_style %}
+<style>
+    .pauta-title {
+        text-align: center;
+        margin-bottom: 0.3cm;
+    }
+    .pauta-meta {
+        text-align: center;
+        color: #444;
+        margin-bottom: 0.8cm;
+    }
+    table.pauta {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10pt;
+    }
+    table.pauta th, table.pauta td {
+        border: 1px solid #999;
+        padding: 0.15cm 0.3cm;
+    }
+    table.pauta th {
+        background: #eee;
+        text-align: left;
+    }
+    table.pauta td.numeric {
+        text-align: right;
+    }
+</style>
+{% endblock %}
+
+{% block document_content %}
+<h2 class="pauta-title">{% translate "Pauta Oficial" %}</h2>
+<p class="pauta-meta">
+    {{ school_class.designation }} — {{ subject.name }} — {{ evaluation_type.name }} — {{ academic_term }}
+</p>
+
+<table class="pauta">
+    <thead>
+        <tr>
+            <th>{% translate "N.º" %}</th>
+            <th>{% translate "Aluno" %}</th>
+            <th class="numeric">{% translate "Classificação" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for grade in grades %}
+        <tr>
+            <td>{{ grade.student.student_number }}</td>
+            <td>{{ grade.student }}</td>
+            <td class="numeric">{{ grade.value }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">{% translate "Nenhuma nota lançada para esta combinação." %}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
