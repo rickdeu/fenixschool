@@ -4,6 +4,8 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
+from decimal import Decimal
+
 from apps.academic.models import Schedule
 from apps.enrollment.models import Enrollment
 
@@ -125,3 +127,67 @@ def justificar_falta(*, attendance: Attendance, text: str, justified_by, attachm
     attendance.registered_by = justified_by
     attendance.save()
     return attendance
+
+
+# RF-FREQ-03's próprio exemplo de implementação: "limite_faltas = 3 *
+# carga_horaria_semanal". Tal como `Institution.max_recoverable_subjects`,
+# não é um valor normativo confirmado junto do Decreto Presidencial 162/23
+# (docs/legislacao/README.md) -- fica hardcoded como ponto de partida até a
+# issue #175 o tornar configurável por instituição.
+ABSENCE_LIMIT_WEEKLY_LOAD_MULTIPLIER = Decimal("3")
+
+
+def _schedule_duration_hours(schedule) -> Decimal:
+    start_minutes = schedule.start_time.hour * 60 + schedule.start_time.minute
+    end_minutes = schedule.end_time.hour * 60 + schedule.end_time.minute
+    return Decimal(end_minutes - start_minutes) / Decimal(60)
+
+
+def calcular_assiduidade(*, enrollment, subject, academic_term=None) -> dict:
+    """ "Cálculo de percentagem de assiduidade e alerta de limite legal"
+    (issue #68, RF-FREQ-03): acumula as horas de falta (justificadas e
+    injustificadas) de `enrollment` em `subject` -- todo o ano lectivo por
+    omissão, ou só `academic_term` quando indicado -- e compara-as com
+    `limite_faltas = 3 × carga_horária_semanal` (`Subject.weekly_hours`).
+
+    Só as faltas **injustificadas** contam para o limite legal (uma falta
+    justificada não deveria penalizar o aluno) -- ambas contam para a
+    percentagem de assiduidade em si (fisicamente, o aluno não esteve
+    presente de qualquer forma). Nenhuma aula registada ainda (`total_hours
+    == 0`) devolve 100% de assiduidade, sem risco -- não uma divisão por
+    zero nem um falso alerta.
+    """
+    records = Attendance.all_objects.filter(
+        institution_id=enrollment.institution_id, enrollment=enrollment, schedule__subject=subject
+    ).select_related("schedule")
+    if academic_term is not None:
+        records = records.filter(
+            date__gte=academic_term.start_date, date__lte=academic_term.end_date
+        )
+
+    total_hours = Decimal("0")
+    absence_hours = Decimal("0")
+    unjustified_absence_hours = Decimal("0")
+    for record in records:
+        duration = _schedule_duration_hours(record.schedule)
+        total_hours += duration
+        if record.status in (Attendance.Status.ABSENT, Attendance.Status.JUSTIFIED_ABSENT):
+            absence_hours += duration
+        if record.status == Attendance.Status.ABSENT:
+            unjustified_absence_hours += duration
+
+    attendance_percentage = (
+        (total_hours - absence_hours) / total_hours * Decimal("100")
+        if total_hours > 0
+        else Decimal("100")
+    )
+    limit_hours = ABSENCE_LIMIT_WEEKLY_LOAD_MULTIPLIER * Decimal(subject.weekly_hours)
+
+    return {
+        "total_hours": total_hours,
+        "absence_hours": absence_hours,
+        "unjustified_absence_hours": unjustified_absence_hours,
+        "attendance_percentage": attendance_percentage.quantize(Decimal("0.1")),
+        "limit_hours": limit_hours,
+        "exceeds_limit": unjustified_absence_hours > limit_hours,
+    }

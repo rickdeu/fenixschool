@@ -89,6 +89,21 @@ def academic_year(institution):
 
 
 @pytest.fixture
+def academic_term(institution, academic_year):
+    from apps.core.models import AcademicTerm
+
+    with tenant_context(institution.id):
+        return AcademicTerm.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            academic_year=academic_year,
+            number=1,
+            start_date=date(2026, 2, 1),
+            end_date=date(2026, 5, 31),
+        )
+
+
+@pytest.fixture
 def school_class(institution, academic_year, course, curricular_year):
     with tenant_context(institution.id):
         return SchoolClass.objects.create(
