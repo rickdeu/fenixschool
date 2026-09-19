@@ -16,5 +16,6 @@ urlpatterns = [
     path("admin-painel/", include("apps.admin_panel.urls")),
     path("encarregado/", include("apps.guardian_portal.urls")),
     path("notas/", include("apps.grading.urls")),
+    path("presencas/", include("apps.attendance.urls")),
     path("", include("apps.public_site.urls")),
 ]

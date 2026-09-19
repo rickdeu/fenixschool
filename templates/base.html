@@ -127,6 +127,19 @@
                 </ul>
             </div>
             {% endif %}
+
+            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" or user.is_superuser %}
+            <div class="menu-section">
+                <div class="menu-section-title">{% translate "Frequência" %}</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'attendance:attendance_grid_selection' %}">
+                            <i class="bi bi-calendar2-check"></i> <span>{% translate "Marcar presenças" %}</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
         </nav>
     </aside>
     {% endblock %}
