@@ -15,4 +15,7 @@ urlpatterns = [
     path("pautas/nota/gravar/", views.pauta_grade_cell_save_view, name="pauta_grade_cell_save"),
     path("pautas/ver/pdf/", views.pauta_oficial_pdf_view, name="pauta_oficial_pdf"),
     path("situacao-final/", views.final_situation_view, name="final_situation"),
+    path("boletins/", views.boletim_selection_view, name="boletim_selection"),
+    path("boletins/ver/", views.boletim_view, name="boletim"),
+    path("boletins/ver/pdf/", views.boletim_pdf_view, name="boletim_pdf"),
 ]

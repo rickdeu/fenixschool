@@ -128,3 +128,34 @@ def gerar_pauta_oficial_pdf(
         },
     )
     return issued, pdf
+
+
+BOLETIM_DOCUMENT_TYPE = "boletim"
+
+
+def gerar_boletim_pdf(
+    *, enrollment, academic_term, rows, issued_by, origin_node_id
+) -> tuple[IssuedDocument, bytes]:
+    """RF-REL-04 (issue #97): "reaproveita a view de Boletim de `grading`,
+    exportando em PDF" -- o chamador (`grading`'s `boletim_pdf_view`) já
+    resolveu o mesmo aluno/trimestre e as mesmas `rows`
+    (`apps.grading.services.get_boletim_rows`) que `boletim_view` mostra no
+    ecrã; esta função só regista a emissão e renderiza o PDF."""
+
+    issued = emitir_documento(
+        institution=enrollment.institution,
+        document_type=BOLETIM_DOCUMENT_TYPE,
+        issued_by=issued_by,
+        origin_node_id=origin_node_id,
+    )
+    pdf = render_document_pdf(
+        "reports/boletim.html",
+        {
+            "institution": enrollment.institution,
+            "issued_document": issued,
+            "enrollment": enrollment,
+            "academic_term": academic_term,
+            "rows": rows,
+        },
+    )
+    return issued, pdf

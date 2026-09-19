@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Boletins" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Boletins" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="turma" class="form-label">{% translate "Turma" %}</label>
+                <select name="turma" id="turma" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for sc in school_classes %}
+                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="periodo" class="form-label">{% translate "Trimestre" %}</label>
+                <select name="periodo" id="periodo" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for at in academic_terms %}
+                    <option value="{{ at.id }}" {% if selected_academic_term == at.id|stringformat:"s" %}selected{% endif %}>{{ at }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">{% translate "Ver alunos" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if enrollments is not None %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{% translate "Aluno" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td>{{ enrollment.student }}</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary"
+                           href="{% url 'grading:boletim' %}?aluno={{ enrollment.id }}&periodo={{ selected_academic_term }}">
+                            {% translate "Ver boletim" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-muted">{% translate "Nenhum aluno matriculado nesta turma." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
