@@ -12,6 +12,8 @@ that model lands, rather than fabricating it against a table that doesn't
 exist.
 """
 
+from decimal import Decimal
+
 from django.db import models
 from uuid6 import uuid7
 
@@ -101,6 +103,21 @@ class Institution(models.Model):
             "comummente citado em escolas angolanas, não um valor normativo "
             "confirmado -- fica como ponto de partida editável pelo Administrador "
             "da Instituição."
+        ),
+    )
+
+    absence_limit_weekly_load_multiplier = models.DecimalField(
+        "multiplicador do limite legal de faltas",
+        max_digits=3,
+        decimal_places=1,
+        default=Decimal("3"),
+        help_text=(
+            "RF-FREQ-03/issue #175: o limite de faltas injustificadas de uma "
+            "disciplina é este valor multiplicado pela sua carga horária "
+            "semanal (`Subject.weekly_hours`). '3' é o valor fixado no "
+            "Decreto Presidencial 162/23 (ver docs/legislacao/README.md) -- "
+            "valor por omissão que reflecte a legislação vigente, mantido "
+            "configurável por instituição caso um diploma futuro o altere."
         ),
     )
 
