@@ -219,3 +219,84 @@ def emitir_comprovativo_matricula(*, enrollment: Enrollment, issued_by, origin_n
         issued_by=issued_by,
         origin_node_id=origin_node_id,
     )
+
+
+_ACTIVE_ENROLLMENT_STATUSES = {Enrollment.Status.PENDING, Enrollment.Status.ACTIVE}
+
+
+class MotivoAnulacaoObrigatorioError(Exception):
+    """Issue #51/docs/06-modulos-e-funcionalidades.md §6.4: anular uma
+    matrícula exige sempre um motivo preenchido."""
+
+    def __init__(self):
+        super().__init__("A anulação de uma matrícula exige um motivo preenchido.")
+
+
+class MatriculaJaEncerradaError(Exception):
+    """Nem `anular_matricula` nem `transferir_aluno` fazem sentido sobre
+    uma matrícula que já não está activa (já anulada, transferida ou
+    concluída) -- o histórico é imutável a partir daí."""
+
+    def __init__(self, enrollment: Enrollment):
+        self.enrollment = enrollment
+        super().__init__(
+            f'"{enrollment}" já não está activa (estado actual: '
+            f'"{enrollment.get_status_display()}").'
+        )
+
+
+def anular_matricula(*, enrollment: Enrollment, reason: str, cancelled_by) -> Enrollment:
+    """ "Anular matrícula" (issue #51): muda o estado para Anulada, com
+    motivo obrigatório -- nunca elimina o registo (soft-delete/estado), que
+    continua consultável no histórico do aluno depois disto."""
+    if enrollment.status not in _ACTIVE_ENROLLMENT_STATUSES:
+        raise MatriculaJaEncerradaError(enrollment)
+    if not reason or not reason.strip():
+        raise MotivoAnulacaoObrigatorioError()
+
+    enrollment.status = Enrollment.Status.CANCELLED
+    enrollment.cancellation_reason = reason
+    enrollment.updated_by = cancelled_by
+    enrollment.save()
+    return enrollment
+
+
+def transferir_aluno(
+    *, enrollment: Enrollment, school_class, transferred_by, origin_node_id, **fields
+) -> Enrollment:
+    """ "Transferir aluno" (issue #49, RF-MAT-08): cria uma nova Matrícula
+    em `school_class`, referenciando `enrollment` via `previous_enrollment`
+    (histórico preservado), e marca a matrícula antiga como Transferida.
+
+    Só cobre a transferência *dentro da mesma instituição* (mudança de
+    turma/curso): "transferência entre instituições da mesma rede transita
+    via Nó Central" (o próprio critério de aceitação da issue) depende do
+    motor de sincronização entre instituições distintas -- que ainda não
+    existe para este fluxo (ver `apps.sync`, hoje só changelog/auditoria de
+    sincronização) -- não fabricado aqui à frente dessa dependência real.
+    """
+    if enrollment.status not in _ACTIVE_ENROLLMENT_STATUSES:
+        raise MatriculaJaEncerradaError(enrollment)
+
+    new_enrollment = enroll_student(
+        institution=enrollment.institution,
+        student=enrollment.student,
+        school_class=school_class,
+        origin_node_id=origin_node_id,
+        course=school_class.course,
+        academic_year=school_class.academic_year,
+        cycle=school_class.course.cycle,
+        curricular_year=school_class.curricular_year,
+        presented_document_type=enrollment.presented_document_type,
+        presented_document_number=enrollment.presented_document_number,
+        document_issue_date=enrollment.document_issue_date,
+        document_issue_place=enrollment.document_issue_place,
+        previous_enrollment=enrollment,
+        **fields,
+    )
+
+    enrollment.status = Enrollment.Status.TRANSFERRED
+    enrollment.updated_by = transferred_by
+    enrollment.save()
+
+    return new_enrollment

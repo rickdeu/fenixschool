@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n form_tags %}
 
 {% block title %}{% translate "Faltas" %} — FenixSchool{% endblock %}
 
@@ -10,23 +10,18 @@
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label for="turma" class="form-label">{% translate "Turma" %}</label>
-                <select name="turma" id="turma" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for sc in school_classes %}
-                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="turma" queryset=school_classes selected=selected_school_class label="Turma" label_attr="designation" %}
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary">{% translate "Ver faltas" %}</button>
+                <button type="submit" class="btn btn-primary">{% translate "Filtrar" %}</button>
             </div>
         </form>
     </div>
 </div>
 
-{% if absences is not None %}
-<div class="card">
+{% for group in groups %}
+<div class="card mb-4">
+    <div class="card-header">{{ group.school_class.designation }}</div>
     <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
             <thead>
@@ -39,7 +34,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for attendance in absences %}
+                {% for attendance in group.absences %}
                 <tr>
                     <td>{{ attendance.student }}</td>
                     <td>{{ attendance.schedule.subject.name }}</td>
@@ -64,5 +59,7 @@
         </table>
     </div>
 </div>
-{% endif %}
+{% empty %}
+<p class="text-muted">{% translate "Sem faltas registadas." %}</p>
+{% endfor %}
 {% endblock %}

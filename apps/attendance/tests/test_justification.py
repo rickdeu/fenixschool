@@ -119,6 +119,17 @@ def test_absence_list_shows_unjustified_absences_for_the_chosen_class(
     assert "Yolene Hangalo" in response.content.decode()
 
 
+def test_absence_list_shows_every_class_with_absences_without_a_filter(
+    secretary_client, absence, school_class
+):
+    response = secretary_client.get(LIST_URL)
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert school_class.designation in content
+    assert "Yolene Hangalo" in content
+
+
 def test_justify_absence_view_saves_text_and_attachment(tmp_path, secretary_client, absence):
     with override_settings(MEDIA_ROOT=tmp_path):
         url = reverse("attendance:justify_absence", args=[absence.id])

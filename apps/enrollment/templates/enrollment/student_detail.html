@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ student }} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-1">{{ student.first_name }} {{ student.last_name }}</h1>
+<p class="text-muted mb-4">
+    {% translate "N.º de aluno" %}: {{ student.student_number }}
+</p>
+
+{% if current_enrollment %}
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6">{% translate "Anular matrícula" %}</h2>
+                <p class="text-muted small">
+                    {% translate "A matrícula fica marcada como Anulada, mas permanece consultável no histórico." %}
+                </p>
+                <form method="post" onsubmit="return confirm('{% translate "Confirma a anulação desta matrícula?" %}');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="anular">
+                    <div class="mb-2">
+                        <label for="reason" class="form-label">{% translate "Motivo (obrigatório)" %}</label>
+                        <textarea name="reason" id="reason" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-x-circle me-1"></i>{% translate "Anular" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6">{% translate "Transferir aluno" %}</h2>
+                <p class="text-muted small">
+                    {% translate "Cria uma nova matrícula na turma escolhida e marca a actual como Transferida." %}
+                </p>
+                <form method="post" onsubmit="return confirm('{% translate "Confirma a transferência deste aluno?" %}');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="transferir">
+                    {% include "components/bootstrap_form.html" with form=transfer_form %}
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left-right me-1"></i>{% translate "Transferir" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-body">
+        <p class="text-muted mb-2">{% translate "Sem matrícula activa." %}</p>
+        <a href="{% url 'enrollment:enrollment_create' student.id %}" class="btn btn-primary btn-sm">
+            {% translate "Nova matrícula" %}
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">{% translate "Histórico de matrículas" %}</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Ano lectivo" %}</th>
+                    <th>{% translate "Turma" %}</th>
+                    <th>{% translate "Estado" %}</th>
+                    <th>{% translate "Repetente" %}</th>
+                    <th>{% translate "Matrícula anterior" %}</th>
+                    <th>{% translate "Motivo da anulação" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td>{{ enrollment.academic_year }}</td>
+                    <td>{{ enrollment.school_class.designation }}</td>
+                    <td>
+                        {% if enrollment.status == "active" or enrollment.status == "pending" %}
+                        <span class="badge text-bg-success">{{ enrollment.get_status_display }}</span>
+                        {% elif enrollment.status == "cancelled" %}
+                        <span class="badge text-bg-danger">{{ enrollment.get_status_display }}</span>
+                        {% else %}
+                        <span class="badge text-bg-secondary">{{ enrollment.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if enrollment.is_repeating %}{% translate "Sim" %}{% else %}—{% endif %}</td>
+                    <td>{% if enrollment.previous_enrollment %}#{{ enrollment.previous_enrollment.enrollment_number }} ({{ enrollment.previous_enrollment.academic_year }}){% else %}—{% endif %}</td>
+                    <td>{{ enrollment.cancellation_reason|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-muted">{% translate "Nenhuma matrícula registada." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

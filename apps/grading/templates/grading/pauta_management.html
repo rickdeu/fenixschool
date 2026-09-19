@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n form_tags %}
 
 {% block title %}{% translate "Pautas" %} — FenixSchool{% endblock %}
 
@@ -11,40 +11,16 @@
     <div class="card-body">
         <form method="get" action="{% url 'grading:pauta_detail' %}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label for="turma" class="form-label">{% translate "Turma" %}</label>
-                <select name="turma" id="turma" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for sc in school_classes %}
-                    <option value="{{ sc.id }}">{{ sc.designation }}</option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="turma" queryset=school_classes label="Turma" label_attr="designation" required=True %}
             </div>
             <div class="col-md-3">
-                <label for="disciplina" class="form-label">{% translate "Disciplina" %}</label>
-                <select name="disciplina" id="disciplina" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for s in subjects %}
-                    <option value="{{ s.id }}">{{ s.name }}</option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="disciplina" queryset=subjects label="Disciplina" label_attr="name" required=True %}
             </div>
             <div class="col-md-3">
-                <label for="tipo" class="form-label">{% translate "Tipo de avaliação" %}</label>
-                <select name="tipo" id="tipo" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for et in evaluation_types %}
-                    <option value="{{ et.id }}">{{ et.name }}</option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="tipo" queryset=evaluation_types label="Tipo de avaliação" label_attr="name" required=True %}
             </div>
             <div class="col-md-3">
-                <label for="periodo" class="form-label">{% translate "Trimestre" %}</label>
-                <select name="periodo" id="periodo" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for at in academic_terms %}
-                    <option value="{{ at.id }}">{{ at }}</option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="periodo" queryset=academic_terms label="Trimestre" required=True %}
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">

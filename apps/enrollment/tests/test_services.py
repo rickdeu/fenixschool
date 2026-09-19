@@ -284,6 +284,7 @@ def test_cancelled_enrollments_free_up_a_vacancy(institution, document_type, cla
         _enroll(institution, class_setup, second)
 
         first_enrollment.status = Enrollment.Status.CANCELLED
+        first_enrollment.cancellation_reason = "Desistência do aluno."
         first_enrollment.save()
 
         # A vacancy freed up by the cancellation must be usable again.

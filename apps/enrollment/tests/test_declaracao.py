@@ -51,6 +51,15 @@ def test_selection_lists_enrolled_students(admin_client, enrollment, school_clas
     assert "Yolene Hangalo" in response.content.decode()
 
 
+def test_selection_lists_every_class_without_a_filter(admin_client, enrollment, school_class):
+    response = admin_client.get(SELECTION_URL)
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert school_class.designation in content
+    assert "Yolene Hangalo" in content
+
+
 def test_declaracao_matricula_is_issued_for_any_status(admin_client, institution, enrollment):
     response = admin_client.post(
         PDF_URL, {"matricula": str(enrollment.id), "tipo": "declaracao-matricula"}
@@ -68,6 +77,7 @@ def test_declaracao_frequencia_rejected_for_cancelled_enrollment(
     admin_client, institution, enrollment
 ):
     enrollment.status = Enrollment.Status.CANCELLED
+    enrollment.cancellation_reason = "Desistência do aluno."
     enrollment.save()
 
     response = admin_client.post(
