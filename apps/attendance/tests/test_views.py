@@ -79,7 +79,7 @@ def test_saving_the_grid_marks_attendance(
         {
             "horario": str(schedule.id),
             "data": "2026-03-02",
-            f"status_{enrollment.id}": Attendance.Status.ABSENT,
+            f"falta_{enrollment.id}": "on",
         },
         follow=True,
     )
@@ -89,3 +89,38 @@ def test_saving_the_grid_marks_attendance(
         attendance = Attendance.objects.get(enrollment=enrollment, schedule=schedule)
     assert attendance.status == Attendance.Status.ABSENT
     assert attendance.registered_by_id == teacher.id
+
+
+def test_saving_the_grid_without_checking_falta_marks_present(
+    teacher_client, institution, teacher, schedule, enrollment
+):
+    response = teacher_client.post(
+        GRID_URL,
+        {"horario": str(schedule.id), "data": "2026-03-02"},
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        attendance = Attendance.objects.get(enrollment=enrollment, schedule=schedule)
+    assert attendance.status == Attendance.Status.PRESENT
+
+
+def test_saving_the_grid_with_falta_and_justificada_marks_justified(
+    teacher_client, institution, teacher, schedule, enrollment
+):
+    response = teacher_client.post(
+        GRID_URL,
+        {
+            "horario": str(schedule.id),
+            "data": "2026-03-02",
+            f"falta_{enrollment.id}": "on",
+            f"justificada_{enrollment.id}": "on",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        attendance = Attendance.objects.get(enrollment=enrollment, schedule=schedule)
+    assert attendance.status == Attendance.Status.JUSTIFIED_ABSENT

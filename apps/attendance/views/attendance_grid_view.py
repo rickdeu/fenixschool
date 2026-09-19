@@ -38,12 +38,33 @@ def attendance_grid_view(request):
     except (TypeError, ValueError):
         attendance_date = date_cls.today()
 
+    enrollments = (
+        Enrollment.objects.filter(
+            institution=institution,
+            school_class=schedule.school_class,
+            status__in=[Enrollment.Status.PENDING, Enrollment.Status.ACTIVE],
+        )
+        .select_related("student")
+        .order_by("student__first_name", "student__last_name")
+    )
+
     if request.method == "POST":
-        statuses = {
-            key.removeprefix("status_"): value
-            for key, value in request.POST.items()
-            if key.startswith("status_")
-        }
+        # "Por omissão, todos os alunos estão presentes -- assinale apenas
+        # as faltas" (feedback do utilizador): duas checkboxes por aluno
+        # (falta/justificada) em vez de um select com 3 opções -- uma
+        # checkbox desmarcada nunca é enviada no POST, por isso o estado é
+        # derivado por ausência, não por valor.
+        statuses = {}
+        for enrollment in enrollments:
+            key = str(enrollment.id)
+            is_absent = f"falta_{key}" in request.POST
+            if not is_absent:
+                statuses[key] = Attendance.Status.PRESENT
+            elif f"justificada_{key}" in request.POST:
+                statuses[key] = Attendance.Status.JUSTIFIED_ABSENT
+            else:
+                statuses[key] = Attendance.Status.ABSENT
+
         try:
             registar_presencas(
                 teacher=request.user,
@@ -62,15 +83,6 @@ def attendance_grid_view(request):
             f"{request.path}?horario={schedule.id}&data={attendance_date.isoformat()}"
         )
 
-    enrollments = (
-        Enrollment.objects.filter(
-            institution=institution,
-            school_class=schedule.school_class,
-            status__in=[Enrollment.Status.PENDING, Enrollment.Status.ACTIVE],
-        )
-        .select_related("student")
-        .order_by("student__first_name", "student__last_name")
-    )
     existing_by_enrollment_id = {
         attendance.enrollment_id: attendance
         for attendance in Attendance.objects.filter(
@@ -89,7 +101,5 @@ def attendance_grid_view(request):
             "schedule": schedule,
             "date": attendance_date,
             "rows": rows,
-            "status_choices": Attendance.Status.choices,
-            "default_status": Attendance.Status.PRESENT,
         },
     )

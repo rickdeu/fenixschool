@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Mapa de faltas" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Mapa de faltas" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label for="horario" class="form-label">{% translate "Turma / Disciplina" %}</label>
+                <select name="horario" id="horario" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for slot in schedules %}
+                    <option value="{{ slot.id }}" {% if selected_schedule == slot.id|stringformat:"s" %}selected{% endif %}>
+                        {{ slot.school_class }} — {{ slot.subject }} ({{ slot.get_weekday_display }} {{ slot.start_time }}-{{ slot.end_time }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">{% translate "Ver mapa" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if rows is not None %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Aluno" %}</th>
+                    <th>{% translate "Assiduidade" %}</th>
+                    <th>{% translate "Horas de falta injustificadas" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.enrollment.student }}</td>
+                    <td>
+                        {% if row.exceeds_limit %}
+                        <span class="badge text-bg-danger">{{ row.attendance_percentage }}%</span>
+                        {% else %}
+                        <span class="badge text-bg-success">{{ row.attendance_percentage }}%</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.unjustified_absence_hours }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-muted">{% translate "Nenhum aluno matriculado nesta turma." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
