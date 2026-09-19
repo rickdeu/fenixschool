@@ -86,3 +86,45 @@ def render_document_pdf(template_name: str, context: dict) -> bytes:
 
     html = render_to_string(template_name, context)
     return weasyprint.HTML(string=html).write_pdf()
+
+
+PAUTA_OFICIAL_DOCUMENT_TYPE = "pauta-oficial"
+
+
+def gerar_pauta_oficial_pdf(
+    *,
+    school_class,
+    subject,
+    evaluation_type,
+    academic_term,
+    grades,
+    issued_by,
+    origin_node_id,
+) -> tuple[IssuedDocument, bytes]:
+    """RF-REL-03 (issue #96): "reaproveita a view de Pauta de `grading`,
+    exportando em PDF via WeasyPrint" -- o chamador (`grading`'s
+    `pauta_oficial_pdf_view`) já resolveu a mesma selecção turma/disciplina/
+    tipo/trimestre e as mesmas `grades` que `pauta_detail_view` mostra no
+    ecrã; esta função só regista a emissão (numeração/auditoria) e
+    renderiza o PDF -- `reports` não importa nenhum modelo de `grading`
+    para o fazer."""
+
+    issued = emitir_documento(
+        institution=school_class.institution,
+        document_type=PAUTA_OFICIAL_DOCUMENT_TYPE,
+        issued_by=issued_by,
+        origin_node_id=origin_node_id,
+    )
+    pdf = render_document_pdf(
+        "reports/pauta_oficial.html",
+        {
+            "institution": school_class.institution,
+            "issued_document": issued,
+            "school_class": school_class,
+            "subject": subject,
+            "evaluation_type": evaluation_type,
+            "academic_term": academic_term,
+            "grades": grades,
+        },
+    )
+    return issued, pdf

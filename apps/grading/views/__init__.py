@@ -5,6 +5,7 @@ from .grade_grid_view import grade_grid_view
 from .pauta_detail_view import pauta_detail_view
 from .pauta_grade_cell_save_view import pauta_grade_cell_save_view
 from .pauta_management_view import pauta_management_view
+from .pauta_oficial_pdf_view import pauta_oficial_pdf_view
 
 __all__ = [
     "final_situation_view",
@@ -14,4 +15,5 @@ __all__ = [
     "pauta_detail_view",
     "pauta_grade_cell_save_view",
     "pauta_management_view",
+    "pauta_oficial_pdf_view",
 ]
