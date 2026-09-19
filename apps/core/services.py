@@ -116,10 +116,12 @@ def setup_institution(*, institution_data: dict, manager_data: dict) -> tuple[In
     already tied to an institution, or a Super Administrator).
     """
     # Local import: avoids `core` (a foundational app every other app already
-    # depends on) importing `grading` at module load time -- this is the one
-    # place `core` needs to reach into a business app, to seed a working
-    # grading formula (issue #18) at institution creation, not module scope.
+    # depends on) importing `grading`/`sync` at module load time -- this is
+    # the one place `core` needs to reach into another app, to seed a
+    # working grading formula (issue #18) and this node's own sync identity
+    # (issue #123) at installation, not module scope.
     from apps.grading.services import seed_default_grading_formula
+    from apps.sync.services import create_local_node
 
     with transaction.atomic():
         institution = Institution.objects.create(**institution_data)
@@ -136,9 +138,13 @@ def setup_institution(*, institution_data: dict, manager_data: dict) -> tuple[In
             # AcademicYear ends up covering already has its holidays.
             today = date.today()
             seed_national_holidays(institution, origin_node_id=origin_node_id, year=today.year)
-            seed_national_holidays(
-                institution, origin_node_id=origin_node_id, year=today.year + 1
-            )
+            seed_national_holidays(institution, origin_node_id=origin_node_id, year=today.year + 1)
+
+    # Fora da transacção acima de propósito: gera um ficheiro no disco (a
+    # chave privada do Node), que uma reversão da transacção da Instituição/
+    # Gestor não desfaria -- ver `create_local_node()`.
+    create_local_node(institution=institution)
+
     return institution, manager
 
 

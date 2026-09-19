@@ -68,6 +68,22 @@ def test_wizard_seeds_a_working_default_grading_formula(client):
         }
 
 
+def test_wizard_registers_this_nodes_own_sync_identity(client, tmp_path, settings):
+    """Issue #123: a instalação gera a chave própria deste Node -- nunca
+    exige que o Administrador a configure à mão."""
+    from apps.sync.models import Node
+
+    settings.NODE_PRIVATE_KEY_PATH = str(tmp_path / "node_private_key.pem")
+
+    client.post(reverse("core:setup_wizard"), VALID_POST_DATA)
+
+    institution = Institution.objects.get()
+    node = Node.objects.get()
+    assert node.node_type == Node.NodeType.LOCAL
+    assert node.institution == institution
+    assert node.public_key.startswith("-----BEGIN PUBLIC KEY-----")
+
+
 def test_wizard_preloads_this_and_next_years_national_holidays(client):
     """Issue #20: national holidays must be pre-loaded at installation, not
     left for an Administrator to type in by hand before the calendar means

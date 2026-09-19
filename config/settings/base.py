@@ -51,6 +51,20 @@ FIELD_ENCRYPTION_KEY = env(
     default="iY5PdY0SI7/vlPrKf7H55nMDREuSFpC9olClhaWMmgw/6qG9xOfnOw0gvi2PhB+PsI+eO3y8qkmlMjzLl2EDXQ==",
 )
 
+# Onde a chave privada Ed25519 do Node deste Nó Local fica guardada (issue
+# #123) -- nunca na base de dados (só a pública vai para `sync.Node.
+# public_key`), nunca sob controlo de versões (ver `.gitignore`). O default
+# reaproveita o mesmo volume `backups` que já é persistente entre reinícios/
+# reimplantações em docker-compose.local-node.yml/central-node.yml
+# (`apps.core.services.backup_database`'s próprio `BACKUP_DIR`) -- `BASE_DIR`
+# sozinho não serve, por não estar montado como volume nomeado nesses
+# ficheiros (perder-se-ia a cada `docker compose up` depois de reconstruir a
+# imagem).
+NODE_PRIVATE_KEY_PATH = env(
+    "NODE_PRIVATE_KEY_PATH",
+    default=str(Path(env("BACKUP_DIR", default="/app/backups")) / "node_private_key.pem"),
+)
+
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 
 
