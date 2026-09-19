@@ -39,6 +39,13 @@
                             <i class="bi bi-person-lines-fill"></i> <span>{% translate "Inscrições/Matrículas" %}</span>
                         </a>
                     </li>
+                    {% if perms.reports.add_issueddocument %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'enrollment:declaracao_selection' %}">
+                            <i class="bi bi-file-earmark-text"></i> <span>{% translate "Declarações" %}</span>
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
 
