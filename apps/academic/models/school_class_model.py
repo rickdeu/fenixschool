@@ -57,6 +57,13 @@ class SchoolClass(SyncedModel):
     max_enrollment = models.PositiveSmallIntegerField("número máximo de inscritos", default=36)
     shift = models.CharField("turno", max_length=10, choices=Shift.choices)
 
+    # Issue #174: o maior valor entre as variações regionais documentadas no
+    # Decreto Presidencial 162/23 (36 por omissão, até 45 nalgumas regiões) --
+    # acima disto não há nenhuma leitura do diploma que o justifique, seja
+    # qual for a região. Usado só para um aviso não bloqueante (RF-CURR-05:
+    # "aviso, não bloqueio automático"), nunca para rejeitar o valor.
+    LEGAL_MAX_ENROLLMENT_CEILING = 45
+
     class Meta(SyncedModel.Meta):
         verbose_name = "turma"
         verbose_name_plural = "turmas"
@@ -69,6 +76,10 @@ class SchoolClass(SyncedModel):
 
     def __str__(self) -> str:
         return f"{self.designation} ({self.academic_year})"
+
+    @property
+    def exceeds_legal_enrollment_ceiling(self) -> bool:
+        return self.max_enrollment > self.LEGAL_MAX_ENROLLMENT_CEILING
 
     def active_enrollment_count(self) -> int:
         """Enrollments that currently occupy a vacancy in this class (issue
