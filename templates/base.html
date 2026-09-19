@@ -91,15 +91,24 @@
             </div>
             {% endif %}
 
-            {% if perms.academic.view_schedule %}
+            {% if perms.academic.view_schedule or perms.academic.view_schoolclass %}
             <div class="menu-section">
                 <div class="menu-section-title">{% translate "Académico" %}</div>
                 <ul class="nav flex-column">
+                    {% if perms.academic.view_schoolclass %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_panel:school_class_list' %}">
+                            <i class="bi bi-people"></i> <span>{% translate "Turmas" %}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.academic.view_schedule %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'admin_panel:schedule_occupancy' %}">
                             <i class="bi bi-calendar3-week"></i> <span>{% translate "Mapa de ocupação" %}</span>
                         </a>
                     </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}

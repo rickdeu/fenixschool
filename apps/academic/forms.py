@@ -3,8 +3,43 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from .models import Schedule
+from apps.core.models import AcademicTerm, AcademicYear
+
+from .models import Course, CurricularYear, Schedule, SchoolClass
 from .services import ScheduleConflictError, validate_schedule_conflict
+
+
+class SchoolClassForm(forms.ModelForm):
+    """Turma (RF-CURR-05, issue #34) -- até agora só editável via Django
+    Admin; ecrã dedicado pedido directamente pelo utilizador."""
+
+    class Meta:
+        model = SchoolClass
+        fields = [
+            "code",
+            "designation",
+            "academic_year",
+            "course",
+            "curricular_year",
+            "academic_term",
+            "shift",
+            "max_enrollment",
+        ]
+
+    def __init__(self, *args, institution=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if institution is not None:
+            self.fields["academic_year"].queryset = AcademicYear.objects.filter(
+                institution=institution
+            )
+            self.fields["course"].queryset = Course.objects.filter(institution=institution)
+            self.fields["curricular_year"].queryset = CurricularYear.objects.filter(
+                institution=institution
+            )
+            self.fields["academic_term"].queryset = AcademicTerm.objects.filter(
+                institution=institution
+            )
+        self.fields["academic_term"].required = False
 
 
 class ScheduleAdminForm(forms.ModelForm):

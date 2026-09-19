@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n form_tags %}
+
+{% block title %}{% translate "Turmas" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{% translate "Turmas" %}</h1>
+    {% if perms.academic.add_schoolclass %}
+    <a href="{% url 'admin_panel:school_class_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>{% translate "Nova turma" %}
+    </a>
+    {% endif %}
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-6">
+                {% choice_field "ano_lectivo" academic_years selected=selected_academic_year_id label="Ano lectivo" label_attr="designation" %}
+            </div>
+            <div class="col-md-5">
+                {% choice_field "curso" courses selected=selected_course_id label="Curso" label_attr="name" %}
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% for group in groups %}
+<div class="card mb-3">
+    <div class="card-header">
+        {{ group.academic_year.designation }}
+        {% if group.academic_year.is_current %}
+        <span class="badge text-bg-success ms-1">{% translate "Corrente" %}</span>
+        {% endif %}
+    </div>
+    {% if group.school_classes %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Código" %}</th>
+                    <th>{% translate "Designação" %}</th>
+                    <th>{% translate "Curso" %}</th>
+                    <th>{% translate "Ano curricular" %}</th>
+                    <th>{% translate "Turno" %}</th>
+                    <th>{% translate "Ocupação" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for school_class in group.school_classes %}
+                <tr>
+                    <td>{{ school_class.code }}</td>
+                    <td>{{ school_class.designation }}</td>
+                    <td>{{ school_class.course.name }}</td>
+                    <td>{{ school_class.curricular_year.equivalent_grade }}</td>
+                    <td>{{ school_class.get_shift_display }}</td>
+                    <td>
+                        {{ school_class.active_enrollment_count }}/{{ school_class.max_enrollment }}
+                        {% if school_class.exceeds_legal_enrollment_ceiling %}
+                        <span class="badge text-bg-warning" title="{% translate 'Acima do tecto legal' %}">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if perms.academic.change_schoolclass %}
+                        <a href="{% url 'admin_panel:school_class_edit' school_class.id %}" class="btn btn-sm btn-outline-secondary">
+                            {% translate "Editar" %}
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center text-muted py-3">
+        {% translate "Nenhuma turma neste ano lectivo." %}
+    </div>
+    {% endif %}
+</div>
+{% empty %}
+<div class="card">
+    <div class="card-body text-center text-muted py-4">
+        {% translate "Nenhuma turma configurada." %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

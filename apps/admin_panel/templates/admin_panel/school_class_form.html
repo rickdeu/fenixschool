@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}
+{% if is_create %}{% translate "Nova turma" %}{% else %}{% translate "Editar turma" %}{% endif %} — FenixSchool
+{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">
+    {% if is_create %}
+        {% translate "Nova turma" %}
+    {% else %}
+        {% blocktranslate with name=school_class.designation %}Editar {{ name }}{% endblocktranslate %}
+    {% endif %}
+</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "components/bootstrap_form.html" %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">{% translate "Guardar" %}</button>
+                {% if not is_create and perms.academic.delete_schoolclass %}
+                <button type="submit" name="delete" value="1" class="btn btn-outline-danger"
+                        onclick="return confirm('{% translate "Remover esta turma?" %}')">
+                    {% translate "Remover" %}
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
