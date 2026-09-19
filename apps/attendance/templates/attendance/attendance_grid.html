@@ -21,35 +21,55 @@
                 <i class="bi bi-check2-square me-1"></i>{% translate "Gravar presenças" %}
             </button>
         </div>
+        <p class="text-muted small px-3 pt-2 mb-0">
+            {% translate "Por omissão, todos os alunos estão presentes -- assinale apenas as faltas." %}
+        </p>
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
                 <thead>
                     <tr>
                         <th>{% translate "Aluno" %}</th>
-                        <th>{% translate "Estado" %}</th>
+                        <th class="text-center">{% translate "Falta" %}</th>
+                        <th class="text-center">{% translate "Justificada" %}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in rows %}
                     <tr>
                         <td>{{ row.enrollment.student }}</td>
-                        <td>
-                            <select name="status_{{ row.enrollment.id }}" class="form-select form-select-sm" style="max-width: 14rem;">
-                                {% for value, label in status_choices %}
-                                <option value="{{ value }}"
-                                    {% if row.attendance.status == value or not row.attendance and value == default_status %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                                {% endfor %}
-                            </select>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input falta-checkbox" name="falta_{{ row.enrollment.id }}"
+                                   aria-label="{% translate 'Falta' %}"
+                                   {% if row.attendance.status == "absent" or row.attendance.status == "justified_absent" %}checked{% endif %}>
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input justificada-checkbox" name="justificada_{{ row.enrollment.id }}"
+                                   aria-label="{% translate 'Justificada' %}"
+                                   {% if row.attendance.status != "absent" and row.attendance.status != "justified_absent" %}disabled{% endif %}
+                                   {% if row.attendance.status == "justified_absent" %}checked{% endif %}>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="2" class="text-muted">{% translate "Nenhum aluno matriculado nesta turma." %}</td></tr>
+                    <tr><td colspan="3" class="text-muted">{% translate "Nenhum aluno matriculado nesta turma." %}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll(".falta-checkbox").forEach(function (faltaBox) {
+        var row = faltaBox.closest("tr");
+        var justificadaBox = row.querySelector(".justificada-checkbox");
+        faltaBox.addEventListener("change", function () {
+            justificadaBox.disabled = !faltaBox.checked;
+            if (!faltaBox.checked) {
+                justificadaBox.checked = false;
+            }
+        });
+    });
+</script>
 {% endblock %}

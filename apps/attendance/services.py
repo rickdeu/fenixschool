@@ -6,7 +6,7 @@ views normais e endpoints de API) e testes unitários isolados.
 
 from decimal import Decimal
 
-from apps.academic.models import Schedule
+from apps.academic.models import Schedule, Subject
 from apps.enrollment.models import Enrollment
 
 from .models import Attendance
@@ -191,3 +191,55 @@ def calcular_assiduidade(*, enrollment, subject, academic_term=None) -> dict:
         "limit_hours": limit_hours,
         "exceeds_limit": unjustified_absence_hours > limit_hours,
     }
+
+
+def mapa_faltas_aluno(*, enrollment) -> dict:
+    """A assiduidade agregada de `enrollment` em todas as disciplinas do
+    seu ano curricular -- o resumo de uma linha do "mapa de faltas" (issue
+    #69, RF-FREQ-04), reutilizado tanto pelo mapa por turma
+    (`mapa_faltas_turma`) como pela vista do Encarregado de Educação
+    (`guardian_portal`)."""
+    subjects = Subject.objects.filter(
+        institution=enrollment.institution, curricular_year=enrollment.curricular_year
+    )
+    total_hours = Decimal("0")
+    absence_hours = Decimal("0")
+    unjustified_absence_hours = Decimal("0")
+    at_risk_subjects = []
+    for subject in subjects:
+        result = calcular_assiduidade(enrollment=enrollment, subject=subject)
+        total_hours += result["total_hours"]
+        absence_hours += result["absence_hours"]
+        unjustified_absence_hours += result["unjustified_absence_hours"]
+        if result["exceeds_limit"]:
+            at_risk_subjects.append(subject)
+
+    attendance_percentage = (
+        (total_hours - absence_hours) / total_hours * Decimal("100")
+        if total_hours > 0
+        else Decimal("100")
+    )
+    return {
+        "enrollment": enrollment,
+        "total_hours": total_hours,
+        "unjustified_absence_hours": unjustified_absence_hours,
+        "attendance_percentage": attendance_percentage.quantize(Decimal("0.1")),
+        "at_risk_subjects": at_risk_subjects,
+    }
+
+
+def mapa_faltas_turma(*, institution, school_class) -> list[dict]:
+    """ "Mapa de faltas por turma" (issue #69, RF-FREQ-04): uma linha por
+    aluno matriculado em `school_class`, com a assiduidade agregada de
+    `mapa_faltas_aluno` -- visão geral da turma, não o detalhe por
+    disciplina (`calcular_assiduidade`)."""
+    enrollments = (
+        Enrollment.objects.filter(
+            institution=institution,
+            school_class=school_class,
+            status__in=[Enrollment.Status.PENDING, Enrollment.Status.ACTIVE],
+        )
+        .select_related("student", "curricular_year")
+        .order_by("student__first_name", "student__last_name")
+    )
+    return [mapa_faltas_aluno(enrollment=enrollment) for enrollment in enrollments]

@@ -1,0 +1,39 @@
+{% extends "public_base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Frequência" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Frequência" %}</h1>
+
+{% if not students %}
+<p class="text-muted">{% translate "Não há nenhum educando associado a esta conta." %}</p>
+{% elif not selected_student %}
+<p class="text-muted">{% translate "Seleccione um educando no painel principal." %}</p>
+{% elif not summary %}
+<p class="text-muted">{% translate "Sem matrícula activa para este educando." %}</p>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <h2 class="h5">{{ selected_student.first_name }} {{ selected_student.last_name }}</h2>
+        <p class="mb-1">
+            {% translate "Assiduidade global" %}:
+            {% if summary.at_risk_subjects %}
+            <span class="badge text-bg-danger">{{ summary.attendance_percentage }}%</span>
+            {% else %}
+            <span class="badge text-bg-success">{{ summary.attendance_percentage }}%</span>
+            {% endif %}
+        </p>
+        <p class="mb-0">
+            {% translate "Horas de falta injustificadas" %}: {{ summary.unjustified_absence_hours }}
+        </p>
+        {% if summary.at_risk_subjects %}
+        <p class="text-danger small mt-2 mb-0">
+            {% translate "Disciplinas com risco de reprovação por faltas" %}:
+            {% for subject in summary.at_risk_subjects %}{{ subject.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

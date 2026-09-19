@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Mapa de faltas" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Mapa de faltas" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="turma" class="form-label">{% translate "Turma" %}</label>
+                <select name="turma" id="turma" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for sc in school_classes %}
+                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">{% translate "Ver mapa" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if rows is not None %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Aluno" %}</th>
+                    <th>{% translate "Assiduidade" %}</th>
+                    <th>{% translate "Horas de falta injustificadas" %}</th>
+                    <th>{% translate "Disciplinas em risco" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.enrollment.student }}</td>
+                    <td>
+                        {% if row.at_risk_subjects %}
+                        <span class="badge text-bg-danger">{{ row.attendance_percentage }}%</span>
+                        {% else %}
+                        <span class="badge text-bg-success">{{ row.attendance_percentage }}%</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.unjustified_absence_hours }}</td>
+                    <td>
+                        {% for subject in row.at_risk_subjects %}{{ subject.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-muted">{% translate "Nenhum aluno matriculado nesta turma." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

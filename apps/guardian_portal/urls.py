@@ -8,4 +8,5 @@ app_name = "guardian_portal"
 
 urlpatterns = [
     path("", views.dashboard_view, name="dashboard"),
+    path("frequencia/", views.attendance_view, name="attendance"),
 ]

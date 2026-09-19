@@ -20,4 +20,6 @@ urlpatterns = [
         views.justification_attachment_view,
         name="justification_attachment",
     ),
+    path("mapa/", views.attendance_map_view, name="attendance_map"),
+    path("mapa/docente/", views.docente_attendance_map_view, name="docente_attendance_map"),
 ]

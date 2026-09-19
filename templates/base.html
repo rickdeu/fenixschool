@@ -128,7 +128,7 @@
             </div>
             {% endif %}
 
-            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" or user.is_superuser or perms.attendance.change_attendance %}
+            {% if user.profile == "teacher" or user.profile == "homeroom_teacher" or user.is_superuser or perms.attendance.change_attendance or perms.attendance.view_attendance %}
             <div class="menu-section">
                 <div class="menu-section-title">{% translate "Frequência" %}</div>
                 <ul class="nav flex-column">
@@ -138,11 +138,23 @@
                             <i class="bi bi-calendar2-check"></i> <span>{% translate "Marcar presenças" %}</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'attendance:docente_attendance_map' %}">
+                            <i class="bi bi-bar-chart-line"></i> <span>{% translate "Mapa de faltas" %}</span>
+                        </a>
+                    </li>
                     {% endif %}
                     {% if perms.attendance.change_attendance %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'attendance:absence_list' %}">
                             <i class="bi bi-clipboard2-x"></i> <span>{% translate "Faltas" %}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.attendance.view_attendance %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'attendance:attendance_map' %}">
+                            <i class="bi bi-bar-chart-line"></i> <span>{% translate "Mapa de faltas (turma)" %}</span>
                         </a>
                     </li>
                     {% endif %}
