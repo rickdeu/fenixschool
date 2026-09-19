@@ -65,5 +65,6 @@ def grade_cell_save_view(request):
     else:
         context["value"] = grade.value
         context["success"] = True
+        context["qualitative_level"] = grade.qualitative_level
 
     return render(request, "grading/_grade_row.html", context)

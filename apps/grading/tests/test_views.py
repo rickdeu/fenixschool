@@ -232,12 +232,16 @@ def test_cell_save_creates_a_grade(
     )
 
     assert response.status_code == 200
-    assert "Gravado" in response.content.decode()
+    content = response.content.decode()
+    assert "Gravado" in content
     with tenant_context(institution.id):
         grade = Grade.objects.get(
             enrollment=enrollment, subject=subject, evaluation_type=evaluation_type
         )
     assert grade.value == Decimal("15.5")
+    # RF-AVAL-01/03 (issue #57): "nível qualitativo mostrado junto ao valor
+    # numérico" -- not just computable on the model, actually rendered.
+    assert grade.qualitative_level.qualitative_level in content
 
 
 def test_cell_save_updates_an_existing_grade_instead_of_erroring(

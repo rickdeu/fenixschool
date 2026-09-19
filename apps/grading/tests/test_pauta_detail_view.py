@@ -91,7 +91,10 @@ def test_lists_the_pautas_grades(
     response = admin_client.get(URL, _query(school_class, subject, evaluation_type, academic_term))
 
     assert response.status_code == 200
-    assert "Yolene Hangalo" in response.content.decode()
+    content = response.content.decode()
+    assert "Yolene Hangalo" in content
+    # RF-AVAL-01/03 (issue #57): nível qualitativo mostrado junto ao valor.
+    assert grade.qualitative_level.qualitative_level in content
 
 
 def test_homologar_closes_the_grades(
