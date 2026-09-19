@@ -8,7 +8,12 @@ from decimal import Decimal
 
 from django.db import transaction
 
-from apps.reports.services import gerar_comprovativo_matricula_pdf, gerar_declaracao_pdf
+from apps.reports.services import (
+    gerar_comprovativo_candidatura_pdf,
+    gerar_comprovativo_matricula_pdf,
+    gerar_declaracao_pdf,
+    render_document_pdf,
+)
 
 from .models import Candidate, Enrollment, Student
 
@@ -227,6 +232,45 @@ def aceitar_candidatos_em_lote(*, institution, candidate_ids) -> int:
         candidate.save(update_fields=["status"])
         accepted += 1
     return accepted
+
+
+def emitir_comprovativo_candidatura(*, candidate: Candidate, origin_node_id) -> bytes:
+    """RF-PUB-03 (issue #102): "comprovativo... que ele pode imprimir ou
+    voltar a emitir quando necessário" (feedback do utilizador) --
+    reserva o número/série uma única vez, na primeira chamada
+    (`pre_application_view`, mesmo pedido HTTP da candidatura), e guarda-o
+    em `candidate.application_receipt`; chamadas seguintes (a
+    "reemissão" pública) reaproveitam o mesmo `IssuedDocument` já
+    reservado em vez de emitir um novo número a cada reimpressão."""
+
+    fields = {
+        "Candidato": candidate.full_name,
+        "Data de nascimento": candidate.birth_date,
+        "Documento apresentado": (
+            f"{candidate.document_type.name} n.º {candidate.document_number}"
+        ),
+        "Curso pretendido": candidate.desired_course.name,
+        "Data da candidatura": candidate.application_date,
+    }
+
+    if candidate.application_receipt_id:
+        return render_document_pdf(
+            "reports/comprovativo_candidatura.html",
+            {
+                "institution": candidate.institution,
+                "issued_document": candidate.application_receipt,
+                "fields": fields,
+            },
+        )
+
+    issued, pdf = gerar_comprovativo_candidatura_pdf(
+        institution=candidate.institution,
+        fields=fields,
+        origin_node_id=origin_node_id,
+    )
+    candidate.application_receipt = issued
+    candidate.save(update_fields=["application_receipt"])
+    return pdf
 
 
 def enroll_student(

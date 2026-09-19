@@ -69,7 +69,11 @@
         <div class="document-footer-row">
             <span>{{ issued_document.formatted_number }}</span>
             <span>
+                {% if issued_document.issued_by %}
                 {% blocktranslate with user=issued_document.issued_by.get_full_name|default:issued_document.issued_by.username date=issued_document.created_at %}Emitido por {{ user }} em {{ date }}{% endblocktranslate %}
+                {% else %}
+                {% blocktranslate with date=issued_document.created_at %}Emitido automaticamente pelo sistema em {{ date }}{% endblocktranslate %}
+                {% endif %}
             </span>
         </div>
         {% if institution.document_legal_footer_text %}<p class="document-footer-legal">{{ institution.document_legal_footer_text }}</p>{% endif %}

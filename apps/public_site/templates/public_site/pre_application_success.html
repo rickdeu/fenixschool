@@ -11,6 +11,16 @@
         <p class="mb-0">
             {% blocktranslate with name=candidate.full_name course=candidate.desired_course.name %}Obrigado, {{ name }}. Recebemos a sua pré-candidatura para {{ course }} e entraremos em contacto brevemente.{% endblocktranslate %}
         </p>
+        {% if candidate.application_receipt %}
+        <p class="mt-3 mb-0 fw-semibold">{{ candidate.application_receipt.formatted_number }}</p>
+        <a href="{% url 'public_site:application_receipt' %}?documento={{ candidate.document_number|urlencode }}"
+           class="btn btn-outline-primary mt-3">
+            <i class="bi bi-file-earmark-pdf me-1"></i>{% translate "Descarregar comprovativo (PDF)" %}
+        </a>
+        <p class="text-muted small mt-2 mb-0">
+            {% translate "Guarde o número do documento apresentado: é o que precisa para voltar a obter este comprovativo mais tarde." %}
+        </p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

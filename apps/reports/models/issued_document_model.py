@@ -36,7 +36,15 @@ class IssuedDocument(SyncedModel):
         settings.AUTH_USER_MODEL,
         verbose_name="emitido por",
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name="issued_documents",
+        help_text=(
+            "Em branco para documentos emitidos automaticamente pelo próprio sistema, sem "
+            "nenhum funcionário envolvido -- ex. o comprovativo de candidatura de uma "
+            "pré-candidatura pública (issue #102), que não passa por nenhum utilizador "
+            "autenticado."
+        ),
     )
 
     class Meta:
