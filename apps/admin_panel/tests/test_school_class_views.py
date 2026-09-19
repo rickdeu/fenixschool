@@ -248,3 +248,65 @@ def test_cannot_delete_a_school_class_with_enrollments(admin_client, institution
 
     assert response.status_code == 200
     assert SchoolClass.all_objects.filter(pk=setup["school_class"].id).exists()
+
+
+def _enroll(institution, setup, *, first_name, last_name):
+    from apps.core.models import IdentificationDocumentType
+    from apps.enrollment.models import Guardian, Student
+    from apps.enrollment.services import enroll_student
+
+    with tenant_context(institution.id):
+        document_type = IdentificationDocumentType.objects.get(code="bilhete-de-identidade")
+        guardian = Guardian.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            full_name="Encarregado",
+            kinship=Guardian.Kinship.MOTHER,
+            document_type=document_type,
+            document_number=f"ENC-{first_name}",
+        )
+        student = Student.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            first_name=first_name,
+            last_name=last_name,
+            birth_date=date(2012, 4, 10),
+            gender=Student.Gender.FEMALE,
+            document_type=document_type,
+            document_number=f"005LA{first_name}",
+            document_issue_date=date(2020, 1, 1),
+            document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=guardian,
+        )
+        return enroll_student(
+            institution=institution,
+            student=student,
+            school_class=setup["school_class"],
+            origin_node_id=_origin(),
+            course=setup["course"],
+            academic_year=setup["academic_year"],
+            cycle=setup["curricular_year"].course.cycle,
+            curricular_year=setup["curricular_year"],
+            presented_document_type=document_type,
+            presented_document_number=f"005LA{first_name}",
+            document_issue_date=date(2020, 1, 1),
+            document_issue_place="Nacional - Luanda",
+        )
+
+
+def test_school_class_students_view_lists_enrolled_students(admin_client, institution, setup):
+    _enroll(institution, setup, first_name="Yolene", last_name="Hangalo")
+
+    url = reverse("admin_panel:school_class_students", args=[setup["school_class"].id])
+    response = admin_client.get(url)
+
+    assert response.status_code == 200
+    assert b"Yolene" in response.content
+
+
+def test_school_class_students_view_shows_empty_state(admin_client, setup):
+    url = reverse("admin_panel:school_class_students", args=[setup["school_class"].id])
+    response = admin_client.get(url)
+
+    assert response.status_code == 200
+    assert "Nenhum aluno matriculado nesta turma." in response.content.decode()

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ school_class.designation }} — {% translate "Alunos" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">{{ school_class.designation }}</h1>
+        <p class="text-muted mb-0">
+            {{ school_class.course.name }} — {{ school_class.curricular_year.equivalent_grade }}
+            ({{ school_class.academic_year.designation }})
+        </p>
+    </div>
+    <a href="{% url 'admin_panel:school_class_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>{% translate "Voltar às turmas" %}
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        {% blocktranslate count counter=enrollments|length %}{{ counter }} aluno{% plural %}{{ counter }} alunos{% endblocktranslate %}
+    </div>
+    {% if enrollments %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Nº de matrícula" %}</th>
+                    <th>{% translate "Aluno" %}</th>
+                    <th>{% translate "Nº de aluno" %}</th>
+                    <th>{% translate "Estado" %}</th>
+                    <th>{% translate "Repetente" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td>#{{ enrollment.enrollment_number }}</td>
+                    <td>
+                        <a href="{% url 'enrollment:student_detail' enrollment.student.id %}">
+                            {{ enrollment.student.first_name }} {{ enrollment.student.last_name }}
+                        </a>
+                    </td>
+                    <td>#{{ enrollment.student.student_number }}</td>
+                    <td>
+                        {% if enrollment.status == "active" or enrollment.status == "pending" %}
+                        <span class="badge text-bg-success">{{ enrollment.get_status_display }}</span>
+                        {% elif enrollment.status == "cancelled" %}
+                        <span class="badge text-bg-danger">{{ enrollment.get_status_display }}</span>
+                        {% else %}
+                        <span class="badge text-bg-secondary">{{ enrollment.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if enrollment.is_repeating %}{% translate "Sim" %}{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center text-muted py-4">
+        {% translate "Nenhum aluno matriculado nesta turma." %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

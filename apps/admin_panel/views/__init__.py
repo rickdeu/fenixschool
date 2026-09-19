@@ -24,6 +24,7 @@ from .schedule_occupancy_view import schedule_occupancy_view
 from .school_class_create_view import school_class_create_view
 from .school_class_edit_view import school_class_edit_view
 from .school_class_list_view import school_class_list_view
+from .school_class_students_view import school_class_students_view
 from .subject_grading_formula_view import subject_grading_formula_view
 from .user_create_view import user_create_view
 from .user_edit_view import user_edit_view
@@ -41,6 +42,7 @@ __all__ = [
     "school_class_create_view",
     "school_class_edit_view",
     "school_class_list_view",
+    "school_class_students_view",
     "backup_download_view",
     "backup_list_view",
     "course_grading_formula_view",
