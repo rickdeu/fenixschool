@@ -244,6 +244,36 @@ def test_school_class_defaults_max_enrollment_to_36(institution, course, curricu
         )
 
     assert school_class.max_enrollment == 36
+    assert school_class.exceeds_legal_enrollment_ceiling is False
+
+
+def test_school_class_flags_max_enrollment_above_the_legal_ceiling(
+    institution, course, curricular_year
+):
+    """Issue #174 (RF-CURR-05): "aviso, não bloqueio automático" -- um
+    valor acima do tecto legal (45, Decreto Presidencial 162/23) é aceite
+    (nunca levanta `ValidationError`), só fica sinalizado."""
+    with tenant_context(institution.id):
+        academic_year = AcademicYear.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            designation="2026/2027",
+            start_date=date(2026, 2, 1),
+            end_date=date(2026, 12, 15),
+        )
+        school_class = SchoolClass.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            code="10A",
+            designation="10.ª A",
+            academic_year=academic_year,
+            course=course,
+            curricular_year=curricular_year,
+            shift=SchoolClass.Shift.MORNING,
+            max_enrollment=50,
+        )
+
+    assert school_class.exceeds_legal_enrollment_ceiling is True
 
 
 def test_school_class_code_is_unique_per_academic_year(institution, course, curricular_year):

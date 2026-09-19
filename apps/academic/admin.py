@@ -1,6 +1,6 @@
 """Registo dos modelos de `academic` no Django Admin."""
 
-from django.contrib import admin
+from django.contrib import admin, messages
 
 from .forms import ScheduleAdminForm
 from .models import Course, CurricularYear, Department, Room, Schedule, SchoolClass, Subject
@@ -75,6 +75,19 @@ class SchoolClassAdmin(admin.ModelAdmin):
         "course",
         "curricular_year",
     )
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Issue #174 (RF-CURR-05): "aviso, não bloqueio automático" -- o
+        # tecto legal (Decreto Presidencial 162/23) nunca impede a
+        # gravação, só avisa quem a fez.
+        if obj.exceeds_legal_enrollment_ceiling:
+            self.message_user(
+                request,
+                f"O número máximo de inscritos ({obj.max_enrollment}) ultrapassa o tecto "
+                f"legal do Decreto Presidencial 162/23 ({obj.LEGAL_MAX_ENROLLMENT_CEILING}).",
+                level=messages.WARNING,
+            )
 
 
 @admin.register(Schedule)
