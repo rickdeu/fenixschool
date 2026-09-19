@@ -128,7 +128,13 @@ class Enrollment(SyncedModel):
         null=True,
         blank=True,
         related_name="next_enrollments",
-        help_text="Referência à matrícula do ano anterior (histórico/retenção).",
+        help_text="Referência à matrícula do ano anterior (histórico/retenção/transferência).",
+    )
+    cancellation_reason = models.TextField(
+        "motivo da anulação",
+        blank=True,
+        default="",
+        help_text="Issue #51/docs/06 §6.4: obrigatório ao anular (Estado = Anulada), vazio até lá.",
     )
 
     class Meta(SyncedModel.Meta):
@@ -155,6 +161,12 @@ class Enrollment(SyncedModel):
                 and related.institution_id != self.institution_id
             ):
                 errors[field_name] = f"O(a) {label} tem de pertencer à mesma instituição."
+
+        if self.status == self.Status.CANCELLED and not self.cancellation_reason.strip():
+            errors["cancellation_reason"] = (
+                "A anulação de uma matrícula exige um motivo (issue #51)."
+            )
+
         if errors:
             raise ValidationError(errors)
 

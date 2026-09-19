@@ -23,3 +23,39 @@ def widget_type(field):
     markup (`form-control`/`form-select`/`form-check`) per field without
     the form itself having to say so."""
     return field.field.widget.__class__.__name__.lower()
+
+
+@register.inclusion_tag("components/choice_field.html")
+def choice_field(
+    name, queryset, selected=None, label=None, label_attr=None, multiple=False, required=False
+):
+    """Renders `queryset` as radios (single choice) or checkboxes (`multiple=True`)
+    when it has 4 or fewer options, or as a `<select>` otherwise (feedback do
+    utilizador: "onde tem select, para página onde no máximo 4 campos... deve
+    ser sempre um check") -- one plain GET-param filter field, not a Django
+    `Form` field (see `components/bootstrap_form.html` for those).
+
+    `label_attr`: the attribute to read each option's display text from
+    (e.g. "designation"/"name"); falls back to `str(obj)` when omitted (e.g.
+    for `AcademicTerm`, whose own `__str__` already reads as "1.º Trimestre
+    — 2026/2027").
+    """
+    options = [
+        (obj.pk, getattr(obj, label_attr) if label_attr else str(obj)) for obj in queryset
+    ]
+
+    if multiple:
+        selected_values = selected or []
+    else:
+        selected_values = [selected] if selected else []
+    selected_values = {str(value) for value in selected_values if value}
+
+    return {
+        "name": name,
+        "options": options,
+        "selected_values": selected_values,
+        "label": label,
+        "multiple": multiple,
+        "required": required,
+        "use_choices": len(options) <= 4,
+    }

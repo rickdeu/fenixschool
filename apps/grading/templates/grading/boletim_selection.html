@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n form_tags %}
 
 {% block title %}{% translate "Boletins" %} — FenixSchool{% endblock %}
 
@@ -10,22 +10,10 @@
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label for="turma" class="form-label">{% translate "Turma" %}</label>
-                <select name="turma" id="turma" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for sc in school_classes %}
-                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="turma" queryset=school_classes selected=selected_school_class label="Turma (opcional)" label_attr="designation" %}
             </div>
             <div class="col-md-4">
-                <label for="periodo" class="form-label">{% translate "Trimestre" %}</label>
-                <select name="periodo" id="periodo" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for at in academic_terms %}
-                    <option value="{{ at.id }}" {% if selected_academic_term == at.id|stringformat:"s" %}selected{% endif %}>{{ at }}</option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="periodo" queryset=academic_terms selected=selected_academic_term label="Trimestre" required=True %}
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary">{% translate "Ver alunos" %}</button>
@@ -34,8 +22,9 @@
     </div>
 </div>
 
-{% if enrollments is not None %}
-<div class="card">
+{% for group in groups %}
+<div class="card mb-4">
+    <div class="card-header">{{ group.school_class.designation }}</div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead>
@@ -45,7 +34,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for enrollment in enrollments %}
+                {% for enrollment in group.enrollments %}
                 <tr>
                     <td>{{ enrollment.student }}</td>
                     <td>
@@ -62,5 +51,9 @@
         </table>
     </div>
 </div>
+{% empty %}
+{% if groups is not None %}
+<p class="text-muted">{% translate "Nenhum aluno matriculado." %}</p>
 {% endif %}
+{% endfor %}
 {% endblock %}

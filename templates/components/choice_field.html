@@ -1,0 +1,28 @@
+{% load i18n %}
+{% if label %}<label class="form-label">{{ label }}</label>{% endif %}
+{% if use_choices %}
+<div>
+    {% if not multiple and not required %}
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="{{ name }}" id="{{ name }}_todas" value=""
+               {% if not selected_values %}checked{% endif %}>
+        <label class="form-check-label" for="{{ name }}_todas">{% translate "Todas" %}</label>
+    </div>
+    {% endif %}
+    {% for value, text in options %}
+    <div class="form-check{% if not multiple %} form-check-inline{% endif %}">
+        <input class="form-check-input" type="{% if multiple %}checkbox{% else %}radio{% endif %}"
+               name="{{ name }}" id="{{ name }}_{{ forloop.counter }}" value="{{ value }}"
+               {% if value|stringformat:"s" in selected_values %}checked{% endif %}>
+        <label class="form-check-label" for="{{ name }}_{{ forloop.counter }}">{{ text }}</label>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<select name="{{ name }}" id="{{ name }}" class="form-select" {% if required %}required{% endif %} {% if multiple %}multiple{% endif %}>
+    {% if not multiple %}<option value="">{% translate "Seleccione" %}</option>{% endif %}
+    {% for value, text in options %}
+    <option value="{{ value }}" {% if value|stringformat:"s" in selected_values %}selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+</select>
+{% endif %}

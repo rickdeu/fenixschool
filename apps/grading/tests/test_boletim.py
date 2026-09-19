@@ -87,6 +87,17 @@ def test_selection_lists_enrolled_students(admin_client, enrollment, school_clas
     assert "Yolene Hangalo" in response.content.decode()
 
 
+def test_selection_lists_every_class_when_turma_is_omitted(
+    admin_client, enrollment, school_class, academic_term
+):
+    response = admin_client.get(SELECTION_URL, {"periodo": str(academic_term.id)})
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert school_class.designation in content
+    assert "Yolene Hangalo" in content
+
+
 def test_boletim_shows_final_grades(admin_client, final_grade, enrollment, academic_term):
     response = admin_client.get(
         BOLETIM_URL, {"aluno": str(enrollment.id), "periodo": str(academic_term.id)}

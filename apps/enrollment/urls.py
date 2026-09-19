@@ -22,6 +22,8 @@ urlpatterns = [
         views.enrollment_create_view,
         name="enrollment_create",
     ),
+    # -- Histórico/transferência/anulação (issues #49/#50/#51) -----------------
+    path("alunos/<uuid:student_id>/", views.student_detail_view, name="student_detail"),
     # -- Matrícula em lote (issue #241) -- admitidos por candidatura -----------
     path("matriculas/lote/", views.bulk_enrollment_view, name="bulk_enrollment"),
     # -- Declarações (issue #94, RF-REL-01) ------------------------------------

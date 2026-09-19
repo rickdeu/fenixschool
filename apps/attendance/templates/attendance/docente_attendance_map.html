@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n form_tags %}
 
 {% block title %}{% translate "Mapa de faltas" %} — FenixSchool{% endblock %}
 
@@ -10,25 +10,21 @@
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-6">
-                <label for="horario" class="form-label">{% translate "Turma / Disciplina" %}</label>
-                <select name="horario" id="horario" class="form-select" required>
-                    <option value="">{% translate "Seleccione" %}</option>
-                    {% for slot in schedules %}
-                    <option value="{{ slot.id }}" {% if selected_schedule == slot.id|stringformat:"s" %}selected{% endif %}>
-                        {{ slot.school_class }} — {{ slot.subject }} ({{ slot.get_weekday_display }} {{ slot.start_time }}-{{ slot.end_time }})
-                    </option>
-                    {% endfor %}
-                </select>
+                {% choice_field name="horario" queryset=schedules selected=selected_schedule label="Turma / Disciplina" %}
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary">{% translate "Ver mapa" %}</button>
+                <button type="submit" class="btn btn-primary">{% translate "Filtrar" %}</button>
             </div>
         </form>
     </div>
 </div>
 
-{% if rows is not None %}
-<div class="card">
+{% for group in groups %}
+<div class="card mb-4">
+    <div class="card-header">
+        {{ group.schedule.school_class }} — {{ group.schedule.subject }}
+        ({{ group.schedule.get_weekday_display }} {{ group.schedule.start_time }}-{{ group.schedule.end_time }})
+    </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
             <thead>
@@ -39,7 +35,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for row in rows %}
+                {% for row in group.rows %}
                 <tr>
                     <td>{{ row.enrollment.student }}</td>
                     <td>
@@ -58,5 +54,7 @@
         </table>
     </div>
 </div>
-{% endif %}
+{% empty %}
+<p class="text-muted">{% translate "Sem alunos matriculados." %}</p>
+{% endfor %}
 {% endblock %}

@@ -140,3 +140,21 @@ def test_docente_map_forbidden_for_a_schedule_not_their_own(
     response = client.get(DOCENTE_MAP_URL, {"horario": str(schedule.id)})
 
     assert response.status_code == 403
+
+
+def test_attendance_map_lists_every_class_without_a_filter(
+    secretary_client, enrollment, school_class
+):
+    response = secretary_client.get(MAP_URL)
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert school_class.designation in content
+    assert "Yolene Hangalo" in content
+
+
+def test_docente_map_lists_every_schedule_without_a_filter(teacher_client, schedule, enrollment):
+    response = teacher_client.get(DOCENTE_MAP_URL)
+
+    assert response.status_code == 200
+    assert "Yolene Hangalo" in response.content.decode()

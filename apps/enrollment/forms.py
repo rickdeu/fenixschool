@@ -135,3 +135,19 @@ class EnrollmentForm(forms.ModelForm):
         self.fields["previous_enrollment"].required = False
         if student is not None:
             self.fields["previous_enrollment"].queryset = Enrollment.objects.filter(student=student)
+
+
+class TransferForm(forms.Form):
+    """Issue #49 (RF-MAT-08): só a nova turma é pedida -- os restantes
+    dados da nova Matrícula (curso/ano lectivo/ciclo/ano curricular,
+    documento apresentado) são derivados da turma escolhida ou herdados da
+    matrícula anterior por `apps.enrollment.services.transferir_aluno`."""
+
+    school_class = forms.ModelChoiceField(queryset=SchoolClass.objects.none(), label="Nova turma")
+
+    def __init__(self, *args, institution, current_school_class=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = SchoolClass.objects.filter(institution=institution)
+        if current_school_class is not None:
+            queryset = queryset.exclude(pk=current_school_class.pk)
+        self.fields["school_class"].queryset = queryset
