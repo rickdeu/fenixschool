@@ -1,0 +1,68 @@
+{% extends "reports/base_document.html" %}
+{% load i18n %}
+
+{% block document_title %}{% translate "Boletim" %} — {{ enrollment.student }}{% endblock %}
+
+{% block extra_style %}
+<style>
+    .boletim-title {
+        text-align: center;
+        margin-bottom: 0.3cm;
+    }
+    .boletim-meta {
+        text-align: center;
+        color: #444;
+        margin-bottom: 0.8cm;
+    }
+    table.boletim {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10pt;
+        margin-bottom: 0.4cm;
+    }
+    table.boletim th, table.boletim td {
+        border: 1px solid #999;
+        padding: 0.15cm 0.3cm;
+    }
+    table.boletim th {
+        background: #eee;
+        text-align: left;
+    }
+    table.boletim td.numeric, table.boletim th.numeric {
+        text-align: right;
+    }
+    .subject-name {
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block document_content %}
+<h2 class="boletim-title">{% translate "Boletim de Notas" %}</h2>
+<p class="boletim-meta">
+    {{ enrollment.student }} — {{ enrollment.school_class.designation }} — {{ academic_term }}
+</p>
+
+<table class="boletim">
+    <thead>
+        <tr>
+            <th>{% translate "Disciplina" %}</th>
+            <th>{% translate "Avaliações" %}</th>
+            <th class="numeric">{% translate "Média" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td class="subject-name">{{ row.final_grade.subject.name }}</td>
+            <td>
+                {% for grade in row.grades %}{{ grade.evaluation_type.name }}: {{ grade.value }}{% if not forloop.last %} · {% endif %}{% endfor %}
+            </td>
+            <td class="numeric">{{ row.final_grade.final_value }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">{% translate "Ainda não há médias calculadas para este trimestre." %}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

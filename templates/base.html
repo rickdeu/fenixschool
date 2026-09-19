@@ -104,6 +104,11 @@
                             <i class="bi bi-clipboard-check"></i> <span>{% translate "Pautas" %}</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'grading:boletim_selection' %}">
+                            <i class="bi bi-file-earmark-person"></i> <span>{% translate "Boletins" %}</span>
+                        </a>
+                    </li>
                     {% endif %}
                     {% if perms.grading.view_finalsituation %}
                     <li class="nav-item">

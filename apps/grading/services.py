@@ -721,3 +721,32 @@ def ensure_recurso_evaluation_type(institution, *, origin_node_id) -> Evaluation
         defaults={"default_weight": Decimal("0"), "origin_node_id": origin_node_id},
     )
     return evaluation_type
+
+
+def get_boletim_rows(*, institution, enrollment, academic_term) -> list[dict]:
+    """Issue #97 (RF-REL-04): uma linha por disciplina com `FinalGrade` já
+    calculada para `enrollment`/`academic_term`, com as respectivas notas
+    por tipo de avaliação -- usado tanto pelo ecrã (`boletim_view`) como
+    pela exportação em PDF (`boletim_pdf_view`), para que ambos mostrem
+    exactamente os mesmos dados."""
+    final_grades = (
+        FinalGrade.objects.filter(
+            institution=institution, enrollment=enrollment, academic_term=academic_term
+        )
+        .select_related("subject")
+        .order_by("subject__name")
+    )
+    rows = []
+    for final_grade in final_grades:
+        grades = (
+            Grade.objects.filter(
+                institution=institution,
+                enrollment=enrollment,
+                subject=final_grade.subject,
+                academic_term=academic_term,
+            )
+            .select_related("evaluation_type")
+            .order_by("evaluation_type__name")
+        )
+        rows.append({"final_grade": final_grade, "grades": grades})
+    return rows
