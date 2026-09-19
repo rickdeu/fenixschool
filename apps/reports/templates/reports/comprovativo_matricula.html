@@ -1,0 +1,42 @@
+{% extends "reports/base_document.html" %}
+{% load i18n %}
+
+{% block document_title %}{% translate "Comprovativo de Matrícula" %}{% endblock %}
+
+{% block extra_style %}
+<style>
+    .comprovativo-title {
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 1cm 0 1.5cm;
+    }
+    table.comprovativo {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11pt;
+    }
+    table.comprovativo th, table.comprovativo td {
+        border: 1px solid #999;
+        padding: 0.2cm 0.35cm;
+        text-align: left;
+    }
+    table.comprovativo th {
+        background: #eee;
+        width: 40%;
+    }
+</style>
+{% endblock %}
+
+{% block document_content %}
+<h2 class="comprovativo-title">{% translate "Comprovativo de Matrícula" %}</h2>
+
+<table class="comprovativo">
+    {% for label, value in fields.items %}
+    <tr>
+        <th>{{ label }}</th>
+        <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -4,7 +4,7 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
-from apps.reports.services import gerar_declaracao_pdf
+from apps.reports.services import gerar_comprovativo_matricula_pdf, gerar_declaracao_pdf
 
 from .models import Enrollment, Student
 
@@ -185,6 +185,37 @@ def emitir_declaracao(*, enrollment: Enrollment, declaracao_type: str, issued_by
         declaracao_type=declaracao_type,
         title=DECLARACAO_TITLES[declaracao_type],
         legal_text=legal_text,
+        issued_by=issued_by,
+        origin_node_id=origin_node_id,
+    )
+
+
+def emitir_comprovativo_matricula(*, enrollment: Enrollment, issued_by, origin_node_id):
+    """Issue #48 (RF-MAT-06): "comprovativo imprimível imediatamente após
+    confirmação da matrícula" -- chamado directamente por
+    `enrollment_create_view` a seguir a `enroll_student()`, nunca como uma
+    acção separada e opcional. Resolve os campos a mostrar e delega a
+    numeração/auditoria/renderização a
+    `apps.reports.services.gerar_comprovativo_matricula_pdf`."""
+
+    fields = {
+        "N.º de matrícula": enrollment.enrollment_number,
+        "Aluno": str(enrollment.student),
+        "Data de nascimento": enrollment.student.birth_date,
+        "Turma": enrollment.school_class.designation,
+        "Curso": enrollment.course.name,
+        "Ano curricular": enrollment.curricular_year.equivalent_grade,
+        "Ano lectivo": str(enrollment.academic_year),
+        "Data da matrícula": enrollment.date,
+        "Documento apresentado": (
+            f"{enrollment.presented_document_type.name} n.º "
+            f"{enrollment.presented_document_number}"
+        ),
+    }
+
+    return gerar_comprovativo_matricula_pdf(
+        institution=enrollment.institution,
+        fields=fields,
         issued_by=issued_by,
         origin_node_id=origin_node_id,
     )
