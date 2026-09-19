@@ -178,8 +178,13 @@ class InstitutionEditForm(forms.ModelForm):
             "email",
             "website",
             "logo",
+            "document_header_text",
+            "document_legal_footer_text",
         ]
-        widgets = {"municipality": MunicipalitySelect}
+        widgets = {
+            "municipality": MunicipalitySelect,
+            "document_legal_footer_text": forms.Textarea(attrs={"rows": 3}),
+        }
 
 
 class AcademicYearForm(forms.ModelForm):

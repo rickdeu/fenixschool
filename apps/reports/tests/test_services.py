@@ -6,6 +6,7 @@ import uuid
 from unittest import mock
 
 import pytest
+from django.template.loader import render_to_string
 from django.utils import translation
 
 from apps.accounts.models import Profile
@@ -155,6 +156,60 @@ def test_render_document_pdf_forces_portuguese_regardless_of_active_language():
         translation.deactivate()
 
     assert captured["language"] == "pt"
+
+
+def test_base_document_shows_the_institutions_configured_header_and_footer_text(
+    institution, secretaria
+):
+    """Issue #99 (RF-REL-01): cabeçalho/textos legais editáveis por
+    instituição, reflectidos em todo documento oficial (`base_document.html`
+    é a base partilhada por todos -- pauta, boletim, declaração,
+    comprovativo)."""
+    institution.document_header_text = "República de Angola — Ministério da Educação"
+    institution.document_legal_footer_text = "Registo MED n.º 12345/2026."
+    institution.save()
+
+    issued = emitir_documento(
+        institution=institution,
+        document_type="declaracao-matricula",
+        issued_by=secretaria,
+        origin_node_id=_origin(),
+    )
+
+    html = render_to_string(
+        "reports/declaracao.html",
+        {
+            "institution": institution,
+            "issued_document": issued,
+            "title": "Declaração",
+            "legal_text": "Texto da declaração.",
+        },
+    )
+
+    assert "República de Angola — Ministério da Educação" in html
+    assert "Registo MED n.º 12345/2026." in html
+
+
+def test_base_document_omits_header_and_footer_text_when_not_configured(institution, secretaria):
+    issued = emitir_documento(
+        institution=institution,
+        document_type="declaracao-matricula",
+        issued_by=secretaria,
+        origin_node_id=_origin(),
+    )
+
+    html = render_to_string(
+        "reports/declaracao.html",
+        {
+            "institution": institution,
+            "issued_document": issued,
+            "title": "Declaração",
+            "legal_text": "Texto da declaração.",
+        },
+    )
+
+    assert '<p class="document-header-text">' not in html
+    assert '<p class="document-footer-legal">' not in html
 
 
 def test_issued_document_cannot_be_deleted(institution, secretaria):

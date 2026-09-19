@@ -106,6 +106,32 @@ class Institution(models.Model):
         ),
     )
 
+    # -- Documentos oficiais (RF-REL-01, issue #99) ------------------------
+    document_header_text = models.CharField(
+        "texto do cabeçalho dos documentos",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=(
+            "Linha adicional mostrada por baixo do nome da instituição no "
+            "cabeçalho de todo documento oficial (pauta, boletim, "
+            'declaração, comprovativo) -- ex. "República de Angola -- '
+            'Ministério da Educação". Em branco, essa linha não aparece.'
+        ),
+    )
+    document_legal_footer_text = models.TextField(
+        "texto legal do rodapé dos documentos",
+        blank=True,
+        default="",
+        help_text=(
+            "Texto legal (ex. registo/licenciamento, isenções, avisos "
+            "normativos) mostrado no rodapé de todo documento oficial, por "
+            "baixo da numeração/série. Em branco, o rodapé mostra só a "
+            "numeração/série e o emissor, como antes desta configuração "
+            "existir."
+        ),
+    )
+
     absence_limit_weekly_load_multiplier = models.DecimalField(
         "multiplicador do limite legal de faltas",
         max_digits=3,
