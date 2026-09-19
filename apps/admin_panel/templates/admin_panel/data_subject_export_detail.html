@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} — FenixSchool{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ title }}</h1>
+    <div class="d-flex gap-2">
+        <a href="?formato=json" class="btn btn-outline-secondary">
+            <i class="bi bi-download me-1"></i>{% translate "Transferir em JSON" %}
+        </a>
+        <a href="{% url 'admin_panel:data_subject_export' %}" class="btn btn-outline-secondary">
+            {% translate "Nova pesquisa" %}
+        </a>
+    </div>
+</div>
+<p class="text-muted mb-4">
+    {% translate "Exportação completa dos dados pessoais deste titular (Lei n.º 22/11) -- inclui todos os campos guardados pelo FenixSchool nas secções abaixo." %}
+</p>
+
+{% for section_label, section_value in sections %}
+<div class="card mb-3">
+    <div class="card-header">{{ section_label }}</div>
+    <div class="card-body">
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ section_value|pprint }}</pre>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

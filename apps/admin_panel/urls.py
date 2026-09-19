@@ -75,6 +75,22 @@ urlpatterns = [
         views.non_teaching_day_edit_view,
         name="non_teaching_day_edit",
     ),
+    # -- Exportação de dados de um titular (RF-.../9.1, issue #144) ------------
+    path(
+        "privacidade/exportar-dados/",
+        views.data_subject_export_view,
+        name="data_subject_export",
+    ),
+    path(
+        "privacidade/exportar-dados/aluno/<uuid:student_id>/",
+        views.data_subject_export_student_view,
+        name="data_subject_export_student",
+    ),
+    path(
+        "privacidade/exportar-dados/encarregado/<uuid:guardian_id>/",
+        views.data_subject_export_guardian_view,
+        name="data_subject_export_guardian",
+    ),
     # -- Cópias de segurança (RF-INST-*, issue #166) ----------------------------
     path("configuracao/backups/", views.backup_list_view, name="backup_list"),
     path(

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Exportação de dados de um titular" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-2">{% translate "Exportação de dados de um titular" %}</h1>
+<p class="text-muted mb-4">
+    {% translate "Direito de acesso e rectificação (Lei n.º 22/11) -- procure o Aluno ou Encarregado de Educação titular do pedido." %}
+</p>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-2">
+            <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="{% translate 'Nome ou número de documento' %}"
+                value="{{ query }}"
+                autofocus
+            >
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i>{% translate "Procurar" %}
+            </button>
+        </form>
+    </div>
+</div>
+
+{% if query %}
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">{% translate "Alunos" %}</div>
+            <ul class="list-group list-group-flush">
+                {% for student in students %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ student }} <span class="text-muted">#{{ student.student_number }}</span></span>
+                    <a href="{% url 'admin_panel:data_subject_export_student' student.id %}" class="btn btn-sm btn-outline-primary">
+                        {% translate "Exportar" %}
+                    </a>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">{% translate "Nenhum aluno encontrado." %}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">{% translate "Encarregados de Educação" %}</div>
+            <ul class="list-group list-group-flush">
+                {% for guardian in guardians %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ guardian }}</span>
+                    <a href="{% url 'admin_panel:data_subject_export_guardian' guardian.id %}" class="btn btn-sm btn-outline-primary">
+                        {% translate "Exportar" %}
+                    </a>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">{% translate "Nenhum encarregado encontrado." %}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
