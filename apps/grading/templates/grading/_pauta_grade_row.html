@@ -1,11 +1,11 @@
-{% load i18n %}
+{% load i18n l10n %}
 <div class="d-flex align-items-center gap-2 pauta-grade-cell" id="pauta-grade-cell-{{ grade.id }}">
     {% csrf_token %}
     <input type="hidden" name="grade_id" value="{{ grade.id }}">
     <input type="number" step="0.1" min="0" max="20" name="value"
            class="form-control form-control-sm {% if error %}is-invalid{% elif success %}is-valid{% endif %}"
            style="max-width: 6rem;"
-           value="{{ value|default_if_none:'' }}"
+           value="{{ value|default_if_none:''|unlocalize }}"
            aria-label="{% translate 'Classificação' %}"
            {% if closed %}disabled{% endif %}
            hx-post="{% url 'grading:pauta_grade_cell_save' %}"
