@@ -39,6 +39,18 @@ SECRET_KEY = env(
 
 DEBUG = env("DJANGO_DEBUG")
 
+# Chave da cifra determinística de campo (AES-SIV, issue #141, RNF-SEC-06) --
+# base64 de 64 bytes (AES-256-SIV). SECURITY WARNING: tal como
+# DJANGO_SECRET_KEY, este default só serve para desenvolvimento local; toda
+# instituição em produção DEVE definir FIELD_ENCRYPTION_KEY na sua própria
+# `.env` -- nunca a mesma chave entre instituições/nós, e nunca perdida
+# (dados cifrados com uma chave perdida ficam permanentemente
+# irrecuperáveis). Ver apps/core/crypto.py.
+FIELD_ENCRYPTION_KEY = env(
+    "FIELD_ENCRYPTION_KEY",
+    default="iY5PdY0SI7/vlPrKf7H55nMDREuSFpC9olClhaWMmgw/6qG9xOfnOw0gvi2PhB+PsI+eO3y8qkmlMjzLl2EDXQ==",
+)
+
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 
 

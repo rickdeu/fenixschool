@@ -41,7 +41,13 @@ class StudentAdmin(admin.ModelAdmin):
 class GuardianAdmin(admin.ModelAdmin):
     list_display = ("full_name", "kinship", "document_number", "institution")
     list_filter = ("institution", "kinship")
-    search_fields = ("full_name", "document_number")
+    # `document_number` removido de `search_fields` (issue #141): fica
+    # cifrado em repouso com uma cifra determinística, que só suporta
+    # comparação de igualdade -- a busca `icontains` que o Django Admin usa
+    # por omissão não tem como funcionar sobre o texto cifrado. Sem perda
+    # real: o Django Admin nunca é o ecrã real usado por utilizadores finais
+    # neste projecto.
+    search_fields = ("full_name",)
     autocomplete_fields = (
         "institution",
         "document_type",
