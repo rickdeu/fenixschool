@@ -58,7 +58,7 @@ def _reserve_document_number(
 
 
 def emitir_documento(
-    *, institution, document_type: str, issued_by, origin_node_id
+    *, institution, document_type: str, origin_node_id, issued_by=None
 ) -> IssuedDocument:
     """RF-REL-06: regista a emissão de um novo documento oficial, com
     numeração/série reservada por `_reserve_document_number` e entrada de
@@ -185,6 +185,35 @@ def gerar_comprovativo_matricula_pdf(
     )
     pdf = render_document_pdf(
         "reports/comprovativo_matricula.html",
+        {
+            "institution": institution,
+            "issued_document": issued,
+            "fields": fields,
+        },
+    )
+    return issued, pdf
+
+
+COMPROVATIVO_CANDIDATURA_DOCUMENT_TYPE = "comprovativo-candidatura"
+
+
+def gerar_comprovativo_candidatura_pdf(
+    *, institution, fields: dict, origin_node_id
+) -> tuple[IssuedDocument, bytes]:
+    """RF-PUB-03 (issue #102): "comprovativo em PDF" de uma pré-candidatura
+    pública -- sem utilizador autenticado (`issued_by=None`, ver
+    `IssuedDocument.issued_by`), ao contrário de todo outro documento
+    oficial emitido por um funcionário. O chamador
+    (`apps.enrollment.services.emitir_comprovativo_candidatura`) já
+    resolveu `fields`."""
+
+    issued = emitir_documento(
+        institution=institution,
+        document_type=COMPROVATIVO_CANDIDATURA_DOCUMENT_TYPE,
+        origin_node_id=origin_node_id,
+    )
+    pdf = render_document_pdf(
+        "reports/comprovativo_candidatura.html",
         {
             "institution": institution,
             "issued_document": issued,

@@ -83,9 +83,7 @@ def test_valid_submission_creates_a_pending_candidate(institution, course, docum
     assert candidate.document_number == "004928474HA038"
 
 
-def test_missing_required_fields_shows_validation_errors_and_creates_nothing(
-    institution, course
-):
+def test_missing_required_fields_shows_validation_errors_and_creates_nothing(institution, course):
     response = Client().post(reverse("public_site:pre_application"), data={})
 
     assert response.status_code == 200
@@ -132,3 +130,88 @@ def test_desired_course_choices_never_leak_another_institutions_courses(institut
     assert response.status_code == 200
     with tenant_context(institution.id):
         assert not Candidate.objects.filter(full_name="João Bumba").exists()
+
+
+def _apply(document_number, course, document_type, *, full_name="Ana Kavungo"):
+    return Client().post(
+        reverse("public_site:pre_application"),
+        data={
+            "full_name": full_name,
+            "birth_date": "2010-05-20",
+            "document_type": document_type.code,
+            "document_number": document_number,
+            "document_expiry_date": "2030-01-01",
+            "desired_course": str(course.pk),
+            "contact": "923000000",
+        },
+    )
+
+
+def test_valid_submission_issues_a_pdf_receipt_with_a_reserved_number(
+    institution, course, document_type
+):
+    response = _apply("004928474HA038", course, document_type)
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        candidate = Candidate.objects.get(full_name="Ana Kavungo")
+    assert candidate.application_receipt is not None
+    assert candidate.application_receipt.formatted_number.startswith("COMPROVATIVO-CANDIDATURA/")
+    assert candidate.application_receipt.issued_by is None
+    assert response.context["candidate"].application_receipt is not None
+
+
+def test_a_second_application_with_the_same_document_number_is_blocked(
+    institution, course, document_type
+):
+    _apply("004928474HA038", course, document_type)
+
+    response = _apply("004928474HA038", course, document_type, full_name="Ana Segunda Vez")
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        assert not Candidate.objects.filter(full_name="Ana Segunda Vez").exists()
+        assert Candidate.objects.filter(document_number="004928474HA038").count() == 1
+
+
+def test_a_rejected_candidate_may_re_apply(institution, course, document_type):
+    _apply("004928474HA038", course, document_type)
+    with tenant_context(institution.id):
+        Candidate.objects.filter(document_number="004928474HA038").update(
+            status=Candidate.Status.REJECTED
+        )
+
+    response = _apply("004928474HA038", course, document_type, full_name="Ana Segunda Vez")
+
+    assert response.status_code == 200
+    with tenant_context(institution.id):
+        assert Candidate.objects.filter(full_name="Ana Segunda Vez").exists()
+
+
+def test_receipt_lookup_by_document_number_returns_the_pdf(institution, course, document_type):
+    _apply("004928474HA038", course, document_type)
+    with tenant_context(institution.id):
+        candidate = Candidate.objects.get(document_number="004928474HA038")
+
+    response = Client().post(
+        reverse("public_site:application_receipt"),
+        data={"document_number": "004928474HA038"},
+    )
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/pdf"
+    with tenant_context(institution.id):
+        candidate.refresh_from_db()
+    from apps.reports.models import IssuedDocument
+
+    assert IssuedDocument.all_objects.filter(document_type="comprovativo-candidatura").count() == 1
+
+
+def test_receipt_lookup_with_unknown_document_number_shows_an_error(institution, course):
+    response = Client().post(
+        reverse("public_site:application_receipt"),
+        data={"document_number": "does-not-exist"},
+    )
+
+    assert response.status_code == 200
+    assert "Não encontrámos" in response.content.decode()

@@ -64,6 +64,19 @@ class Candidate(SyncedModel):
             "foi exigida a este candidato."
         ),
     )
+    application_receipt = models.ForeignKey(
+        "reports.IssuedDocument",
+        verbose_name="comprovativo de candidatura",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text=(
+            "Número/série já reservado por apps.reports.services._reserve_document_number "
+            "-- guardado aqui (issue #102) para que 'voltar a emitir' reimprima sempre o "
+            "mesmo número em vez de reservar um novo a cada reimpressão."
+        ),
+    )
 
     class Meta(SyncedModel.Meta):
         verbose_name = "candidato"

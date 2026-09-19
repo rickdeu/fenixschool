@@ -19,6 +19,7 @@
             <div class="d-flex align-items-center gap-3 ms-auto">
                 <a href="{% url 'public_site:calendar' %}" class="nav-link">{% translate "Calendário" %}</a>
                 <a href="{% url 'public_site:pre_application' %}" class="nav-link">{% translate "Pré-candidatura" %}</a>
+                <a href="{% url 'public_site:application_receipt' %}" class="nav-link">{% translate "Reemitir comprovativo" %}</a>
                 {% if user.is_authenticated %}
                 <a href="{% url 'accounts:landing_placeholder' %}" class="btn btn-outline-primary btn-sm">{% translate "A minha conta" %}</a>
                 {% else %}
