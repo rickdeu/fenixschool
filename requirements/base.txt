@@ -42,3 +42,7 @@ argon2-cffi==25.1.0
 # (issue #93). Requer bibliotecas nativas (Pango/Cairo/GDK-Pixbuf) na
 # imagem -- ver Dockerfile.
 weasyprint==70.0
+
+# Cifra de campo (AES-SIV) para dados sensíveis em repouso -- RNF-SEC-06,
+# issue #141. `apps/core/crypto.py`/`apps/core/fields.py`.
+cryptography==50.0.1

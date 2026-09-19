@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.db import models
 
+from apps.core.fields import EncryptedCharField, EncryptedEmailField
 from apps.core.models import SyncedModel
 
 
@@ -26,11 +27,18 @@ class Guardian(SyncedModel):
         on_delete=models.PROTECT,
         related_name="guardians",
     )
-    document_number = models.CharField("número do documento", max_length=50)
+    # Cifrados em repouso (issue #141, RNF-SEC-06/9.3): o número de
+    # documento e os contactos directos do Encarregado de Educação, tal como
+    # o próprio exemplo de implementação da issue pede. Cifra determinística
+    # (ver apps/core/crypto.py) -- `.filter(document_number=...)` (usado em
+    # `student_inscription_view.py` para procurar um encarregado existente)
+    # continua a funcionar de forma transparente, sem alterar nenhuma lógica
+    # de negócio.
+    document_number = EncryptedCharField("número do documento", max_length=50)
 
-    mobile_phone = models.CharField("telemóvel", max_length=20, blank=True, default="")
-    landline_phone = models.CharField("telefone fixo", max_length=20, blank=True, default="")
-    email = models.EmailField("email", blank=True, default="")
+    mobile_phone = EncryptedCharField("telemóvel", max_length=20, blank=True, default="")
+    landline_phone = EncryptedCharField("telefone fixo", max_length=20, blank=True, default="")
+    email = EncryptedEmailField("email", blank=True, default="")
     # Plain text per §5.12 (unlike Student.profession, which reuses
     # core.Profession) -- the source table lists it as free text here.
     profession = models.CharField("profissão", max_length=100, blank=True, default="")
