@@ -24,4 +24,7 @@ urlpatterns = [
     ),
     # -- Matrícula em lote (issue #241) -- admitidos por candidatura -----------
     path("matriculas/lote/", views.bulk_enrollment_view, name="bulk_enrollment"),
+    # -- Declarações (issue #94, RF-REL-01) ------------------------------------
+    path("declaracoes/", views.declaracao_selection_view, name="declaracao_selection"),
+    path("declaracoes/pdf/", views.declaracao_pdf_view, name="declaracao_pdf"),
 ]

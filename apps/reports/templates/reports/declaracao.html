@@ -1,0 +1,25 @@
+{% extends "reports/base_document.html" %}
+{% load i18n %}
+
+{% block document_title %}{{ title }}{% endblock %}
+
+{% block extra_style %}
+<style>
+    .declaracao-title {
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 1.5cm 0 2cm;
+    }
+    .declaracao-text {
+        text-align: justify;
+        line-height: 1.8;
+        font-size: 12pt;
+    }
+</style>
+{% endblock %}
+
+{% block document_content %}
+<h2 class="declaracao-title">{{ title }}</h2>
+<p class="declaracao-text">{{ legal_text }}</p>
+{% endblock %}

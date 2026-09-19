@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Declarações" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">{% translate "Declarações" %}</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="turma" class="form-label">{% translate "Turma" %}</label>
+                <select name="turma" id="turma" class="form-select" required>
+                    <option value="">{% translate "Seleccione" %}</option>
+                    {% for sc in school_classes %}
+                    <option value="{{ sc.id }}" {% if selected_school_class == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.designation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">{% translate "Ver alunos" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if enrollments is not None %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Aluno" %}</th>
+                    <th>{% translate "Estado da matrícula" %}</th>
+                    <th>{% translate "Declaração de Matrícula" %}</th>
+                    <th>{% translate "Declaração de Frequência" %}</th>
+                    <th>{% translate "Declaração de Conclusão" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td>{{ enrollment.student }}</td>
+                    <td>{{ enrollment.get_status_display }}</td>
+                    <td>
+                        <form method="post" action="{% url 'enrollment:declaracao_pdf' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="matricula" value="{{ enrollment.id }}">
+                            <input type="hidden" name="tipo" value="{{ declaracao_matricula }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'enrollment:declaracao_pdf' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="matricula" value="{{ enrollment.id }}">
+                            <input type="hidden" name="tipo" value="{{ declaracao_frequencia }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" {% if enrollment.status not in active_statuses %}disabled{% endif %}>
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'enrollment:declaracao_pdf' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="matricula" value="{{ enrollment.id }}">
+                            <input type="hidden" name="tipo" value="{{ declaracao_conclusao }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" {% if enrollment.status != completed_status %}disabled{% endif %}>
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-muted">{% translate "Nenhum aluno matriculado nesta turma." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

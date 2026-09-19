@@ -4,6 +4,8 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
+from apps.reports.services import gerar_declaracao_pdf
+
 from .models import Enrollment, Student
 
 
@@ -100,4 +102,89 @@ def enroll_student(*, institution, student, school_class, **fields) -> Enrollmen
         student=student,
         school_class=school_class,
         **fields,
+    )
+
+
+# RF-REL-01/issue #94: "3 tipos de declaração geráveis em PDF". Redacção
+# genérica de exemplo -- não confirmada junto de nenhum modelo oficial do
+# MED -- fica como ponto de partida até a issue #99 construir o ecrã que a
+# torna editável por instituição (mesmo raciocínio hedge já usado para
+# `Institution.max_recoverable_subjects`/`DEFAULT_EVALUATION_TYPES`).
+DECLARACAO_MATRICULA = "declaracao-matricula"
+DECLARACAO_FREQUENCIA = "declaracao-frequencia"
+DECLARACAO_CONCLUSAO = "declaracao-conclusao"
+
+DECLARACAO_TITLES = {
+    DECLARACAO_MATRICULA: "Declaração de Matrícula",
+    DECLARACAO_FREQUENCIA: "Declaração de Frequência",
+    DECLARACAO_CONCLUSAO: "Declaração de Conclusão",
+}
+
+_DEFAULT_DECLARACAO_TEXTS = {
+    DECLARACAO_MATRICULA: (
+        "Para os devidos efeitos, declara-se que {student} se encontra "
+        "matriculado(a) nesta instituição de ensino, na turma {school_class}, "
+        "no ano lectivo {academic_year}."
+    ),
+    DECLARACAO_FREQUENCIA: (
+        "Para os devidos efeitos, declara-se que {student} frequenta "
+        "actualmente esta instituição de ensino, na turma {school_class}, "
+        "no ano lectivo {academic_year}."
+    ),
+    DECLARACAO_CONCLUSAO: (
+        "Para os devidos efeitos, declara-se que {student} concluiu, nesta "
+        "instituição de ensino, os estudos correspondentes à turma "
+        "{school_class}, no ano lectivo {academic_year}."
+    ),
+}
+
+# Que estados de `Enrollment.Status` cada tipo de declaração exige --
+# "Matrícula" é válida para qualquer matrícula real, seja qual for o seu
+# estado actual (é um registo histórico de ter sido matriculado).
+_REQUIRED_STATUSES = {
+    DECLARACAO_FREQUENCIA: {Enrollment.Status.ACTIVE, Enrollment.Status.PENDING},
+    DECLARACAO_CONCLUSAO: {Enrollment.Status.COMPLETED},
+}
+
+
+class TipoDeDeclaracaoIncompativelError(Exception):
+    """A matrícula não está num estado compatível com o tipo de declaração
+    pedido (ex.: "Declaração de Conclusão" para uma matrícula ainda activa,
+    não concluída)."""
+
+    def __init__(self, declaracao_type: str, enrollment: Enrollment):
+        self.declaracao_type = declaracao_type
+        self.enrollment = enrollment
+        super().__init__(
+            f'Não é possível emitir "{DECLARACAO_TITLES[declaracao_type]}" para uma '
+            f'matrícula com estado "{enrollment.get_status_display()}".'
+        )
+
+
+def emitir_declaracao(*, enrollment: Enrollment, declaracao_type: str, issued_by, origin_node_id):
+    """Issue #94 (RF-REL-01): valida que o estado da matrícula é compatível
+    com `declaracao_type`, formata o texto legal por omissão e delega a
+    numeração/auditoria/renderização a
+    `apps.reports.services.gerar_declaracao_pdf` -- que não sabe nada sobre
+    `Enrollment`, apenas recebe texto e etiquetas já resolvidos (mesma
+    direcção de dependência enrollment/grading → reports, nunca o
+    inverso)."""
+
+    required_statuses = _REQUIRED_STATUSES.get(declaracao_type)
+    if required_statuses is not None and enrollment.status not in required_statuses:
+        raise TipoDeDeclaracaoIncompativelError(declaracao_type, enrollment)
+
+    legal_text = _DEFAULT_DECLARACAO_TEXTS[declaracao_type].format(
+        student=enrollment.student,
+        school_class=enrollment.school_class.designation,
+        academic_year=enrollment.academic_year,
+    )
+
+    return gerar_declaracao_pdf(
+        institution=enrollment.institution,
+        declaracao_type=declaracao_type,
+        title=DECLARACAO_TITLES[declaracao_type],
+        legal_text=legal_text,
+        issued_by=issued_by,
+        origin_node_id=origin_node_id,
     )

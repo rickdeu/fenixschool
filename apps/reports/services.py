@@ -130,6 +130,33 @@ def gerar_pauta_oficial_pdf(
     return issued, pdf
 
 
+def gerar_declaracao_pdf(
+    *, institution, declaracao_type: str, title: str, legal_text: str, issued_by, origin_node_id
+) -> tuple[IssuedDocument, bytes]:
+    """RF-REL-01 (issue #94): "3 tipos de declaração geráveis em PDF" --
+    genérico para os 3 (matrícula/frequência/conclusão): o chamador
+    (`apps.enrollment.services.emitir_declaracao`) já validou o tipo contra
+    o estado da matrícula e resolveu `title`/`legal_text`; esta função só
+    regista a emissão e renderiza o PDF."""
+
+    issued = emitir_documento(
+        institution=institution,
+        document_type=declaracao_type,
+        issued_by=issued_by,
+        origin_node_id=origin_node_id,
+    )
+    pdf = render_document_pdf(
+        "reports/declaracao.html",
+        {
+            "institution": institution,
+            "issued_document": issued,
+            "title": title,
+            "legal_text": legal_text,
+        },
+    )
+    return issued, pdf
+
+
 BOLETIM_DOCUMENT_TYPE = "boletim"
 
 
