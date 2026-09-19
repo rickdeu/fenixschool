@@ -21,6 +21,10 @@ locale/**/*.mo
 
 # Environments
 .env
+
+# Chave privada Ed25519 do Node deste Nó Local (issue #123) -- nunca sob
+# controlo de versões, gerada uma única vez na instalação.
+node_private_key.pem
 .venv
 env/
 venv/
