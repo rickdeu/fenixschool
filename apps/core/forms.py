@@ -180,6 +180,7 @@ class InstitutionEditForm(forms.ModelForm):
             "logo",
             "document_header_text",
             "document_legal_footer_text",
+            "admission_exam_passing_score",
         ]
         widgets = {
             "municipality": MunicipalitySelect,

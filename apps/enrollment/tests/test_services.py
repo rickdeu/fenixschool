@@ -14,6 +14,7 @@ from apps.enrollment.services import (
     MissingGuardianConsentError,
     SchoolClassFullError,
     StudentAlreadyEnrolledError,
+    activar_matriculas_do_ano_lectivo_em_curso,
     enroll_student,
     register_student,
 )
@@ -313,6 +314,69 @@ def test_force_enrolls_past_capacity_instead_of_blocking(institution, document_t
 
         assert isinstance(enrollment, Enrollment)
         assert class_setup["school_class"].active_enrollment_count() == 3
+
+
+def test_activates_a_pending_enrollment_once_its_academic_year_has_started(
+    institution, document_type, class_setup
+):
+    """`class_setup`'s own academic_year already started (2026-02-01, well
+    before "today")."""
+    with tenant_context(institution.id):
+        student = _make_student(institution, document_type, "AAA")
+        enrollment = _enroll(institution, class_setup, student)
+        assert enrollment.status == Enrollment.Status.PENDING
+
+        activated = activar_matriculas_do_ano_lectivo_em_curso()
+
+        enrollment.refresh_from_db()
+
+    assert activated == 1
+    assert enrollment.status == Enrollment.Status.ACTIVE
+
+
+def test_does_not_activate_an_enrollment_for_a_year_that_has_not_started_yet(
+    institution, document_type, class_setup
+):
+    with tenant_context(institution.id):
+        future_year = AcademicYear.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            designation="2099/2100",
+            start_date=date(2099, 2, 1),
+            end_date=date(2099, 12, 15),
+        )
+        future_class = SchoolClass.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            code="10A",
+            designation="10.ª A (futuro)",
+            academic_year=future_year,
+            course=class_setup["course"],
+            curricular_year=class_setup["curricular_year"],
+            shift=SchoolClass.Shift.MORNING,
+        )
+        student = _make_student(institution, document_type, "AAA")
+        enrollment = enroll_student(
+            institution=institution,
+            student=student,
+            school_class=future_class,
+            origin_node_id=_origin(),
+            course=class_setup["course"],
+            academic_year=future_year,
+            cycle=class_setup["cycle"],
+            curricular_year=class_setup["curricular_year"],
+            presented_document_type=student.document_type,
+            presented_document_number=student.document_number,
+            document_issue_date=date(2020, 1, 1),
+            document_issue_place="Nacional - Luanda",
+        )
+
+        activated = activar_matriculas_do_ano_lectivo_em_curso()
+
+        enrollment.refresh_from_db()
+
+    assert activated == 0
+    assert enrollment.status == Enrollment.Status.PENDING
 
 
 def test_a_student_cannot_have_two_active_enrollments_in_the_same_academic_year(

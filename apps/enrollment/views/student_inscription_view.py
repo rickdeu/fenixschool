@@ -80,14 +80,25 @@ def student_inscription_view(request):
     institution = request.institution
     found_guardian = None
     guardian_not_found = False
+    candidate_ineligible = False
     candidate_id = request.POST.get("candidate_id") or request.GET.get("candidate")
     candidate = (
         Candidate.objects.filter(
-            institution=institution, pk=candidate_id, status=Candidate.Status.PENDING
+            institution=institution,
+            pk=candidate_id,
+            status__in=(Candidate.Status.PENDING, Candidate.Status.ACCEPTED),
         ).first()
         if candidate_id
         else None
     )
+    if candidate is not None and not candidate.is_eligible_for_admission:
+        # Reprovado na prova de aptidão (feedback do utilizador): só quem
+        # está apto pode avançar para a Inscrição -- tratado como "nenhum
+        # candidato encontrado" (formulário em branco), com um aviso
+        # explícito do porquê, em vez de deixar a Secretaria admitir na
+        # mesma.
+        candidate_ineligible = True
+        candidate = None
 
     if request.method == "POST":
         student_form = StudentInscriptionForm(request.POST, request.FILES, prefix="student")
@@ -182,6 +193,7 @@ def student_inscription_view(request):
             "found_guardian": found_guardian,
             "guardian_not_found": guardian_not_found,
             "candidate": candidate,
+            "candidate_ineligible": candidate_ineligible,
             "student_sections": STUDENT_SECTIONS,
             "initial_step": initial_step,
         },

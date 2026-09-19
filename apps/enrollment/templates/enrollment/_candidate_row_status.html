@@ -1,0 +1,59 @@
+{% load i18n l10n %}
+<td id="candidate-score-cell-{{ candidate.id }}" class="candidate-score-cell">
+    <form class="d-flex align-items-center gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+        <input
+            type="number" step="0.1" min="0" max="20" name="score"
+            value="{{ candidate.exam_score|default_if_none:''|unlocalize }}"
+            class="form-control form-control-sm {% if error %}is-invalid{% elif success %}is-valid{% endif %}"
+            style="max-width: 5.5rem;"
+            placeholder="0-20"
+            aria-label="{% translate 'Nota da prova de aptidão' %}"
+            hx-post="{% url 'enrollment:candidate_score_save' %}"
+            hx-trigger="change, keyup changed delay:600ms"
+            hx-include="closest form"
+            hx-target="#candidate-score-cell-{{ candidate.id }}"
+            hx-swap="outerHTML"
+            hx-indicator="#candidate-score-spinner-{{ candidate.id }}"
+        >
+        <span id="candidate-score-spinner-{{ candidate.id }}"
+              class="htmx-indicator spinner-border spinner-border-sm text-secondary" role="status"
+              aria-label="{% translate 'A gravar' %}"></span>
+    </form>
+    {% if error %}
+    <span class="text-danger small"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ error }}</span>
+    {% endif %}
+</td>
+<td id="candidate-state-cell-{{ candidate.id }}" hx-swap-oob="true">
+    {% if candidate.status == "accepted" %}
+    <span class="badge text-bg-primary">{% translate "Aceite" %}</span>
+    {% elif candidate.status == "second_call" %}
+    <span class="badge text-bg-warning">{% translate "Segunda Chamada" %}</span>
+    {% elif candidate.exam_score is None %}
+    <span class="badge text-bg-light border">{% translate "Sem prova" %}</span>
+    {% elif candidate.is_eligible_for_admission %}
+    <span class="badge text-bg-success">{% translate "Apto" %}</span>
+    {% else %}
+    <span class="badge text-bg-danger">{% translate "Não apto" %}</span>
+    {% endif %}
+</td>
+<td id="candidate-action-cell-{{ candidate.id }}" class="text-end" hx-swap-oob="true">
+    {% if candidate.is_eligible_for_admission %}
+    <a href="{% url 'enrollment:student_inscription' %}?candidate={{ candidate.id }}" class="btn btn-sm btn-primary">
+        {% translate "Admitir" %}
+    </a>
+    {% else %}
+    <form method="post" class="d-inline" onsubmit="return confirm('{% translate "Confirma a convocação para segunda chamada?" %}');">
+        {% csrf_token %}
+        <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+        <input type="hidden" name="action" value="segunda_chamada">
+        <button
+            type="submit" class="btn btn-sm btn-outline-warning"
+            {% if candidate.status == "second_call" %}disabled{% endif %}
+        >
+            {% translate "Segunda Chamada" %}
+        </button>
+    </form>
+    {% endif %}
+</td>

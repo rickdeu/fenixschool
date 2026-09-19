@@ -4,11 +4,13 @@ Mantém a lógica de negócio fora de views/forms para facilitar reutilização 
 views normais e endpoints de API) e testes unitários isolados.
 """
 
+from decimal import Decimal
+
 from django.db import transaction
 
 from apps.reports.services import gerar_comprovativo_matricula_pdf, gerar_declaracao_pdf
 
-from .models import Enrollment, Student
+from .models import Candidate, Enrollment, Student
 
 _ACTIVE_ENROLLMENT_STATUSES = {Enrollment.Status.PENDING, Enrollment.Status.ACTIVE}
 
@@ -120,6 +122,111 @@ def register_student(
         guardian_consent_given_by=guardian_consent_given_by,
         **fields,
     )
+
+
+class ExamScoreOutOfRangeError(Exception):
+    """A nota da prova de aptidão de um Candidato usa a mesma escala 0-20
+    de qualquer outra classificação escolar (docs/legislacao/escala-
+    avaliacao-secundario.md)."""
+
+    def __init__(self, score):
+        self.score = score
+        super().__init__(f'"{score}" está fora da escala 0-20.')
+
+
+class CandidateAlreadyDecidedError(Exception):
+    """Um Candidato já Admitido/Rejeitado é uma decisão encerrada -- nem
+    uma nova nota nem uma convocação para segunda chamada fazem sentido
+    a partir daí."""
+
+    def __init__(self, candidate: Candidate):
+        self.candidate = candidate
+        super().__init__(
+            f'"{candidate}" já tem uma decisão registada (estado actual: '
+            f'"{candidate.get_status_display()}").'
+        )
+
+
+class CandidateAlreadyEligibleError(Exception):
+    """Convocar para segunda chamada só faz sentido para quem *não* está
+    apto com a nota actual -- um candidato já apto seguiria antes para
+    Admitir, não para uma prova de recuperação."""
+
+    def __init__(self, candidate: Candidate):
+        self.candidate = candidate
+        super().__init__(f'"{candidate}" já está apto com a nota actual.')
+
+
+def registar_nota_candidato(*, candidate: Candidate, score) -> Candidate:
+    """Regista a nota da prova de aptidão de um Candidato (feedback do
+    utilizador: "deve ter o campo para preencher a nota do candidato
+    depois da prova, e em função disso, dizer se está apto ou não").
+
+    Nunca decide sozinho Admitir/Rejeitar -- só guarda a nota;
+    `Candidate.is_eligible_for_admission` é quem determina, a partir daí,
+    se a Secretaria já pode avançar para a Inscrição (RF-MAT-10). Uma
+    segunda tentativa (depois de `convocar_para_segunda_chamada`) volta a
+    `PENDING`, para ser reavaliada pela mesma regra.
+    """
+    score = Decimal(str(score))
+    if not (Decimal("0") <= score <= Decimal("20")):
+        raise ExamScoreOutOfRangeError(score)
+    if candidate.status not in (Candidate.Status.PENDING, Candidate.Status.SECOND_CALL):
+        raise CandidateAlreadyDecidedError(candidate)
+
+    candidate.exam_score = score
+    candidate.status = Candidate.Status.PENDING
+    candidate.save(update_fields=["exam_score", "status"])
+    return candidate
+
+
+def convocar_para_segunda_chamada(*, candidate: Candidate) -> Candidate:
+    """ "Segunda chamada" (feedback do utilizador): quando os candidatos já
+    admitidos não preencheram todas as vagas e já não há candidatos por
+    avaliar com nota positiva, a Secretaria pode convocar um candidato
+    reprovado para uma prova de recuperação -- uma decisão humana,
+    informada pelo ecrã (vagas restantes/candidatos ainda pendentes por
+    curso), nunca automática: contar vagas exactamente exigiria já saber
+    em que Turma cada candidato vai cair, o que só a própria Matrícula (não
+    a Candidatura) decide.
+    """
+    if candidate.status not in (Candidate.Status.PENDING, Candidate.Status.SECOND_CALL):
+        raise CandidateAlreadyDecidedError(candidate)
+    if candidate.is_eligible_for_admission:
+        raise CandidateAlreadyEligibleError(candidate)
+
+    candidate.status = Candidate.Status.SECOND_CALL
+    candidate.save(update_fields=["status"])
+    return candidate
+
+
+def aceitar_candidatos_em_lote(*, institution, candidate_ids) -> int:
+    """ "Admitir em lote" (feedback do utilizador): candidatos aptos são
+    marcados Aceites de uma só vez, em vez de um a um -- mas nunca cria
+    Alunos directamente (`Candidate.Status.ACCEPTED`, distinto de
+    `ADMITTED`): faltam dados que só a própria Inscrição recolhe
+    (endereço, Encarregado de Educação, consentimento), por isso cada um
+    continua a precisar de passar individualmente por
+    `student_inscription_view` depois -- este lote só poupa o "Admitir"
+    candidato a candidato até aí.
+
+    Candidatos não elegíveis (reprovados/já decididos) na selecção são
+    ignorados silenciosamente, não param o lote inteiro -- a mesma
+    filosofia de `bulk_enrollment_view`, que também nunca deixa uma
+    entrada inválida bloquear as restantes.
+    """
+    accepted = 0
+    for candidate in Candidate.objects.filter(
+        institution=institution,
+        pk__in=candidate_ids,
+        status__in=(Candidate.Status.PENDING, Candidate.Status.SECOND_CALL),
+    ):
+        if not candidate.is_eligible_for_admission:
+            continue
+        candidate.status = Candidate.Status.ACCEPTED
+        candidate.save(update_fields=["status"])
+        accepted += 1
+    return accepted
 
 
 def enroll_student(
@@ -297,6 +404,41 @@ class MatriculaJaEncerradaError(Exception):
             f'"{enrollment}" já não está activa (estado actual: '
             f'"{enrollment.get_status_display()}").'
         )
+
+
+def activar_matriculas_do_ano_lectivo_em_curso() -> int:
+    """ "Activar matrículas" (docs/05-modelo-de-dados.md §5.15's estado
+    "Activa"): até este método existir, nada em código alguma vez
+    transicionava uma matrícula de Pendente para Activa -- os dois estados
+    eram tratados exactamente da mesma forma em todo o resto do sistema
+    (ver `_ACTIVE_ENROLLMENT_STATUSES`), tornando "Activa" um estado
+    inatingível.
+
+    Regra adoptada (nenhuma outra está documentada): uma matrícula fica
+    Pendente até o seu próprio Ano Lectivo começar, altura em que passa
+    automaticamente a Activa -- corrido diariamente via Django-Q2
+    (`apps.enrollment.signals`, mesmo padrão de
+    `apps.core.services.backup_database`/issue #166), nunca síncrono num
+    pedido HTTP. Uma vez que o financeiro (M3) ainda não existe, esta é a
+    única confirmação administrativa real já disponível para decidir isto
+    -- nunca fabricando uma dependência de pagamento que ainda não existe.
+
+    Percorre uma a uma (não um `.update()` em lote): `Enrollment.save()`
+    dispara os signals de auditoria/sincronização (issues #124/#140) que um
+    `.update()` do queryset saltaria por completo -- esta transição de
+    estado é uma alteração de negócio real, tem de ficar no mesmo rasto que
+    qualquer outra.
+    """
+    from datetime import date
+
+    activated = 0
+    for enrollment in Enrollment.all_objects.filter(
+        status=Enrollment.Status.PENDING, academic_year__start_date__lte=date.today()
+    ).select_related("academic_year"):
+        enrollment.status = Enrollment.Status.ACTIVE
+        enrollment.save()
+        activated += 1
+    return activated
 
 
 def anular_matricula(*, enrollment: Enrollment, reason: str, cancelled_by) -> Enrollment:

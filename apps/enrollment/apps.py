@@ -8,3 +8,6 @@ class EnrollmentConfig(AppConfig):
     name = "apps.enrollment"
     label = "enrollment"
     verbose_name = "Matrículas"
+
+    def ready(self) -> None:
+        from . import signals  # noqa: F401 -- connects its @receiver-decorated functions

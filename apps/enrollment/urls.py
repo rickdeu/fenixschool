@@ -13,6 +13,7 @@ urlpatterns = [
     path("", views.index_view, name="index"),
     # -- Candidatos (issue #42/#102) -- admissão para a Inscrição -------------
     path("candidatos/", views.candidate_list_view, name="candidate_list"),
+    path("candidatos/nota/gravar/", views.candidate_score_save_view, name="candidate_score_save"),
     # -- Inscrição (issue #45) -- "Inscrições → Alunos → Novo Aluno" ----------
     path("alunos/novo/", views.student_inscription_view, name="student_inscription"),
     # -- Matrícula (issue #47) -- "Inscrições → Matrículas → Nova Matrícula" --

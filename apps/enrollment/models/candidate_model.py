@@ -1,5 +1,8 @@
 """Modelo Candidato (RF-MAT-10, docs/05-modelo-de-dados.md §5.14, issue #42)."""
 
+from decimal import Decimal
+
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from apps.core.models import SyncedModel
@@ -7,12 +10,20 @@ from apps.core.models import SyncedModel
 
 class Candidate(SyncedModel):
     """ "Candidato" -- pre-application before the actual Inscrição, fed also by
-    the public site's pre-application form (`apps.public_site`, issue #102)."""
+    the public site's pre-application form (`apps.public_site`, issue #102).
+
+    A prova de aptidão is only administered "quando necessário" (feedback
+    do utilizador) -- e.g. quando há mais candidatos do que vagas -- por
+    isso `exam_score` fica opcional: `None` significa "nenhuma prova
+    exigida para este candidato", não "reprovado".
+    """
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pendente"
+        ACCEPTED = "accepted", "Aceite (aguarda Inscrição)"
         ADMITTED = "admitted", "Admitido"
         REJECTED = "rejected", "Rejeitado"
+        SECOND_CALL = "second_call", "Segunda Chamada"
 
     full_name = models.CharField("nome completo", max_length=200)
     birth_date = models.DateField("data de nascimento")
@@ -37,9 +48,22 @@ class Candidate(SyncedModel):
     )
     contact = models.CharField("contacto", max_length=100)
     status = models.CharField(
-        "estado", max_length=10, choices=Status.choices, default=Status.PENDING
+        "estado", max_length=15, choices=Status.choices, default=Status.PENDING
     )
     application_date = models.DateField("data de candidatura", auto_now_add=True)
+    exam_score = models.DecimalField(
+        "nota da prova de aptidão",
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("20"))],
+        help_text=(
+            "Escala 0-20 (a mesma da avaliação escolar) -- preenchida depois da "
+            "prova de aptidão, só quando esta é exigida. Em branco: nenhuma prova "
+            "foi exigida a este candidato."
+        ),
+    )
 
     class Meta(SyncedModel.Meta):
         verbose_name = "candidato"
@@ -48,6 +72,15 @@ class Candidate(SyncedModel):
 
     def __str__(self) -> str:
         return self.full_name
+
+    @property
+    def is_eligible_for_admission(self) -> bool:
+        """Só um candidato "apto" pode ser admitido à Inscrição -- mas
+        "apto" só é avaliado quando existe uma nota (`exam_score`); sem
+        prova exigida, o candidato segue elegível como sempre foi."""
+        if self.exam_score is None:
+            return True
+        return self.exam_score >= self.institution.admission_exam_passing_score
 
     def student_defaults(self) -> dict:
         """Field values a Student-creation form can pre-fill when admitting

@@ -1,38 +1,105 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n form_tags %}
 
 {% block title %}{% translate "Candidatos" %} — FenixSchool{% endblock %}
 
 {% block content %}
-<h1 class="h3 mb-4">{% translate "Candidatos pendentes" %}</h1>
+<h1 class="h3 mb-2">{% translate "Candidatos" %}</h1>
+<p class="text-muted mb-4">
+    {% translate "A prova de aptidão só é exigida quando necessário -- sem nota registada, o candidato segue directamente elegível para admissão. A nota grava-se automaticamente ao sair do campo." %}
+</p>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">{% translate "Nome ou documento" %}</label>
+                <input type="text" name="q" class="form-control" value="{{ query }}">
+            </div>
+            <div class="col-md-4">
+                {% choice_field "curso" courses selected=selected_course_id label="Curso pretendido" label_attr="name" %}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1 d-block">{% translate "Estado" %}</label>
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="estado" id="estado-todos" value="" {% if not selected_status %}checked{% endif %} autocomplete="off" onchange="this.form.submit()">
+                    <label class="btn btn-outline-secondary btn-sm" for="estado-todos">{% translate "Todos" %}</label>
+                    {% for value, label in status_choices %}
+                    <input type="radio" class="btn-check" name="estado" id="estado-{{ value }}" value="{{ value }}" {% if selected_status == value %}checked{% endif %} autocomplete="off" onchange="this.form.submit()">
+                    <label class="btn btn-outline-secondary btn-sm" for="estado-{{ value }}">{{ label }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sem elementos visíveis próprios: só existe para os checkboxes/botão
+     abaixo se associarem a ela via o atributo `form="..."` -- não pode
+     envolver a tabela inteira, já que cada linha já tem os seus próprios
+     `<form>` (nota/segunda chamada) e HTML não permite `<form>` aninhados. -->
+<form method="post" id="bulk-admit-form" onsubmit="return confirm('{% translate "Confirma a admissão dos candidatos seleccionados?" %}');">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="admitir_lote">
+</form>
 
 <div class="card">
+    <div class="card-body d-flex justify-content-between align-items-center py-2">
+        <span class="text-muted small">
+            {% translate "Seleccione candidatos aptos (Pendente ou Segunda Chamada) para admitir de uma só vez." %}
+        </span>
+        <button type="submit" form="bulk-admit-form" class="btn btn-sm btn-primary">
+            <i class="bi bi-check2-all me-1"></i>{% translate "Admitir seleccionados" %}
+        </button>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 align-middle">
             <thead>
                 <tr>
+                    <th><input type="checkbox" class="form-check-input" onclick="document.querySelectorAll('.candidate-select:not(:disabled)').forEach(cb => cb.checked = this.checked)"></th>
                     <th>{% translate "Nome" %}</th>
                     <th>{% translate "Documento" %}</th>
                     <th>{% translate "Curso pretendido" %}</th>
-                    <th>{% translate "Data de candidatura" %}</th>
+                    <th>{% translate "Vagas" %}</th>
+                    <th>{% translate "Nota da prova" %}</th>
+                    <th>{% translate "Estado" %}</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for candidate in candidates %}
                 <tr>
+                    <td>
+                        <input
+                            type="checkbox" class="form-check-input candidate-select"
+                            form="bulk-admit-form" name="candidate_ids" value="{{ candidate.id }}"
+                            {% if not candidate.is_eligible_for_admission or candidate.status == "accepted" %}disabled{% endif %}
+                        >
+                    </td>
                     <td>{{ candidate.full_name }}</td>
                     <td>{{ candidate.document_type.name }} {{ candidate.document_number }}</td>
                     <td>{{ candidate.desired_course.name }}</td>
-                    <td>{{ candidate.application_date }}</td>
-                    <td class="text-end">
-                        <a href="{% url 'enrollment:student_inscription' %}?candidate={{ candidate.id }}" class="btn btn-sm btn-primary">
-                            {% translate "Admitir" %}
-                        </a>
+                    <td>
+                        {% if candidate.vacancy_info %}
+                            {{ candidate.vacancy_info.occupied }}/{{ candidate.vacancy_info.capacity }}
+                            {% if candidate.vacancy_info.remaining <= 0 %}
+                            <span class="badge text-bg-secondary">{% translate "Sem vagas" %}</span>
+                            {% else %}
+                            <span class="text-muted small">({{ candidate.vacancy_info.remaining }} {% translate "restantes" %})</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
                     </td>
+                    {% include "enrollment/_candidate_row_status.html" %}
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="text-center text-muted py-4">{% translate "Nenhum candidato pendente." %}</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">{% translate "Nenhum candidato encontrado." %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>

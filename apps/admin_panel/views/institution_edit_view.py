@@ -39,6 +39,7 @@ SECTIONS = [
         "title": "Documentos oficiais",
         "fields": ["document_header_text", "document_legal_footer_text"],
     },
+    {"title": "Admissões", "fields": ["admission_exam_passing_score"]},
 ]
 
 
