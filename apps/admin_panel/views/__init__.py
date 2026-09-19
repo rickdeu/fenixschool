@@ -8,6 +8,7 @@ from .academic_year_edit_view import academic_year_edit_view
 from .academic_year_list_view import academic_year_list_view
 from .backup_view import backup_download_view, backup_list_view
 from .course_grading_formula_view import course_grading_formula_view
+from .data_export_view import data_export_view
 from .data_subject_export_view import (
     data_subject_export_guardian_view,
     data_subject_export_student_view,
@@ -37,6 +38,7 @@ __all__ = [
     "backup_download_view",
     "backup_list_view",
     "course_grading_formula_view",
+    "data_export_view",
     "data_subject_export_guardian_view",
     "data_subject_export_student_view",
     "data_subject_export_view",

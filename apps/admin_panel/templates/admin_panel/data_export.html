@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Exportações" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-2">{% translate "Exportações" %}</h1>
+<p class="text-muted mb-4">
+    {% translate "Backup manual e exportações normativas em formatos abertos (RF-ADM-05)." %}
+</p>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>{% translate "Entidade" %}</th>
+                    <th class="text-end">{% translate "Formatos" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entity in entities %}
+                <tr>
+                    <td>{{ entity.label }}</td>
+                    <td class="text-end">
+                        {% for format in formats %}
+                        <a
+                            href="?entidade={{ entity.key }}&formato={{ format }}"
+                            class="btn btn-sm btn-outline-secondary"
+                        >
+                            <i class="bi bi-download me-1"></i>{{ format|upper }}
+                        </a>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
