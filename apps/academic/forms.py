@@ -3,7 +3,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from apps.core.models import AcademicTerm, AcademicYear
+from apps.core.models import AcademicYear
 
 from .models import Course, CurricularYear, Schedule, SchoolClass
 from .services import ScheduleConflictError, validate_schedule_conflict
@@ -11,7 +11,16 @@ from .services import ScheduleConflictError, validate_schedule_conflict
 
 class SchoolClassForm(forms.ModelForm):
     """Turma (RF-CURR-05, issue #34) -- até agora só editável via Django
-    Admin; ecrã dedicado pedido directamente pelo utilizador."""
+    Admin; ecrã dedicado pedido directamente pelo utilizador.
+
+    Sem campo para `academic_term`: feedback do utilizador -- "ao criar a
+    turma não precisa ter o campo trimestre, pois uma turma é válida para
+    o ano todo (os três trimestres)" -- confirma a mesma razão já
+    documentada em `SchoolClass.academic_term` (nullable desde a issue
+    #34: uma turma normalmente mantém-se junta o ano lectivo inteiro, não
+    só um trimestre). O campo continua a existir no modelo (§5.8), só não
+    é pedido neste ecrã.
+    """
 
     class Meta:
         model = SchoolClass
@@ -21,7 +30,6 @@ class SchoolClassForm(forms.ModelForm):
             "academic_year",
             "course",
             "curricular_year",
-            "academic_term",
             "shift",
             "max_enrollment",
         ]
@@ -36,10 +44,6 @@ class SchoolClassForm(forms.ModelForm):
             self.fields["curricular_year"].queryset = CurricularYear.objects.filter(
                 institution=institution
             )
-            self.fields["academic_term"].queryset = AcademicTerm.objects.filter(
-                institution=institution
-            )
-        self.fields["academic_term"].required = False
 
 
 class ScheduleAdminForm(forms.ModelForm):
