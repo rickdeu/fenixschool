@@ -11,7 +11,10 @@
 Requisitos transversais recomendados:
 - **UPS/Nobreak** obrigatório, dado o histórico de instabilidade eléctrica — dimensionado
   para permitir encerramento gracioso automático (script de shutdown ao detectar bateria
-  baixa).
+  baixa). Implementado (issue #168) via NUT (Network UPS Tools) + `scripts/
+  ups_graceful_shutdown.sh` — ver o cabeçalho do próprio script para a configuração de
+  `upsmon.conf`/`ups.conf` e `scripts/test_ups_graceful_shutdown.sh` para o procedimento
+  de simulação (bateria baixa) sem hardware real.
 - **Rede local (LAN/Wi-Fi)** cobrindo secretaria, sala de professores e, idealmente,
   salas de aula (para lançamento de faltas/notas em tablet).
 - **Router com ligação móvel de backup** (dados móveis Unitel/Movicel/Africell) para as
