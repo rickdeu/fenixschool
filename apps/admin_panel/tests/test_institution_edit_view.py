@@ -52,7 +52,13 @@ def test_shows_the_form_grouped_into_sections(admin_client):
 
     assert response.status_code == 200
     sections = {s["title"] for s in response.context["sections"]}
-    assert sections == {"Identificação", "Morada", "Contactos", "Identidade visual"}
+    assert sections == {
+        "Identificação",
+        "Morada",
+        "Contactos",
+        "Identidade visual",
+        "Documentos oficiais",
+    }
 
 
 def test_updating_the_institutions_data(admin_client, institution):

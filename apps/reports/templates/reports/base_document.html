@@ -34,14 +34,26 @@
             font-size: 14pt;
             margin: 0;
         }
+        .document-header-text {
+            font-size: 9pt;
+            color: #444;
+            margin: 0.2cm 0 0;
+        }
         .document-footer {
             position: running(document-footer);
             font-size: 8pt;
             color: #555;
             border-top: 1px solid #ccc;
             padding-top: 0.2cm;
+        }
+        .document-footer-row {
             display: flex;
             justify-content: space-between;
+        }
+        .document-footer-legal {
+            margin: 0.15cm 0 0;
+            font-size: 7pt;
+            color: #777;
         }
     </style>
     {% block extra_style %}{% endblock %}
@@ -50,13 +62,17 @@
     <div class="document-header">
         {% if institution.logo %}<img src="file://{{ institution.logo.path }}" alt="">{% endif %}
         <h1>{{ institution.name }}</h1>
+        {% if institution.document_header_text %}<p class="document-header-text">{{ institution.document_header_text }}</p>{% endif %}
     </div>
 
     <div class="document-footer">
-        <span>{{ issued_document.formatted_number }}</span>
-        <span>
-            {% blocktranslate with user=issued_document.issued_by.get_full_name|default:issued_document.issued_by.username date=issued_document.created_at %}Emitido por {{ user }} em {{ date }}{% endblocktranslate %}
-        </span>
+        <div class="document-footer-row">
+            <span>{{ issued_document.formatted_number }}</span>
+            <span>
+                {% blocktranslate with user=issued_document.issued_by.get_full_name|default:issued_document.issued_by.username date=issued_document.created_at %}Emitido por {{ user }} em {{ date }}{% endblocktranslate %}
+            </span>
+        </div>
+        {% if institution.document_legal_footer_text %}<p class="document-footer-legal">{{ institution.document_legal_footer_text }}</p>{% endif %}
     </div>
 
     {% block document_content %}{% endblock %}

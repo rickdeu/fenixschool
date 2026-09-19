@@ -35,6 +35,10 @@ SECTIONS = [
         ],
     },
     {"title": "Identidade visual", "fields": ["logo"]},
+    {
+        "title": "Documentos oficiais",
+        "fields": ["document_header_text", "document_legal_footer_text"],
+    },
 ]
 
 
