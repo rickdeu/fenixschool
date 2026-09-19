@@ -37,6 +37,15 @@ MIDDLEWARE = [
 ]
 
 STORAGES = {
+    # Overriding `STORAGES` replaces Django's own built-in dict entirely
+    # (settings don't merge) -- omitting "default" here silently drops
+    # Django's own `FileSystemStorage` default for every `FileField`/
+    # `ImageField` (`Institution.logo`, `Attendance.justification_
+    # attachment`, ...), breaking any real file upload with
+    # `InvalidStorageError` the moment `STORAGES["default"]` is looked up.
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },

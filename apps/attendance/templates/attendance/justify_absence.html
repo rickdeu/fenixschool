@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Justificar falta" %} — FenixSchool{% endblock %}
+
+{% block content %}
+<a href="{% url 'attendance:absence_list' %}" class="btn btn-link ps-0">
+    <i class="bi bi-arrow-left"></i> {% translate "Voltar às faltas" %}
+</a>
+
+<h1 class="h3 mb-1">{% translate "Justificar falta" %}</h1>
+<p class="text-muted mb-4">
+    {{ attendance.student }} — {{ attendance.schedule.subject.name }} — {{ attendance.date }}
+</p>
+
+<div class="card">
+    <div class="card-body">
+        {% if attendance.status == "justified_absent" %}
+        <p class="text-muted small mb-3">
+            {% translate "Esta falta já está justificada -- gravar de novo substitui a justificação anterior." %}
+        </p>
+        {% if attendance.justification_attachment %}
+        <p>
+            <a href="{% url 'attendance:justification_attachment' attendance.id %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-paperclip me-1"></i>{% translate "Ver anexo actual" %}
+            </a>
+        </p>
+        {% endif %}
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="justification_text" class="form-label">{% translate "Justificação" %}</label>
+                <textarea name="justification_text" id="justification_text" class="form-control" rows="3">{{ attendance.justification_text }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="justification_attachment" class="form-label">{% translate "Anexo (opcional)" %}</label>
+                <input type="file" name="justification_attachment" id="justification_attachment" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check2 me-1"></i>{% translate "Gravar justificação" %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

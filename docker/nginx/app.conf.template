@@ -36,6 +36,20 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
+    # Justification attachments (issue #67, RF-FREQ-02/docs/09-seguranca-e-
+    # privacidade.md §9.3: "nunca URL pública directa") are the one upload
+    # under /media/ that must never be served straight from disk -- unlike
+    # everything else here (institution logos, ...), they can contain a
+    # guardian's private medical/legal documents. This longer, more specific
+    # prefix wins over the general /media/ location below regardless of
+    # declaration order (Nginx always matches the longest literal prefix),
+    # forcing every request through Django's own permission-checked
+    # `apps.attendance.views.justification_attachment_view` instead.
+    location /media/attendance/justifications/ {
+        deny all;
+        return 404;
+    }
+
     location /media/ {
         alias /app/media/;
         add_header Cache-Control "public, max-age=3600";
