@@ -129,14 +129,6 @@ def justificar_falta(*, attendance: Attendance, text: str, justified_by, attachm
     return attendance
 
 
-# RF-FREQ-03's próprio exemplo de implementação: "limite_faltas = 3 *
-# carga_horaria_semanal". Tal como `Institution.max_recoverable_subjects`,
-# não é um valor normativo confirmado junto do Decreto Presidencial 162/23
-# (docs/legislacao/README.md) -- fica hardcoded como ponto de partida até a
-# issue #175 o tornar configurável por instituição.
-ABSENCE_LIMIT_WEEKLY_LOAD_MULTIPLIER = Decimal("3")
-
-
 def _schedule_duration_hours(schedule) -> Decimal:
     start_minutes = schedule.start_time.hour * 60 + schedule.start_time.minute
     end_minutes = schedule.end_time.hour * 60 + schedule.end_time.minute
@@ -148,7 +140,10 @@ def calcular_assiduidade(*, enrollment, subject, academic_term=None) -> dict:
     (issue #68, RF-FREQ-03): acumula as horas de falta (justificadas e
     injustificadas) de `enrollment` em `subject` -- todo o ano lectivo por
     omissão, ou só `academic_term` quando indicado -- e compara-as com
-    `limite_faltas = 3 × carga_horária_semanal` (`Subject.weekly_hours`).
+    `limite_faltas = multiplicador × carga_horária_semanal`
+    (`Subject.weekly_hours`), onde o multiplicador é
+    `Institution.absence_limit_weekly_load_multiplier` (issue #175; "3" por
+    omissão, conforme o Decreto Presidencial 162/23).
 
     Só as faltas **injustificadas** contam para o limite legal (uma falta
     justificada não deveria penalizar o aluno) -- ambas contam para a
@@ -181,7 +176,9 @@ def calcular_assiduidade(*, enrollment, subject, academic_term=None) -> dict:
         if total_hours > 0
         else Decimal("100")
     )
-    limit_hours = ABSENCE_LIMIT_WEEKLY_LOAD_MULTIPLIER * Decimal(subject.weekly_hours)
+    limit_hours = enrollment.institution.absence_limit_weekly_load_multiplier * Decimal(
+        subject.weekly_hours
+    )
 
     return {
         "total_hours": total_hours,

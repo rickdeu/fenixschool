@@ -132,6 +132,36 @@ def test_exceeds_limit_once_unjustified_hours_pass_3x_weekly_load(
     assert result["exceeds_limit"] is True
 
 
+def test_absence_limit_multiplier_is_configurable_per_institution(
+    institution, enrollment, student, schedule, teacher
+):
+    """Issue #175: o multiplicador "3x carga semanal" (Decreto Presidencial
+    162/23) é o valor por omissão, mas fica configurável por instituição --
+    não hardcoded."""
+    institution.absence_limit_weekly_load_multiplier = Decimal("5")
+    institution.save()
+
+    # weekly_hours=4 -> limit = 5 * 4 = 20h; 13 unjustified absences (13h) no
+    # longer exceed it, unlike with the default multiplier (3x -> 12h, see
+    # `test_exceeds_limit_once_unjustified_hours_pass_3x_weekly_load`).
+    for week in range(13):
+        _mark(
+            institution,
+            enrollment,
+            student,
+            schedule,
+            teacher,
+            MONDAY + timedelta(days=7 * week),
+            Attendance.Status.ABSENT,
+        )
+
+    with tenant_context(institution.id):
+        result = calcular_assiduidade(enrollment=enrollment, subject=schedule.subject)
+
+    assert result["limit_hours"] == Decimal("20")
+    assert result["exceeds_limit"] is False
+
+
 def test_academic_term_scopes_the_calculation(
     institution, enrollment, student, schedule, teacher, academic_term
 ):
