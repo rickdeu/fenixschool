@@ -2,6 +2,7 @@
 funcionalidades.md §6.4)."""
 
 from django.contrib.auth.decorators import login_required, permission_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 
 from apps.core.context import get_current_node_id
@@ -9,7 +10,7 @@ from apps.core.view_helpers import require_institution_context
 
 from ..forms import EnrollmentForm
 from ..models import Student
-from ..services import SchoolClassFullError, enroll_student
+from ..services import SchoolClassFullError, emitir_comprovativo_matricula, enroll_student
 
 
 @login_required
@@ -19,10 +20,11 @@ def enrollment_create_view(request, student_id):
     data is pre-loaded (RF-MAT-04's search already found them) and the
     Secretaria only picks the Turma, presented document and observations.
 
-    "Guardar e Imprimir" (RF-MAT-06 -- a printable PDF proof) is only
-    "Guardar" here: PDF generation is its own dedicated task (`reports`),
-    not fabricated in this view -- the success page says so plainly instead
-    of pretending to offer a download that doesn't exist.
+    "Guardar e Imprimir" (RF-MAT-06, docs/06-modulos-e-funcionalidades.md
+    §6.4's own step 7: "Guardar e Imprimir grava a matrícula e emite
+    comprovativo em PDF") is a single action, not two: on success this
+    returns the comprovativo PDF directly, generated automatically, never
+    a separate opt-in step.
     """
     redirect_response = require_institution_context(request)
     if redirect_response:
@@ -52,9 +54,12 @@ def enrollment_create_view(request, student_id):
             except SchoolClassFullError as error:
                 form.add_error("school_class", str(error))
             else:
-                return render(
-                    request, "enrollment/enrollment_success.html", {"enrollment": enrollment}
+                _issued, pdf = emitir_comprovativo_matricula(
+                    enrollment=enrollment,
+                    issued_by=request.user,
+                    origin_node_id=get_current_node_id(),
                 )
+                return HttpResponse(pdf, content_type="application/pdf")
     else:
         form = EnrollmentForm(institution=institution, student=student)
 

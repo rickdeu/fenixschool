@@ -157,6 +157,35 @@ def gerar_declaracao_pdf(
     return issued, pdf
 
 
+COMPROVATIVO_MATRICULA_DOCUMENT_TYPE = "comprovativo-matricula"
+
+
+def gerar_comprovativo_matricula_pdf(
+    *, institution, fields: dict, issued_by, origin_node_id
+) -> tuple[IssuedDocument, bytes]:
+    """RF-MAT-06 (issue #48): "comprovativo imprimível imediatamente após
+    confirmação da matrícula" -- o chamador
+    (`apps.enrollment.services.emitir_comprovativo_matricula`) já resolveu
+    todos os campos a mostrar (`fields`, um dict simples de etiqueta →
+    valor); esta função só regista a emissão e renderiza o PDF."""
+
+    issued = emitir_documento(
+        institution=institution,
+        document_type=COMPROVATIVO_MATRICULA_DOCUMENT_TYPE,
+        issued_by=issued_by,
+        origin_node_id=origin_node_id,
+    )
+    pdf = render_document_pdf(
+        "reports/comprovativo_matricula.html",
+        {
+            "institution": institution,
+            "issued_document": issued,
+            "fields": fields,
+        },
+    )
+    return issued, pdf
+
+
 BOLETIM_DOCUMENT_TYPE = "boletim"
 
 
