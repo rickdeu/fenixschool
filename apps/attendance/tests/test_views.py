@@ -42,6 +42,26 @@ def test_selection_lists_the_teachers_own_schedule(teacher_client, schedule):
     assert schedule.subject.name in response.content.decode()
 
 
+def test_selection_rejects_a_date_that_does_not_match_the_schedules_weekday(
+    teacher_client, schedule
+):
+    """`schedule` só dá aulas à Segunda -- submeter um Sábado deve falhar
+    aqui, de forma clara, em vez de só ao gravar na grelha."""
+    response = teacher_client.post(
+        SELECTION_URL, {"schedule": str(schedule.id), "date": "2026-03-07"}
+    )
+
+    assert response.status_code == 200
+    assert "corresponder a uma Segunda-feira" in response.content.decode()
+
+
+def test_selection_accepts_a_date_matching_the_schedules_weekday(teacher_client, schedule):
+    response = teacher_client.post(SELECTION_URL, {"schedule": str(schedule.id), "date": MONDAY})
+
+    assert response.status_code == 302
+    assert f"horario={schedule.id}" in response.url
+
+
 def test_grid_lists_the_class_students(teacher_client, schedule, enrollment):
     response = teacher_client.get(GRID_URL, {"horario": str(schedule.id), "data": "2026-03-02"})
 
