@@ -70,6 +70,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_panel:data_export' %}">
+                            <i class="bi bi-file-earmark-arrow-down"></i> <span>{% translate "Exportações" %}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'admin_panel:data_subject_export' %}">
                             <i class="bi bi-file-earmark-lock"></i> <span>{% translate "Exportação de dados (Lei 22/11)" %}</span>
                         </a>

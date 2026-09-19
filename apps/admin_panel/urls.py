@@ -75,6 +75,8 @@ urlpatterns = [
         views.non_teaching_day_edit_view,
         name="non_teaching_day_edit",
     ),
+    # -- Exportações normativas (RF-ADM-05, issue #117) -------------------------
+    path("exportacoes/", views.data_export_view, name="data_export"),
     # -- Exportação de dados de um titular (RF-.../9.1, issue #144) ------------
     path(
         "privacidade/exportar-dados/",

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+{# Relatório PDF interno de exportação (issue #117, RF-ADM-05) --
+   deliberadamente não estende reports/base_document.html: não é um
+   documento oficial numerado/auditado (apps.reports.services.
+   emitir_documento), é um extracto administrativo interno, sem
+   numeração/série própria. #}
+<html lang="pt">
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <style>
+        @page { size: A4 landscape; margin: 1.5cm; }
+        body { font-family: "DejaVu Sans", sans-serif; font-size: 9pt; color: #1a1a1a; }
+        h1 { font-size: 13pt; margin-bottom: 0.3cm; }
+        p.meta { color: #555; margin-top: 0; margin-bottom: 0.8cm; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 0.15cm 0.25cm; text-align: left; }
+        th { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>{{ institution.name }} — {{ title }}</h1>
+    <p class="meta">Exportação administrativa interna -- {{ rows|length }} registo(s).</p>
+    <table>
+        <thead>
+            <tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
