@@ -46,8 +46,23 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # binary -- apps.core.services.backup_database() (issue #166) runs it from
 # here, over the network, since this image (unlike the `db` service's own
 # postgres:16-alpine) never has the Postgres *server* itself.
+# libpango-1.0-0/libpangocairo-1.0-0/libgdk-pixbuf-2.0-0/libcairo2/libffi8 +
+# shared-mime-info + fonts-dejavu-core are WeasyPrint's own runtime
+# dependencies (issue #93, docs/10-stack-tecnologica-e-estrutura-projeto.md
+# §10.1) -- it is a pure-Python wheel that `dlopen()`s these at import time,
+# nothing to compile, so they only belong in this runtime stage.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 postgresql-client \
+    && apt-get install -y --no-install-recommends \
+        libpq5 \
+        postgresql-client \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libgdk-pixbuf-2.0-0 \
+        libcairo2 \
+        libffi8 \
+        libharfbuzz-subset0 \
+        shared-mime-info \
+        fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 1000 --shell /usr/sbin/nologin fenixschool
 

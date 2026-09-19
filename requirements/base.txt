@@ -36,3 +36,9 @@ qrcode[pil]==8.2
 # Argon2 password hashing -- docs/09-seguranca-e-privacidade.md §9.2,
 # RNF-SEC-02 (issue #26). Required for Django's Argon2PasswordHasher.
 argon2-cffi==25.1.0
+
+# Geração de documentos oficiais em PDF a partir de templates HTML/CSS --
+# docs/10-stack-tecnologica-e-estrutura-projeto.md §10.1, RF-REL-06
+# (issue #93). Requer bibliotecas nativas (Pango/Cairo/GDK-Pixbuf) na
+# imagem -- ver Dockerfile.
+weasyprint==70.0

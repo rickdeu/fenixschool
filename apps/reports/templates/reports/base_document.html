@@ -1,0 +1,64 @@
+{% load i18n %}<!DOCTYPE html>
+{# Template base para todo documento oficial em PDF (RF-REL-06, issue #93):
+   cabeçalho institucional + rodapé com numeração/série, data/hora e
+   funcionário emissor, repetido em todas as páginas via WeasyPrint's
+   "running elements" (`position: running(...)` / `content: element(...)`).
+   As issues #94/#96/#97 extendem este template e preenchem apenas o bloco
+   `document_content`. #}
+<html lang="pt">
+<head>
+    <meta charset="utf-8">
+    <title>{% block document_title %}{{ issued_document.formatted_number }}{% endblock %}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm 2cm 3.5cm 2cm;
+            @bottom-center { content: element(document-footer); }
+        }
+        body {
+            font-family: "DejaVu Sans", sans-serif;
+            font-size: 11pt;
+            color: #1a1a1a;
+        }
+        .document-header {
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.5cm;
+            margin-bottom: 1cm;
+        }
+        .document-header img {
+            max-height: 2cm;
+            margin-bottom: 0.3cm;
+        }
+        .document-header h1 {
+            font-size: 14pt;
+            margin: 0;
+        }
+        .document-footer {
+            position: running(document-footer);
+            font-size: 8pt;
+            color: #555;
+            border-top: 1px solid #ccc;
+            padding-top: 0.2cm;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body>
+    <div class="document-header">
+        {% if institution.logo %}<img src="file://{{ institution.logo.path }}" alt="">{% endif %}
+        <h1>{{ institution.name }}</h1>
+    </div>
+
+    <div class="document-footer">
+        <span>{{ issued_document.formatted_number }}</span>
+        <span>
+            {% blocktranslate with user=issued_document.issued_by.get_full_name|default:issued_document.issued_by.username date=issued_document.created_at %}Emitido por {{ user }} em {{ date }}{% endblocktranslate %}
+        </span>
+    </div>
+
+    {% block document_content %}{% endblock %}
+</body>
+</html>
