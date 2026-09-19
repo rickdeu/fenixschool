@@ -242,6 +242,14 @@ def test_cell_save_creates_a_grade(
     # RF-AVAL-01/03 (issue #57): "nível qualitativo mostrado junto ao valor
     # numérico" -- not just computable on the model, actually rendered.
     assert grade.qualitative_level.qualitative_level in content
+    # A nota persiste correctamente na base de dados, mas reportado ao vivo:
+    # o valor devolvido no `value="..."` de um `<input type="number">` tem
+    # de usar sempre ponto decimal -- "15,5" (a formatação por omissão em
+    # pt, activa neste projecto) não é um número válido para esse tipo de
+    # campo, e o browser mostra o campo como vazio (parece que "a nota
+    # desaparece" ao recarregar, mesmo já gravada).
+    assert 'value="15.5"' in content
+    assert 'value="15,5"' not in content
 
 
 def test_cell_save_updates_an_existing_grade_instead_of_erroring(
