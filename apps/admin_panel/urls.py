@@ -100,6 +100,14 @@ urlpatterns = [
         views.backup_download_view,
         name="backup_download",
     ),
+    # -- Turmas (RF-CURR-05, issue #34) -----------------------------------------
+    path("academico/turmas/", views.school_class_list_view, name="school_class_list"),
+    path("academico/turmas/nova/", views.school_class_create_view, name="school_class_create"),
+    path(
+        "academico/turmas/<uuid:school_class_id>/editar/",
+        views.school_class_edit_view,
+        name="school_class_edit",
+    ),
     # -- Mapa de ocupação de salas e docentes (RF-CURR-06, issue #38) -----------
     path(
         "academico/mapa-ocupacao/",
