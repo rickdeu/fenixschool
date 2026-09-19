@@ -13,6 +13,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.utils import timezone
 
 from apps.academic.models import Schedule, SchoolClass, Subject
+from apps.attendance.services import calcular_assiduidade
 
 from .models import EvaluationType, FinalGrade, FinalSituation, Grade, GradingFormulaOverride
 
@@ -598,19 +599,34 @@ def calcular_situacao_final(enrollment) -> FinalSituation:
     )
     failed_subjects = []
     for subject in subjects:
+        subject_failed = False
+
         final_grades = list(
             FinalGrade.all_objects.filter(
                 institution_id=enrollment.institution_id, enrollment=enrollment, subject=subject
             ).values_list("manual_override_value", "calculated_value")
         )
-        if not final_grades:
-            continue
-        values = [
-            override if override is not None else calculated
-            for override, calculated in final_grades
-        ]
-        annual_average = sum(values) / len(values)
-        if annual_average < PASSING_GRADE and not _has_passed_recurso(enrollment, subject):
+        if final_grades:
+            values = [
+                override if override is not None else calculated
+                for override, calculated in final_grades
+            ]
+            annual_average = sum(values) / len(values)
+            if annual_average < PASSING_GRADE and not _has_passed_recurso(enrollment, subject):
+                subject_failed = True
+
+        # RF-FREQ-03 (issue #68): "alerta de limite legal... com impacto
+        # sinalizado na situação final" -- exceder o limite de faltas
+        # injustificadas marca a disciplina como em atraso mesmo com média
+        # suficiente (avaliado sempre, não só quando a média já reprovou:
+        # um aluno nunca avaliado mas já acima do limite de faltas continua
+        # em risco de reprovação por faltas).
+        if not subject_failed and calcular_assiduidade(enrollment=enrollment, subject=subject)[
+            "exceeds_limit"
+        ]:
+            subject_failed = True
+
+        if subject_failed:
             failed_subjects.append(subject)
 
     if not failed_subjects:
