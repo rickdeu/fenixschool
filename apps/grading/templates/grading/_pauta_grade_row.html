@@ -17,6 +17,9 @@
     <span id="pauta-grade-cell-spinner-{{ grade.id }}"
           class="htmx-indicator spinner-border spinner-border-sm text-secondary" role="status"
           aria-label="{% translate 'A gravar' %}"></span>
+    {% if grade.qualitative_level %}
+    <span class="badge text-bg-light border">{{ grade.qualitative_level.qualitative_level }}</span>
+    {% endif %}
     {% if success %}
     <span class="text-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>
         <span class="visually-hidden">{% translate "Gravado" %}</span>

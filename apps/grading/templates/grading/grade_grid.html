@@ -25,7 +25,7 @@
                     <td>{{ row.enrollment.student.student_number }}</td>
                     <td>{{ row.enrollment.student }}</td>
                     <td>
-                        {% include "grading/_grade_row.html" with enrollment=row.enrollment value=row.grade.value %}
+                        {% include "grading/_grade_row.html" with enrollment=row.enrollment value=row.grade.value qualitative_level=row.grade.qualitative_level %}
                     </td>
                 </tr>
                 {% empty %}
