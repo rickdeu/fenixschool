@@ -117,10 +117,29 @@ def _make_enrollment(institution, setup, **overrides):
     return Enrollment.objects.create(**fields)
 
 
-def test_enrollment_number_is_assigned_sequentially_per_institution_and_year(institution, setup):
+def test_enrollment_number_is_assigned_sequentially_per_institution_and_year(
+    institution, setup, document_type
+):
     with tenant_context(institution.id):
         first = _make_enrollment(institution, setup)
-        second = _make_enrollment(institution, setup)
+        # A different student: two enrolments in the same institution/year
+        # is exactly what's being tested here, but the same student having
+        # two at once would trip the "uma matrícula activa por ano lectivo"
+        # rule this app also enforces (unrelated to enrollment numbering).
+        other_student = Student.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            first_name="Outra",
+            last_name="Aluna",
+            birth_date=date(2010, 5, 20),
+            gender=Student.Gender.FEMALE,
+            document_type=document_type,
+            document_number="OTHER-000",
+            document_issue_date=date(2020, 1, 1),
+            document_issue_place="Nacional - Luanda",
+            guardian_consent_given_by=setup["student"].guardian_consent_given_by,
+        )
+        second = _make_enrollment(institution, setup, student=other_student)
 
     assert first.enrollment_number == 1
     assert second.enrollment_number == 2
@@ -163,9 +182,39 @@ def test_enrollment_defaults_to_pending_status(institution, setup):
 
 
 def test_enrollment_can_reference_a_previous_enrollment_for_repeating_students(institution, setup):
+    """A repeating student's new `Enrollment` is always for a *different*
+    (later) academic year than the one it references -- retaining the
+    same curricular year, never a second active matrícula in the same
+    year the earlier one already covers (see
+    `enrollment_enrollment_one_active_per_student_per_year`)."""
     with tenant_context(institution.id):
         first = _make_enrollment(institution, setup)
-        second = _make_enrollment(institution, setup, is_repeating=True, previous_enrollment=first)
+
+        next_year = AcademicYear.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            designation="2027/2028",
+            start_date=date(2027, 2, 1),
+            end_date=date(2027, 12, 15),
+        )
+        next_class = SchoolClass.objects.create(
+            institution=institution,
+            origin_node_id=_origin(),
+            code="10A",
+            designation="10.ª A (repetição)",
+            academic_year=next_year,
+            course=setup["course"],
+            curricular_year=setup["curricular_year"],
+            shift=SchoolClass.Shift.MORNING,
+        )
+        second = _make_enrollment(
+            institution,
+            setup,
+            academic_year=next_year,
+            school_class=next_class,
+            is_repeating=True,
+            previous_enrollment=first,
+        )
 
     assert second.previous_enrollment == first
     assert second.is_repeating

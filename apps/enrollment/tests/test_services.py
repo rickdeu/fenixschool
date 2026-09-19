@@ -13,6 +13,7 @@ from apps.enrollment.services import (
     DuplicateStudentDocumentError,
     MissingGuardianConsentError,
     SchoolClassFullError,
+    StudentAlreadyEnrolledError,
     enroll_student,
     register_student,
 )
@@ -228,7 +229,7 @@ def _make_student(institution, document_type, document_number):
     )
 
 
-def _enroll(institution, class_setup, student):
+def _enroll(institution, class_setup, student, **overrides):
     return enroll_student(
         institution=institution,
         student=student,
@@ -242,6 +243,7 @@ def _enroll(institution, class_setup, student):
         presented_document_number=student.document_number,
         document_issue_date=date(2020, 1, 1),
         document_issue_place="Nacional - Luanda",
+        **overrides,
     )
 
 
@@ -289,3 +291,43 @@ def test_cancelled_enrollments_free_up_a_vacancy(institution, document_type, cla
 
         # A vacancy freed up by the cancellation must be usable again.
         _enroll(institution, class_setup, third)
+
+
+def test_force_enrolls_past_capacity_instead_of_blocking(institution, document_type, class_setup):
+    """Issue #174's "aviso, não bloqueio automático" extends to the
+    enrolment action itself -- `force=True` is the Secretaria's explicit
+    confirmation past the warning, not a way around real data integrity
+    rules (see the next test)."""
+    with tenant_context(institution.id):
+        first = _make_student(institution, document_type, "AAA")
+        second = _make_student(institution, document_type, "BBB")
+        third = _make_student(institution, document_type, "CCC")
+
+        _enroll(institution, class_setup, first)
+        _enroll(institution, class_setup, second)
+
+        with pytest.raises(SchoolClassFullError):
+            _enroll(institution, class_setup, third)
+
+        enrollment = _enroll(institution, class_setup, third, force=True)
+
+        assert isinstance(enrollment, Enrollment)
+        assert class_setup["school_class"].active_enrollment_count() == 3
+
+
+def test_a_student_cannot_have_two_active_enrollments_in_the_same_academic_year(
+    institution, document_type, class_setup
+):
+    with tenant_context(institution.id):
+        student = _make_student(institution, document_type, "AAA")
+        _enroll(institution, class_setup, student)
+
+        with pytest.raises(StudentAlreadyEnrolledError):
+            _enroll(institution, class_setup, student)
+
+        # `force=True` overrides the capacity warning, never this rule --
+        # a duplicate matrícula in the same year is always a data error.
+        with pytest.raises(StudentAlreadyEnrolledError):
+            _enroll(institution, class_setup, student, force=True)
+
+        assert Enrollment.all_objects.filter(student=student).count() == 1
